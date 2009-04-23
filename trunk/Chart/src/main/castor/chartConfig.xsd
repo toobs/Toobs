@@ -5,7 +5,7 @@
   xmlns:chc="chc"
   xmlns:cc="cc"
   >
-  <xs:import namespace="cc" schemaLocation="componentConfig.xsd"/>
+  <xs:import namespace="cc" schemaLocation="../../../../PresFramework/src/main/castor/componentConfig.xsd"/>
   
   <xs:element name="ChartConfig">
     <xs:annotation>

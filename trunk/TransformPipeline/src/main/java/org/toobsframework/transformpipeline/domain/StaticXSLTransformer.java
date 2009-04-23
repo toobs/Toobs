@@ -2,7 +2,6 @@ package org.toobsframework.transformpipeline.domain;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
-import org.apache.xml.utils.DefaultErrorHandler;
 
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Source;
@@ -19,11 +18,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 import java.util.Properties;
-import java.util.Vector;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -42,10 +41,10 @@ public class StaticXSLTransformer extends BaseXMLTransformer {
    *
    */
   @SuppressWarnings("unchecked")
-  public Vector transform(
-      Vector inputXSLs,
-      Vector inputXMLs,
-      HashMap inputParams) throws XMLTransformerException {
+  public List transform(
+      List inputXSLs,
+      List inputXMLs,
+      Map inputParams) throws XMLTransformerException {
 
     if (log.isDebugEnabled()) {
       log.debug("TRANSFORM XML STARTED");
@@ -80,7 +79,7 @@ public class StaticXSLTransformer extends BaseXMLTransformer {
         throw new XMLTransformerException("StreamSource is null");
       }
 
-      Vector resultingXMLs = new Vector();
+      ArrayList resultingXMLs = new ArrayList();
 
       //String xmlString = "";
       ByteArrayInputStream  xmlInputStream = null;
@@ -98,14 +97,14 @@ public class StaticXSLTransformer extends BaseXMLTransformer {
             t.transform(new DOMSource( (org.w3c.dom.Node)xmlObject ), new StreamResult( os ));
             xmlInputStream = new ByteArrayInputStream(os.toByteArray());
             //xmlString = os.toString("UTF-8");
-            if (log.isDebugEnabled()) {
-              log.debug("Input XML for " + xslSource.toString() + "( " + xslFile + ") : " + os.toString("UTF-8"));
+            if (log.isTraceEnabled()) {
+              log.trace("Input XML for " + xslSource.toString() + "( " + xslFile + ") : " + os.toString("UTF-8"));
             }
           } else {
             //xmlString = (String) xmlObject;
             xmlInputStream = new ByteArrayInputStream(((String) xmlObject).getBytes("UTF-8"));
-            if (log.isDebugEnabled()) {
-              log.debug("Input XML for " + xslSource.toString() + "( " + xslFile + ") : " + xmlObject);
+            if (log.isTraceEnabled()) {
+              log.trace("Input XML for " + xslSource.toString() + "( " + xslFile + ") : " + xmlObject);
             }
           }
           
@@ -181,7 +180,7 @@ public class StaticXSLTransformer extends BaseXMLTransformer {
   protected void doTransform(
       Source xslSource,
       Source xmlSource,
-      HashMap params,
+      Map params,
       StreamResult xmlResult,
       String xslFile) throws XMLTransformerException {
 
@@ -194,8 +193,8 @@ public class StaticXSLTransformer extends BaseXMLTransformer {
       // 2. Use the TransformerFactory to process the stylesheet Source and
       //    generate a Transformer.
       Transformer transformer = tFactory.newTransformer(xslSource);
-      
-      transformer.setErrorListener(new DefaultErrorHandler(true));
+
+      transformer.setErrorListener(tFactory.getErrorListener());
       
       // 2.2 Set character encoding for all transforms to UTF-8.
       transformer.setOutputProperty("encoding", "UTF-8");

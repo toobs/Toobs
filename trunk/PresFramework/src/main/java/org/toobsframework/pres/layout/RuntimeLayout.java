@@ -1,10 +1,11 @@
 package org.toobsframework.pres.layout;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 import javax.xml.transform.URIResolver;
 
@@ -34,7 +35,7 @@ public class RuntimeLayout {
   private static final String XML_CP_HEADER = "<TransformParams>";
   private static final String XML_CP_FOOTER = "</TransformParams>";
   private String id;
-  private Map transforms = new HashMap();
+  private Map<String, List> transforms = new HashMap<String, List>();
   private RuntimeLayoutConfig config;
   private String layoutXml;
   private DoItRef doItRef;
@@ -62,26 +63,7 @@ public class RuntimeLayout {
     sb.append(XML_FOOTER);
     this.setLayoutXml(sb.toString());
   }
-  /*
-  public ArrayList getTransforms() {
-    return transforms;
-  }
-  public Transform[] getAllTransforms() {
-    Transform[] allTransforms = new Transform[transforms.size()];
-    return (Transform[])transforms.toArray(allTransforms);
-  }
-  public void setTransforms(ArrayList transforms) {
-    this.transforms = transforms;
-  }
-  public void addTransform(Transform transform) {
-    addTransform(new Transform[] {transform});
-  }
-  public void addTransform(Transform[] transform) {
-    for (int i = 0; i < transform.length; i++) {
-      transforms.add(transform[i]);
-    }
-  }
-  */
+
   public String getId() {
     return id;
   }
@@ -107,13 +89,13 @@ public class RuntimeLayout {
   public String render(IRequest request, URIResolver uriResolver, String contentType) throws ComponentException, ParameterException {
     IXMLTransformer xmlTransformer = null;
     StringBuffer outputString = new StringBuffer();
-    HashMap layoutParams = new HashMap();
-    
-    Vector outputXML = new Vector();
+    Map layoutParams = new HashMap();
+
+    List outputXML = new ArrayList();
     try {
-      Vector inputXSLs = new Vector();
-      Vector inputXMLs = new Vector();
-      Vector contentTransforms = (Vector) this.getTransforms().get(contentType);
+      List inputXSLs = new ArrayList();
+      List inputXMLs = new ArrayList();
+      List contentTransforms = this.getTransforms().get(contentType);
       if (contentTransforms != null && contentTransforms.size() > 0) {
         Iterator it = contentTransforms.iterator();
         while (it.hasNext()) {
@@ -129,15 +111,17 @@ public class RuntimeLayout {
         throw new ComponentException("Component Layout with id: " + this.id + " does not have a transform for content type: " + contentType);
       }
 
-      log.debug("uriResolver: " + uriResolver);
+      if (log.isDebugEnabled())
+        log.debug("uriResolver: " + uriResolver);
+
       if (inputXSLs.size() > 1) {
         if (!"xhtml".equals(contentType)) {
-          xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_XML, uriResolver);
+          xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_XML, uriResolver, null);
           if (request.getParams().get("outputFormat") != null) {
             layoutParams.put("outputFormat", request.getParams().get("outputFormat"));
           }
         } else {
-          xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_HTML, uriResolver);
+          xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_HTML, uriResolver, null);
         }
       } else {
         xmlTransformer = XMLTransformerFactory.getInstance().getDefaultTransformer(uriResolver);
@@ -168,10 +152,10 @@ public class RuntimeLayout {
   public void setDoItRef(DoItRef doItRef) {
     this.doItRef = doItRef;
   }
-  public Map getTransforms() {
+  public Map<String, List> getTransforms() {
     return transforms;
   }
-  public void setTransforms(Map transforms) {
+  public void setTransforms(Map<String, List> transforms) {
     this.transforms = transforms;
   }
 }

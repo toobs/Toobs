@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="2.0"
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0"
   xmlns:dateHelper="org.toobs.framework.transformpipeline.xslExtentions.DateHelper"
   xmlns:s="org.toobs.framework.transformpipeline.xslExtentions.XMLEncodeHelper"
   xmlns:c="org.toobs.framework.pres.component.util.ComponentHelper"

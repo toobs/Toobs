@@ -6,6 +6,7 @@ import java.util.Properties;
 
 import javax.xml.transform.URIResolver;
 
+import org.apache.xalan.trace.TraceListener;
 import org.apache.xml.serializer.OutputPropertiesFactory;
 import org.toobsframework.util.Configuration;
 
@@ -28,7 +29,8 @@ public class XMLTransformerFactory implements Serializable {
   /** Holds Constant for Translet Transformer */
   public static final String TRANSLET_XSL = "org.toobsframework.transformpipeline.domain.TransletTransformer";
 
-  public static final String CHAIN_XSL = "org.toobsframework.transformpipeline.domain.ChainedXSLTransformer";
+  //public static final String CHAIN_XSL = "org.toobsframework.transformpipeline.domain.ChainedXSLTransformer";
+  public static final String CHAIN_XSL = "org.toobsframework.transformpipeline.domain.CachingChainedTransformer";
 
   public static final String TRANSLET_CHAIN_XSL = "org.toobsframework.transformpipeline.domain.ChainedXSLTransletTransformer";
 
@@ -40,8 +42,6 @@ public class XMLTransformerFactory implements Serializable {
 
   private boolean useTranslets = false;
   private boolean useChain = false;
-  private Class defaultTransformerClazz = null;
-  private Class chainTransformerClazz = null;
   private URIResolver uriResolver;
   
   /**
@@ -58,65 +58,66 @@ public class XMLTransformerFactory implements Serializable {
 
     useTranslets = Configuration.getInstance().getUseTranslets();
     useChain = Configuration.getInstance().getUseChain();
-    
+
     uriResolver = new XSLUriResolverImpl();
-    try {
-      if (useTranslets && useChain) {
-        defaultTransformerClazz = java.lang.Class.forName(TRANSLET_XSL);
-        chainTransformerClazz = java.lang.Class.forName(TRANSLET_CHAIN_XSL);
-      } else if (useTranslets) {
-        defaultTransformerClazz = java.lang.Class.forName(TRANSLET_XSL);
-        chainTransformerClazz = java.lang.Class.forName(TRANSLET_XSL);
-      } else if (useChain) {
-        defaultTransformerClazz = java.lang.Class.forName(STATIC_XSL);
-        chainTransformerClazz = java.lang.Class.forName(CHAIN_XSL);
-      } else {
-        defaultTransformerClazz = java.lang.Class.forName(STATIC_XSL);
-        chainTransformerClazz = java.lang.Class.forName(STATIC_XSL);
-      }
-    } catch(Exception e) {
-      try {
-        defaultTransformerClazz = java.lang.Class.forName(STATIC_XSL);
-        chainTransformerClazz = java.lang.Class.forName(STATIC_XSL);
-      } catch(Exception crap) {
-        crap.printStackTrace();
-      }
-    }
   }
 
   public IXMLTransformer getDefaultTransformer(URIResolver resolver) throws XMLTransformerException {
     IXMLTransformer transformer = null;
 
+    Class transformerClass = null;
     try {
-      transformer = (IXMLTransformer) defaultTransformerClazz.newInstance();
+      if (useTranslets && useChain) {
+        transformerClass = java.lang.Class.forName(TRANSLET_XSL);
+      } else if (useTranslets) {
+        transformerClass = java.lang.Class.forName(TRANSLET_XSL);
+      } else if (useChain) {
+        transformerClass = java.lang.Class.forName(STATIC_XSL);
+      } else {
+        transformerClass = java.lang.Class.forName(STATIC_XSL);
+      }
+      transformer = (IXMLTransformer) transformerClass.newInstance();
       transformer.setURIResolver(resolver == null ? this.uriResolver : resolver);
     } catch(InstantiationException ie) {
-      throw new XMLTransformerException("The transformer class " + defaultTransformerClazz
+      throw new XMLTransformerException("The transformer class " + transformerClass
                                         + " can not be instantiated");
-
     } catch(IllegalAccessException iae) {
-      throw new XMLTransformerException("The transformer class " + defaultTransformerClazz
+      throw new XMLTransformerException("The transformer class " + transformerClass
                                         + " can not be accessed");
-
+    } catch (ClassNotFoundException e) {
+      throw new XMLTransformerException("The transformer class " + transformerClass
+          + " can not be found");
     }
     return transformer;
   }
-  
-  public IXMLTransformer getChainTransformer(String outputMethod, URIResolver resolver) throws XMLTransformerException {
+
+  public IXMLTransformer getChainTransformer(String outputMethod, URIResolver resolver, TraceListener paramListener) throws XMLTransformerException {
     IXMLTransformer transformer = null;
 
+    Class transformerClass = null;
     try {
-      transformer = (IXMLTransformer) chainTransformerClazz.newInstance();
+      if (useTranslets && useChain) {
+        transformerClass = java.lang.Class.forName(TRANSLET_CHAIN_XSL);
+      } else if (useTranslets) {
+        transformerClass = java.lang.Class.forName(TRANSLET_XSL);
+      } else if (useChain) {
+        transformerClass = java.lang.Class.forName(CHAIN_XSL);
+      } else {
+        transformerClass = java.lang.Class.forName(STATIC_XSL);
+      }
+      transformer = (IXMLTransformer) transformerClass.newInstance();
       transformer.setOutputProperties((Properties)outputPropertiesMap.get(outputMethod));
       transformer.setURIResolver(resolver == null ? this.uriResolver : resolver);
+      transformer.setParamListener(paramListener);
     } catch(InstantiationException ie) {
-      throw new XMLTransformerException("The transformer class " + chainTransformerClazz
+      throw new XMLTransformerException("The transformer class " + transformerClass
                                         + " can not be instantiated");
-
     } catch(IllegalAccessException iae) {
-      throw new XMLTransformerException("The transformer class " + chainTransformerClazz
+      throw new XMLTransformerException("The transformer class " + transformerClass
                                         + " can not be accessed");
-
+    } catch (ClassNotFoundException e) {
+      throw new XMLTransformerException("The transformer class " + transformerClass
+          + " can not be found");
     }
     return transformer;
   }
@@ -168,6 +169,22 @@ public class XMLTransformerFactory implements Serializable {
 
 
     return transformer;
+  }
+
+  public boolean isUseTranslets() {
+    return useTranslets;
+  }
+
+  public void setUseTranslets(boolean useTranslets) {
+    this.useTranslets = useTranslets;
+  }
+
+  public boolean isUseChain() {
+    return useChain;
+  }
+
+  public void setUseChain(boolean useChain) {
+    this.useChain = useChain;
   }
 
 }

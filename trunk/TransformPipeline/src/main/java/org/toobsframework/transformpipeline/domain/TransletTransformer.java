@@ -3,9 +3,9 @@ package org.toobsframework.transformpipeline.domain;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
 
+import java.util.List;
 import java.util.Properties;
-import java.util.Vector;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -29,17 +29,17 @@ public class TransletTransformer extends BaseXMLTransformer {
   }
 
   @SuppressWarnings("unchecked")
-  public Vector transform(
-      Vector inputXSLTranslets,
-      Vector inputXMLs,
-      HashMap inputParams) throws XMLTransformerException {
+  public List transform(
+      List inputXSLTranslets,
+      List inputXMLs,
+      Map inputParams) throws XMLTransformerException {
 
     if (log.isDebugEnabled()) {
       log.debug("TRANSFORM XML STARTED");
       log.debug("Get input XMLs");
     }
     String xslClass = null;
-    Vector resultingXMLs = null;
+    ArrayList resultingXMLs = null;
     ByteArrayInputStream  xmlInputStream = null;
     ByteArrayOutputStream xmlOutputStream = null;
     StreamSource xmlSource = null;
@@ -48,7 +48,7 @@ public class TransletTransformer extends BaseXMLTransformer {
 
       xslClass = (String) inputXSLTranslets.get(xt);
 
-      resultingXMLs = new Vector();
+      resultingXMLs = new ArrayList();
 
       xmlInputStream = null;
       xmlOutputStream = null;
@@ -99,7 +99,7 @@ public class TransletTransformer extends BaseXMLTransformer {
   protected void doTransform(
       String xslTranslet,
       StreamSource xmlSource,
-      HashMap params,
+      Map params,
       StreamResult xmlResult) throws XMLTransformerException {
 
     try {
@@ -125,6 +125,7 @@ public class TransletTransformer extends BaseXMLTransformer {
 
       // 2.2 Set character encoding for all transforms to UTF-8.
       transformer.setOutputProperty("encoding", "UTF-8");
+      transformer.setErrorListener(tFactory.getErrorListener());
 
       // 2.5 Set Parameters necessary for transformation.
       if(params != null) {

@@ -17,10 +17,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.Enumeration;
+import java.util.List;
 import java.util.zip.GZIPOutputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-
 
 public class CompressionFilter extends HttpServlet implements Filter {
 
@@ -43,7 +42,7 @@ public class CompressionFilter extends HttpServlet implements Filter {
   private int bufferSize;
 
 
-  private ArrayList excludedHosts = null;
+  private List<String> excludedHosts = null;
 
   /**
    * Initializes the filter's configuratuon
@@ -115,6 +114,7 @@ public class CompressionFilter extends HttpServlet implements Filter {
    *
    * @throws ServletException
    */
+  @SuppressWarnings("unchecked")
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
     throws IOException, ServletException {
     if (log.isDebugEnabled()) {
@@ -131,7 +131,7 @@ public class CompressionFilter extends HttpServlet implements Filter {
       chain.doFilter(request, response);
     } else {
       if (filterCompress) {
-        Enumeration headers = ((HttpServletRequest) request).getHeaders("Accept-Encoding");
+        Enumeration<String> headers = ((HttpServletRequest) request).getHeaders("Accept-Encoding");
         while (headers.hasMoreElements())
         {
           String value = (String) headers.nextElement();

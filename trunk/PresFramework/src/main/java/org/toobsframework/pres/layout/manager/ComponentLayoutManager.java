@@ -1,11 +1,11 @@
 package org.toobsframework.pres.layout.manager;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 import java.net.URL;
 import java.io.File;
 import java.io.IOException;
@@ -23,23 +23,21 @@ import org.toobsframework.pres.layout.config.Layout;
 import org.toobsframework.pres.layout.config.Layouts;
 import org.toobsframework.exception.PermissionException;
 
-
-@SuppressWarnings("unchecked")
 public final class ComponentLayoutManager implements IComponentLayoutManager {
 
   private static Log log = LogFactory.getLog(ComponentLayoutManager.class);
-  
-  private static Map registry;
+
+  private static Map<String, RuntimeLayout> registry;
   private static boolean doReload = false;
   private static boolean initDone = false;
   private static long[] lastModified;
   private static long localDeployTime = 0L;
-  
-  private List configFiles = null;
+
+  private List<String> configFiles = null;
   
   private ComponentLayoutManager() throws ComponentLayoutInitializationException {
     log.info("Constructing new ComponentLayoutManager");
-    registry = new HashMap();
+    registry = new HashMap<String, RuntimeLayout>();
   }
   
   public RuntimeLayout getLayout(String Id, long deployTime)
@@ -152,11 +150,11 @@ public final class ComponentLayoutManager implements IComponentLayoutManager {
     }
   }
 
-  public static void configureLayout(Layout compLayout, RuntimeLayout layout, Map layoutRegistry) throws ComponentLayoutInitializationException, IOException {
+  public static void configureLayout(Layout compLayout, RuntimeLayout layout, Map<String, RuntimeLayout> layoutRegistry) throws ComponentLayoutInitializationException, IOException {
     RuntimeLayoutConfig layoutConfig = new RuntimeLayoutConfig();
 
     // Inherited from extended definition
-    String extendStr = compLayout.getExtends();
+    String extendStr = compLayout.getExtend();
     if (extendStr != null) {
       String[] extSplit = extendStr.split(";");
       for (int ext = 0; ext < extSplit.length; ext++) {
@@ -201,11 +199,11 @@ public final class ComponentLayoutManager implements IComponentLayoutManager {
     
     //Set component pipeline properties.
     if (compLayout.getPipeline() != null) {
-      Enumeration contentTypeEnum = compLayout.getPipeline().enumerateContentType();
+      Enumeration<ContentType> contentTypeEnum = compLayout.getPipeline().enumerateContentType();
       while (contentTypeEnum.hasMoreElements()) {
-        Vector theseTransforms = new Vector();
+        List<org.toobsframework.pres.component.Transform> theseTransforms = new ArrayList<org.toobsframework.pres.component.Transform>();
         ContentType thisContentType = (ContentType) contentTypeEnum.nextElement();
-        Enumeration transEnum = thisContentType.enumerateTransform();
+        Enumeration<org.toobsframework.pres.component.config.Transform> transEnum = thisContentType.enumerateTransform();
         while (transEnum.hasMoreElements()) {
           org.toobsframework.pres.component.config.Transform thisTransformConfig = (org.toobsframework.pres.component.config.Transform) transEnum.nextElement();                  
           org.toobsframework.pres.component.Transform thisTransform = new org.toobsframework.pres.component.Transform();
@@ -239,15 +237,15 @@ public final class ComponentLayoutManager implements IComponentLayoutManager {
     
   }
 
-  public List getConfigFiles() {
+  public List<String> getConfigFiles() {
     return configFiles;
   }
 
-  public void setConfigFiles(List configFiles) {
+  public void setConfigFiles(List<String> configFiles) {
     this.configFiles = configFiles;
   }
   
-  public void addConfigFiles(List configFiles) {
+  public void addConfigFiles(List<String> configFiles) {
     this.configFiles.addAll(configFiles);
   }
 

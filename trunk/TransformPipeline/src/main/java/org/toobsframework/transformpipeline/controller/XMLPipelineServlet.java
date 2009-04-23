@@ -14,7 +14,9 @@ import org.toobsframework.transformpipeline.domain.IXMLTransformer;
 import org.toobsframework.transformpipeline.domain.XMLTransformerException;
 import org.toobsframework.transformpipeline.domain.XMLTransformerFactory;
 
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.xml.transform.stream.StreamSource;
 import java.io.File;
 import java.util.HashMap;
@@ -122,9 +124,9 @@ public class XMLPipelineServlet
       //Later this will all be read from an xml file, but hardcoded in the
       //request for now.
       IXMLTransformer xmlTransformer = null;
-      Vector inputXSLs = (Vector) request.getAttribute(IXMLTransformer.
+      List inputXSLs = (ArrayList) request.getAttribute(IXMLTransformer.
           INPUT_XSL_REQUEST_PARAM);
-      Vector xslSources = new Vector();
+      List xslSources = new ArrayList();
       if (useTranslets && useChain) {
         xmlTransformer = getXMLTransformer(XMLTransformerFactory.TRANSLET_CHAIN_XSL);
         xslSources.addAll(inputXSLs);
@@ -148,9 +150,9 @@ public class XMLPipelineServlet
       }
 
       // transform
-      Vector outputXML = xmlTransformer.transform(
+      List outputXML = xmlTransformer.transform(
         xslSources,
-        (Vector) request.getAttribute(IXMLTransformer.INPUT_XML_REQUEST_PARAM),
+        (ArrayList) request.getAttribute(IXMLTransformer.INPUT_XML_REQUEST_PARAM),
         (HashMap) request.getAttribute(IXMLTransformer.INPUT_PARAM_REQUEST_PARAM));
 
       PrintWriter writer = response.getWriter();

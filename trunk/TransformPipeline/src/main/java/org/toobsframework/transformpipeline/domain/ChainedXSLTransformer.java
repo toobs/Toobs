@@ -3,11 +3,12 @@ package org.toobsframework.transformpipeline.domain;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Vector;
+import java.util.ArrayList;
 
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
@@ -40,12 +41,12 @@ public class ChainedXSLTransformer extends BaseXMLTransformer {
 
   private Properties outputProperties = null;
 
-  public Vector transform(
-      Vector inputXSLs,
-      Vector inputXMLs,
-      HashMap inputParams) throws XMLTransformerException {
+  public List transform(
+      List inputXSLs,
+      List inputXMLs,
+      Map inputParams) throws XMLTransformerException {
 
-    Vector resultingXMLs = new Vector();
+    ArrayList resultingXMLs = new ArrayList();
     for (int i = 0; i < inputXMLs.size(); i++) {
       resultingXMLs.add(transform(inputXSLs, (String)inputXMLs.get(i), inputParams));
     }
@@ -53,9 +54,9 @@ public class ChainedXSLTransformer extends BaseXMLTransformer {
   }
 
   private String transform(
-      Vector inputXSLs,
+      List inputXSLs,
       String inputXML,
-      HashMap inputParams) throws XMLTransformerException {
+      Map inputParams) throws XMLTransformerException {
 
     String outputXML = null;
     ByteArrayInputStream  xmlInputStream = null;
@@ -70,7 +71,7 @@ public class ChainedXSLTransformer extends BaseXMLTransformer {
         SAXTransformerFactory saxTFactory = ( (SAXTransformerFactory) tFactory);
 
         // Create a TransformerHandler for each stylesheet.
-        Vector tHandlers = new Vector();
+        ArrayList tHandlers = new ArrayList();
         TransformerHandler tHandler = null;
 
         // Create an XMLReader.
@@ -81,16 +82,22 @@ public class ChainedXSLTransformer extends BaseXMLTransformer {
           outputProperties = OutputPropertiesFactory.getDefaultMethodProperties("html");
         }
         Serializer serializer = SerializerFactory.getSerializer(outputProperties);
+        String xslFile = null;
         for (int it = 0; it < inputXSLs.size(); it++) {
           Object source = inputXSLs.get(it);
           if (source instanceof StreamSource) {
             tHandler = saxTFactory.newTransformerHandler((StreamSource)source);
+            if (xslFile == null)
+              xslFile = ((StreamSource)source).getSystemId();
           } else {
             //tHandler = saxTFactory.newTransformerHandler(new StreamSource(getXSLFile((String) source)));
             tHandler = saxTFactory.newTransformerHandler(uriResolver.resolve((String) source + ".xsl", ""));
+            if (xslFile == null)
+              xslFile = (String) source;
           }
           Transformer transformer = tHandler.getTransformer();
           transformer.setOutputProperty("encoding", "UTF-8");
+          transformer.setErrorListener(tFactory.getErrorListener());
           if(inputParams != null) {
             Iterator paramIt = inputParams.entrySet().iterator();
             while (paramIt.hasNext()) {
@@ -115,17 +122,24 @@ public class ChainedXSLTransformer extends BaseXMLTransformer {
         // work in separate threads to optimize performance.
         InputSource xmlSource = null;
         xmlInputStream = new ByteArrayInputStream((inputXML).getBytes("UTF-8"));
-        if (log.isDebugEnabled()) {
-          log.debug("Input XML:\n" + inputXML);
+        if (log.isTraceEnabled()) {
+          log.trace("Input XML:\n" + inputXML);
         }
         xmlSource = new InputSource(xmlInputStream);
         xmlOutputStream = new ByteArrayOutputStream();
         serializer.setOutputStream(xmlOutputStream);
         ((TransformerHandler)tHandlers.get(tHandlers.size()-1)).setResult(new SAXResult(serializer.asContentHandler()));
+
+        Date timer = new Date();
         reader.parse(xmlSource);
+        Date timer2 = new Date();
         outputXML = xmlOutputStream.toString("UTF-8");
         if (log.isDebugEnabled()) {
-          log.debug("Output XML:\n" + outputXML);
+          long diff = timer2.getTime() - timer.getTime();
+          log.debug("Time to transform: " + diff + " mS XSL: " + xslFile);
+          if (log.isTraceEnabled()) {
+            log.trace("Output XML:\n" + outputXML);
+          }
         }
       }
     } catch (IOException ex) {

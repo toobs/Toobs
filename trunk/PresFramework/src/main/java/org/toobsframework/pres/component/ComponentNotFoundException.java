@@ -5,10 +5,18 @@ import org.toobsframework.exception.BaseException;
  * @author stewari
  */
 public class ComponentNotFoundException extends BaseException {
-   
+
   private static final long serialVersionUID = 1L;
   private String componentId;
-  
+
+  public ComponentNotFoundException() {
+    super();
+  }
+  public ComponentNotFoundException(String componentId) {
+    super();
+    this.componentId = componentId;
+  }
+
   public void setComponentId(String componentId) {
       this.componentId = componentId;
   }

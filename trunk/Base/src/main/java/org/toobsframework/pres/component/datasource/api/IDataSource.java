@@ -2,8 +2,6 @@ package org.toobsframework.pres.component.datasource.api;
 
 import java.util.Collection;
 import java.util.Map;
-import java.io.Writer;
-import java.io.IOException;
 
 /**
  * @author stewari
@@ -21,7 +19,7 @@ public interface IDataSource {
    * @return specified object
    */
   public IDataSourceObject getObject(String returnObjectType, String dao,
-      String objectId, Map params, Map outParams) throws ObjectNotFoundException,
+      String objectId, Map<String, Object> params, Map<String, Object> outParams) throws ObjectNotFoundException,
       DataSourceNotInitializedException;
 
   /**
@@ -32,7 +30,7 @@ public interface IDataSource {
    * @throws ObjectNotFoundException
    * @throws DataSourceNotInitializedException
    */
-  public Boolean deleteObject(String dao, String objectId, String permissionContext, String namespace, Map params, Map outParams)
+  public Boolean deleteObject(String dao, String objectId, String permissionContext, String namespace, Map<String, Object> params, Map<String, Object> outParams)
       throws ObjectNotFoundException, DataSourceNotInitializedException;
 
   /**
@@ -43,7 +41,7 @@ public interface IDataSource {
    *          property name/value pairs
    */
   public IDataSourceObject updateObject(String objectType, String objectDao,
-      String returnObjectType, String objectId, String permissionContext, String namespace, Map valueMap, Map outParams)
+      String returnObjectType, String objectId, String permissionContext, String namespace, Map<String, Object> valueMap, Map<String, Object> outParams)
       throws ObjectNotFoundException, PropertyNotFoundException,
       TypeMismatchException, DataSourceNotInitializedException;
 
@@ -55,7 +53,7 @@ public interface IDataSource {
    *          property name/value pairs
    */
   public IDataSourceObject updateObjectCollection(String objectType, String objectDao,
-      String returnObjectType, String objectId, String permissionContext, String namespace, String indexParam, Map valueMap, Map outParams)
+      String returnObjectType, String objectId, String permissionContext, String namespace, String indexParam, Map<String, Object> valueMap, Map<String, Object> outParams)
       throws ObjectNotFoundException, PropertyNotFoundException,
       TypeMismatchException, DataSourceNotInitializedException;
 
@@ -71,7 +69,7 @@ public interface IDataSource {
    * @throws InvalidContextException
    */
   public IDataSourceObject createObject(String objectType, String objectDao,
-      String returnObjectType, String permissionContext, String namespace, Map params, Map outParams) throws ObjectCreationException,
+      String returnObjectType, String permissionContext, String namespace, Map<String, Object> params, Map<String, Object> outParams) throws ObjectCreationException,
       DataSourceNotInitializedException, InvalidContextException;
 
   /**
@@ -86,7 +84,7 @@ public interface IDataSource {
    * @throws InvalidContextException
    */
   public IDataSourceObject createObjectCollection(String objectType, String objectDao,
-      String returnObjectType, String permissionContext, String indexParam, String namespace, Map params, Map outParams) throws ObjectCreationException,
+      String returnObjectType, String permissionContext, String indexParam, String namespace, Map<String, Object> params, Map<String, Object> outParams) throws ObjectCreationException,
       DataSourceNotInitializedException, InvalidContextException;
 
   /**
@@ -99,17 +97,17 @@ public interface IDataSource {
    *          defines the scope of the search
    * @return objects that match the search criteria
    */
-  public Collection search(String returnValueObject, String dao,
-      String searchCriteria, String searchMethod, String permissionAction, Map params, Map outParams)
+  public Collection<IDataSourceObject> search(String returnValueObject, String dao,
+      String searchCriteria, String searchMethod, String permissionAction, Map<String, Object> params, Map<String, Object> outParams)
       throws ObjectCreationException, InvalidSearchContextException,
       InvalidSearchFilterException, DataSourceNotInitializedException;
 
-  public Collection searchIndex(String returnValueObject, String dao,
-      String searchCriteria, String searchMethod, String permissionAction, Map params, Map outParams)
+  public Collection<IDataSourceObject> searchIndex(String returnValueObject, String dao,
+      String searchCriteria, String searchMethod, String permissionAction, Map<String, Object> params, Map<String, Object> outParams)
       throws ObjectCreationException, InvalidSearchContextException,
       InvalidSearchFilterException, DataSourceNotInitializedException;
 
   public Object dispatchAction(String action, String dao, String objectType, 
-      String returnObjectType, String guidParam, String permissionContext, String indexParam, String namespace, Map params, Map outParams) throws Exception;
+      String returnObjectType, String guidParam, String permissionContext, String indexParam, String namespace, Map<String, Object> params, Map<String, Object> outParams) throws Exception;
 
 }

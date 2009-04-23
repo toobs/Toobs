@@ -1,0 +1,65 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <parent>
+    <artifactId>toobsframework</artifactId>
+    <groupId>org.toobsframework</groupId>
+    <version>0.0.6-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.toobsframework</groupId>
+  <artifactId>chart</artifactId>
+  <name>chart</name>
+  <version>${toobs.version}</version>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>castor-maven-plugin</artifactId>
+        <version>2.0-alpha1</version>
+        <executions>
+          <execution>
+            <id>generate::chartConfig</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <schema>Chart/src/main/castor/chartConfig.xsd</schema>
+              <packaging>org.toobsframework.pres.chart.config</packaging>
+              <bindingfile>Chart/src/main/castor/compBinding.xml</bindingfile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+  <dependencies>
+    <dependency>
+      <groupId>org.toobsframework</groupId>
+      <artifactId>base</artifactId>
+      <version>${toobs.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.toobsframework</groupId>
+      <artifactId>presentation</artifactId>
+      <version>${toobs.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>jfree</groupId>
+      <artifactId>jfreechart</artifactId>
+    </dependency>
+  </dependencies>
+
+</project>

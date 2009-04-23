@@ -15,9 +15,9 @@ import org.apache.xalan.xsltc.trax.TransformerFactoryImpl;
 import org.xml.sax.XMLReader;
 import org.xml.sax.InputSource;
 
+import java.util.List;
 import java.util.Properties;
-import java.util.Vector;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Iterator;
 import java.io.ByteArrayInputStream;
@@ -40,12 +40,12 @@ public class ChainedXSLTransletTransformer extends BaseXMLTransformer {
    * {@link #makeTransformation makeTransformation()}method.
    *
    */
-  public Vector transform(
-      Vector inputXSLs,
-      Vector inputXMLs,
-      HashMap inputParams) throws XMLTransformerException {
+  public List transform(
+      List inputXSLs,
+      List inputXMLs,
+      Map inputParams) throws XMLTransformerException {
 
-    Vector resultingXMLs = new Vector();
+    ArrayList resultingXMLs = new ArrayList();
     for (int i = 0; i < inputXMLs.size(); i++) {
       resultingXMLs.add(transform(inputXSLs, (String)inputXMLs.get(i), inputParams));
     }
@@ -53,9 +53,9 @@ public class ChainedXSLTransletTransformer extends BaseXMLTransformer {
   }
 
   public String transform(
-      Vector inputXSLs,
+      List inputXSLs,
       String inputXML,
-      HashMap inputParams) throws XMLTransformerException {
+      Map inputParams) throws XMLTransformerException {
 
     String outputXML = null;
     ByteArrayInputStream  xmlInputStream = null;
@@ -70,11 +70,11 @@ public class ChainedXSLTransletTransformer extends BaseXMLTransformer {
         throw new XMLTransformerException(iae);
       }
       setFactoryResolver(tFactory);
-      
+
       TransformerFactoryImpl traxFactory = (TransformerFactoryImpl)tFactory;
 
       // Create a TransformerHandler for each stylesheet.
-      Vector tHandlers = new Vector();
+      ArrayList tHandlers = new ArrayList();
       TransformerHandler tHandler = null;
 
       // Create a SAX XMLReader.
@@ -90,7 +90,7 @@ public class ChainedXSLTransletTransformer extends BaseXMLTransformer {
         Source source = uriResolver.resolve(xslTranslet + ".xsl", "");
 
         String tPkg = source.getSystemId().substring(0, source.getSystemId().lastIndexOf("/")).replaceAll("/", ".").replaceAll("-", "_");
-        
+
         // Package name needs to be set for each TransformerHandler instance
         tFactory.setAttribute("package-name", tPkg);
         tHandler = traxFactory.newTransformerHandler(source);
@@ -98,6 +98,7 @@ public class ChainedXSLTransletTransformer extends BaseXMLTransformer {
         // Set parameters and output encoding on each handlers transformer
         Transformer transformer = tHandler.getTransformer();
         transformer.setOutputProperty("encoding", "UTF-8");
+        transformer.setErrorListener(tFactory.getErrorListener());
         if(inputParams != null) {
           Iterator paramIt = inputParams.entrySet().iterator();
           while (paramIt.hasNext()) {

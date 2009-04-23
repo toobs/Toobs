@@ -17,6 +17,7 @@ import javax.xml.parsers.DocumentBuilder;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class provides the data bindings for the screendefinitions.xml
@@ -58,7 +59,7 @@ public class CompressionFilterDAO {
 
   private String compressionType = "gzip";
 
-  private ArrayList excludedHosts = null;
+  private List<String> excludedHosts = null;
 
   public CompressionFilterDAO (URL configURL) {
     Element root = loadDocument (configURL);
@@ -107,7 +108,7 @@ public class CompressionFilterDAO {
     return bufferSize;
   }
 
-  public ArrayList getHostAddress() {
+  public List<String> getHostAddress() {
     return excludedHosts;
   }
 
@@ -138,8 +139,8 @@ public class CompressionFilterDAO {
     return null;
   }
 
-  private ArrayList getExcludedHosts(Element root) {
-    ArrayList excluded = new ArrayList();
+  private List<String> getExcludedHosts(Element root) {
+    List<String> excluded = new ArrayList<String>();
 
     // get protected pages //
     NodeList outterList = root.getElementsByTagName(HOST_ADDRESS_EXCLUDES);

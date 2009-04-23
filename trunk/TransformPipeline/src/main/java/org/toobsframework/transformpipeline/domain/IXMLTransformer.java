@@ -1,10 +1,12 @@
 package org.toobsframework.transformpipeline.domain;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
-import java.util.Vector;
-import java.util.HashMap;
 
 import javax.xml.transform.URIResolver;
+
+import org.apache.xalan.trace.TraceListener;
 
 /**
  * This is the Base Interface for all datatable domain objects
@@ -40,15 +42,17 @@ public interface IXMLTransformer {
        * @param document the XML Document object create by the StrutsCXDocumentBuilder
    * @param notransform indicates if XML document should not get transformed
    *
-   * @throws StrutsCXXSLTException
+   * @throws XMLTransformerException
    */
-  @SuppressWarnings("unchecked")
-  public Vector transform(
-      Vector inputXSLs,
-      Vector inputXMLs,
-      HashMap inputParams) throws XMLTransformerException;
+  public List<String> transform(
+      List<String> inputXSLs,
+      List<String> inputXMLs,
+      Map<String, Object> params) throws XMLTransformerException;
 
   public void setOutputProperties(Properties outputProperties);
   
-  public void setURIResolver(URIResolver uriResolver); 
+  public void setURIResolver(URIResolver uriResolver);
+
+  public void setParamListener(TraceListener paramListener);
 }
+

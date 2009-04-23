@@ -17,6 +17,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.web.util.WebUtils;
 import org.toobsframework.pres.component.config.Parameter;
+import org.toobsframework.pres.component.datasource.api.IDataSourceObject;
 import org.toobsframework.pres.doit.config.Forward;
 import org.toobsframework.exception.ParameterException;
 import org.toobsframework.util.Configuration;
@@ -145,7 +146,7 @@ public class ParameterUtil {
       Map inParams, 
       Map outParams, 
       String scopeId, 
-      ArrayList objectList) throws ParameterException {
+      List<IDataSourceObject> objects) throws ParameterException {
     JXPathContext context = JXPathContext.newContext(inParams);
     for(int j = 0; j < paramMap.length; j++){
       Parameter thisParam = paramMap[j];
@@ -177,10 +178,10 @@ public class ParameterUtil {
           if (thisParam.getIsStatic()) {
             value = thisPath;
           } else if (thisParam.getIsObject()) {
-            if((objectList == null) || (objectList != null && thisParam.getObjectIndex() >= objectList.size())){
+            if((objects == null) || (objects != null && thisParam.getObjectIndex() >= objects.size())){
               continue;
             }
-            JXPathContext objContext = JXPathContext.newContext(objectList.get(thisParam.getObjectIndex()));
+            JXPathContext objContext = JXPathContext.newContext(objects.get(thisParam.getObjectIndex()));
             if (thisParam.getIsList()) {
               Iterator iter = objContext.iterate(thisPath);
               value = new ArrayList();
@@ -260,7 +261,7 @@ public class ParameterUtil {
     }
   }
 
-  public static void mapOutputParameters(Parameter[] paramMap, Map paramsIn, String scopeId, ArrayList objects) {
+  public static void mapOutputParameters(Parameter[] paramMap, Map paramsIn, String scopeId, List<IDataSourceObject> objects) {
     for(int j = 0; j < paramMap.length; j++){
       Parameter thisParam = paramMap[j];
       if (thisParam.getScope() != null && 

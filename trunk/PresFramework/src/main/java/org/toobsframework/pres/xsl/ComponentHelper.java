@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
@@ -23,9 +24,6 @@ import org.toobsframework.pres.component.config.Parameter;
 import org.toobsframework.pres.component.manager.IComponentManager;
 
 import org.toobsframework.data.beanutil.BeanMonkey;
-import org.toobsframework.pres.chart.ChartBuilder;
-import org.toobsframework.pres.chart.ChartDefinition;
-import org.toobsframework.pres.chart.manager.IChartManager;
 import org.toobsframework.pres.component.Component;
 import org.toobsframework.pres.component.Transform;
 import org.toobsframework.pres.layout.manager.IComponentLayoutManager;
@@ -46,31 +44,25 @@ public class ComponentHelper {
   /** To get the logger instance */
   private static Log log = LogFactory.getLog(ComponentHelper.class);
   
-  private static BeanFactory beanFactory;
+  protected static BeanFactory beanFactory;
 
-  private static ComponentRequestManager reqManager;
-  private static IComponentManager compManager;
-  private static IComponentLayoutManager layoutManager;
-  private static IChartManager chartManager;
-  private static ChartBuilder chartBuilder;
-  private static boolean debugComponents;
-  private static String layoutExtension;
-  private static String componentExtension;
-  private static String chartExtension;
+  protected static ComponentRequestManager reqManager;
+  protected static IComponentManager compManager;
+  protected static IComponentLayoutManager layoutManager;
+  protected static boolean debugComponents;
+  protected static String layoutExtension;
+  protected static String componentExtension;
   
   static {
     beanFactory = ContextHelper.getWebApplicationContext();
     reqManager = (ComponentRequestManager)beanFactory.getBean("componentRequestManager");
     compManager = (IComponentManager)beanFactory.getBean("IComponentManager");
     layoutManager = (IComponentLayoutManager)beanFactory.getBean("IComponentLayoutManager");
-    chartManager = (IChartManager)beanFactory.getBean("IChartManager");
-    chartBuilder = (ChartBuilder)beanFactory.getBean("chartBuilder");
     debugComponents = Configuration.getInstance().getDebugComponents();
     layoutExtension = Configuration.getInstance().getLayoutExtension();
     componentExtension = Configuration.getInstance().getComponentExtension();
-    chartExtension = Configuration.getInstance().getChartExtension();
   }
-  
+
   /**
    * Function extention for decoding an xml escaped string.  Replaces
    * &lt; &gt; &quot etc. with actual characters.
@@ -158,27 +150,6 @@ public class ComponentHelper {
         appendControllers(sb, component);
       }
       return sb.toString();
-    } catch (Exception ex) {
-      throw new XMLTransformerException(ex);
-    }
-  }
-
-  public static String chartUrl(String componentUrl, int width, int height) throws
-    XMLTransformerException {
-  
-    try {
-      IRequest request = reqManager.get();
-      if (request == null) {
-        throw new XMLTransformerException("Invalid request");
-      }
-
-      Map inParams = new HashMap(request.getParams());
-      String componentId = parseUrl("Component:", componentUrl, request, inParams);
-
-      ChartDefinition chartDef = chartManager.getChartDefinition(componentId.replace(chartExtension, ""));
-      request.getParams().putAll(inParams);
-      return chartBuilder.buildAsImage(chartDef, request, width, height);
-
     } catch (Exception ex) {
       throw new XMLTransformerException(ex);
     }
@@ -277,13 +248,13 @@ public class ComponentHelper {
       }
       IXMLTransformer xmlTransformer = null;
       xmlTransformer = XMLTransformerFactory.getInstance().getDefaultTransformer(null);
-      
-      HashMap inParams = new HashMap(); //new HashMap(request.getParams());
+
+      Map inParams = new HashMap(); //new HashMap(request.getParams());
       String transformPath = parseUrl("Transform:", transformUrl, request, inParams);
-      
-      Vector xslSources = new Vector();
-      Vector inputXML = new Vector();
-      Vector outputXML = new Vector();
+
+      List xslSources = new ArrayList();
+      List inputXML = new ArrayList();
+      List outputXML = new ArrayList();
       xslSources.add(transformPath);
 
       // Prepare XML
@@ -321,13 +292,13 @@ public class ComponentHelper {
     }
     IXMLTransformer xmlTransformer = null;
     xmlTransformer = XMLTransformerFactory.getInstance().getDefaultTransformer(null);
-    
+
     HashMap inParams = new HashMap(); //new HashMap(request.getParams());
     String transformPath = parseUrl("Transform:", transformUrl, request, inParams);
-    
-    Vector xslSources = new Vector();
-    Vector inputXML = new Vector();
-    Vector outputXML = new Vector();
+
+    List xslSources = new ArrayList();
+    List inputXML = new ArrayList();
+    List outputXML = new ArrayList();
     xslSources.add(transformPath);
 
     StringBuffer xmlBuf = new StringBuffer();
@@ -510,7 +481,7 @@ public class ComponentHelper {
     return true;
   }
 
-  private static String parseUrl(String context, 
+  protected static String parseUrl(String context, 
       String componentUrl, 
       IRequest request, 
       Map inParams) throws Exception {

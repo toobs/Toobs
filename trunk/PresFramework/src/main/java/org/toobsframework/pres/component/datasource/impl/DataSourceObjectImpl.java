@@ -8,7 +8,6 @@ import java.util.Map;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.toobsframework.data.IObjectLoader;
 import org.toobsframework.pres.component.datasource.api.IDataSourceObject;
 import org.toobsframework.pres.component.datasource.api.IDataSourceObjectProperty;
 import org.toobsframework.pres.component.datasource.api.InvalidContextException;
@@ -27,6 +26,7 @@ public class DataSourceObjectImpl implements IDataSourceObject {
   private static Log log = LogFactory.getLog(DataSourceObjectImpl.class);
 
   private Object valueObject = null;
+  private boolean isXml = false;
 
   private String dao = null;
 
@@ -163,7 +163,17 @@ public class DataSourceObjectImpl implements IDataSourceObject {
   }
 
   public String toXml() throws IOException {
-    return BetwixtUtil.toXml(this.valueObject);
+    if (this.isXml) {
+      String xmlString = (String)this.valueObject;
+      int cb = xmlString.indexOf('>');
+      if (cb != -1 && xmlString.charAt(cb-1) == '?') {
+        return xmlString.substring(cb + 1);
+      } else {
+        return xmlString;
+      }
+    } else {
+      return BetwixtUtil.toXml(this.valueObject);
+    }
   }
 
   public String getDao() {
@@ -190,6 +200,14 @@ public class DataSourceObjectImpl implements IDataSourceObject {
    */
   public String getValueObjectDao() {
     return this.getDao();
+  }
+
+  public void setXml(boolean isXml) {
+    this.isXml = isXml;
+  }
+
+  public boolean isXml() {
+    return isXml;
   }
 
 }

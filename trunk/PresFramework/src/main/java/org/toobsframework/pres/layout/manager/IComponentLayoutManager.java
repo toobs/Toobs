@@ -19,6 +19,6 @@ public interface IComponentLayoutManager {
   // Read from config file
   public abstract void init() throws ComponentLayoutInitializationException;
 
-  public void addConfigFiles(List configFiles);
-  
+  public void addConfigFiles(List<String> configFiles);
+
 }

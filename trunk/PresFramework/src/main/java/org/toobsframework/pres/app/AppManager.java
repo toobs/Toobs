@@ -16,7 +16,6 @@ import org.apache.commons.logging.LogFactory;
 import org.exolab.castor.xml.MarshalException;
 import org.exolab.castor.xml.Unmarshaller;
 import org.exolab.castor.xml.ValidationException;
-import org.jfree.ui.FilesystemFilter;
 import org.toobsframework.exception.ParameterException;
 import org.toobsframework.pres.app.config.Applications;
 import org.toobsframework.pres.app.config.ComponentConfig;
@@ -27,6 +26,7 @@ import org.toobsframework.pres.app.config.XSLConfig;
 import org.toobsframework.pres.app.controller.IAppView;
 import org.toobsframework.pres.component.Component;
 import org.toobsframework.pres.component.ComponentException;
+import org.toobsframework.pres.component.ComponentInitializationException;
 import org.toobsframework.pres.component.config.Components;
 import org.toobsframework.pres.component.datasource.api.DataSourceInitializationException;
 import org.toobsframework.pres.component.datasource.manager.DataSourceNotFoundException;
@@ -37,6 +37,7 @@ import org.toobsframework.pres.layout.config.Layout;
 import org.toobsframework.pres.layout.config.Layouts;
 import org.toobsframework.pres.layout.manager.ComponentLayoutManager;
 import org.toobsframework.transformpipeline.domain.XSLUriResolverImpl;
+import org.toobsframework.util.FilesystemFilter;
 import org.toobsframework.util.IRequest;
 
 public class AppManager implements AppReader {
@@ -243,6 +244,9 @@ public class AppManager implements AppReader {
           // TODO Auto-generated catch block
           e.printStackTrace();
         } catch (DataSourceNotFoundException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        } catch (ComponentInitializationException e) {
           // TODO Auto-generated catch block
           e.printStackTrace();
         }

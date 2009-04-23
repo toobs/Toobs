@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Components xmlns="cc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="cc
   file:../../../../../PresFramework/src/main/castor/componentConfig.xsd">
+
+  <Component id="">
+    <GetObject objectAction="" daoObject="" searchCriteria="" searchMethod="" returnedValueObject="" permissionAction="">
+      <Parameters>
+        <Parameter name="" path="" default=""/>
+      </Parameters>
+    </GetObject>
+    <Pipeline>
+      <ContentType>
+        <Transform name="">
+          <Parameters>
+            <Parameter name="" path=""></Parameter>
+          </Parameters>
+        </Transform>
+      </ContentType>
+    </Pipeline>
+  </Component>
 </Components>
-  

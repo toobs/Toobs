@@ -9,13 +9,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 import javax.servlet.http.Cookie;
 import javax.xml.transform.URIResolver;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.validation.ObjectError;
 import org.toobsframework.pres.component.config.GetObject;
 import org.toobsframework.exception.ParameterException;
 import org.toobsframework.pres.component.datasource.api.DataSourceNotInitializedException;
@@ -33,7 +33,6 @@ import org.toobsframework.pres.util.PresConstants;
 import org.toobsframework.servlet.ContextHelper;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
 import org.toobsframework.transformpipeline.domain.XMLTransformerException;
-import org.toobsframework.transformpipeline.domain.XMLTransformerFactory;
 import org.toobsframework.util.BetwixtUtil;
 import org.toobsframework.util.Configuration;
 
@@ -41,7 +40,6 @@ import org.toobsframework.util.Configuration;
 /**
  * @author pudney
  */
-@SuppressWarnings("unchecked")
 public class Component {
   private static final String XML_HEADER = "<?xml version=\"1.0\"?>";
   private static final String XML_START_COMPONENTS = "<component";
@@ -64,7 +62,7 @@ public class Component {
 
   private boolean initDone;
 
-  private Map transforms;
+  private Map<String, List<Transform>> transforms;
 
   private GetObject[] objectsConfig;
   
@@ -74,15 +72,23 @@ public class Component {
 
   private String fileName;
 
+  private IXMLTransformer defaultTransformer;
+  private IXMLTransformer htmlTransformer;
+  private IXMLTransformer xmlTransformer;
+
   public Component() {
     this.Id = null;
     this.initDone = false;
     componentRequestManager = (ComponentRequestManager)ContextHelper.getWebApplicationContext().getBean("componentRequestManager");
   }
 
-  public IDataSourceObject[] getObjects(Map paramsIn, Map paramsOut) throws ComponentException,
+  public void init() throws ComponentInitializationException {
+    this.initDone = true;
+  }
+
+  public IDataSourceObject[] getObjects(Map<String,Object> paramsIn, Map<String,Object> paramsOut) throws ComponentException,
       ComponentNotInitializedException, ParameterException {
-    ArrayList allObjects = new ArrayList();
+    List<IDataSourceObject> allObjects = new ArrayList<IDataSourceObject>();
     if (!this.initDone) {
       ComponentNotInitializedException ex = new ComponentNotInitializedException();
       ex.setComponentId(this.Id);
@@ -91,7 +97,7 @@ public class Component {
 
     int len = objectsConfig.length;
     for (int i = 0; i < len; i++) {
-      Map params = new HashMap(paramsIn);
+      Map<String,Object> params = new HashMap<String,Object>(paramsIn);
       GetObject thisObjDef = objectsConfig[i];
       //Fetch Datasource for this get.
       IDataSource datasource = (IDataSource)ContextHelper.getWebApplicationContext().getBean(thisObjDef.getDatasource());
@@ -102,10 +108,10 @@ public class Component {
         ParameterUtil.mapParameters("Component:" + this.Id + ":GetObject:" + thisObjDef.getDaoObject(), thisObjDef.getParameters().getParameter(), params, params, this.Id, allObjects);
       }
 
-      ArrayList theseObjects = new ArrayList();
-      
+      List<IDataSourceObject> theseObjects = new ArrayList<IDataSourceObject>();
+
       //Call the appropriate action.
-      Map outParams = new HashMap();
+      Map<String,Object> outParams = new HashMap<String,Object>();
       if (thisObjDef.getObjectAction().equals("get")) {
         Object guidObj = null;
         String thisGuidParam = ParameterUtil.resolveParam(thisObjDef.getGuidParam(), params)[0];
@@ -117,7 +123,7 @@ public class Component {
         } else {
           guidObj = (String) params.get(thisGuidParam);
         }
-        Object obj = null;
+        IDataSourceObject obj = null;
         obj = checkForValidation(paramsIn, thisObjDef, (String)guidObj);
         if (obj == null) {
           obj = this.getObject(
@@ -178,7 +184,7 @@ public class Component {
           theseObjects.addAll(datasource.searchIndex(
               thisObjDef.getReturnedValueObject(),
               ParameterUtil.resolveParam(thisObjDef.getDaoObject(), params)[0], 
-              thisObjDef.getSearchCriteria(),
+              ParameterUtil.resolveParam(thisObjDef.getSearchCriteria(), params)[0], 
               thisObjDef.getSearchMethod(), 
               thisObjDef.getPermissionAction(), 
               params, outParams));
@@ -201,9 +207,9 @@ public class Component {
       }
       allObjects.addAll(theseObjects);
     }
-    allObjects.trimToSize();
+
     IDataSourceObject[] objArray = new IDataSourceObject[allObjects.size()];
-    objArray = (IDataSourceObject[]) allObjects.toArray(objArray);
+    objArray = allObjects.toArray(objArray);
     return objArray;
   }
 
@@ -218,7 +224,7 @@ public class Component {
   }
 
   public IDataSourceObject getObject(IDataSource datasource, String returnedValueObject,
-      String daoObject, boolean noCache, String guid, Map params, Map outParams) throws ComponentException,
+      String daoObject, boolean noCache, String guid, Map<String, Object> params, Map<String, Object> outParams) throws ComponentException,
       ComponentNotInitializedException {
     IDataSourceObject object = null;
     if (!this.initDone) {
@@ -246,14 +252,10 @@ public class Component {
     }
     return object;
   }
-  
-  public void init() {
-    this.initDone = true;
-  }
 
-  public String render(String contentType, Map params, Map paramsOut)
+  public String render(String contentType, Map<String, Object> params, Map<String, Object> outParams)
     throws ComponentNotInitializedException, ComponentException, ParameterException {
-    return this.render(contentType, params, paramsOut, null);
+    return this.render(contentType, params, outParams, null);
   }
 
   /**
@@ -264,11 +266,11 @@ public class Component {
    * @throws ComponentNotInitializedException
    * @throws ComponentException
    */
-  public String render(String contentType, Map params, Map paramsOut, URIResolver uriResolver)
+  public String render(String contentType, Map<String, Object> params, Map<String, Object> outParams, URIResolver uriResolver)
       throws ComponentNotInitializedException, ComponentException, ParameterException {
     StringBuffer renderedOutput = new StringBuffer();
     Date start = new Date();
-    String componentXML = this.getObjectsAsXML(params, paramsOut);
+    String componentXML = this.getObjectsAsXML(params, outParams);
     Date endGet = new Date();
 
     if (!contentType.equals("bizXML")) {
@@ -291,10 +293,11 @@ public class Component {
    * @throws ComponentNotInitializedException
    * @throws ComponentException
    */
-  private String getObjectsAsXML(Map params, Map paramsOut)
+  @SuppressWarnings("unchecked")
+  private String getObjectsAsXML(Map<String, Object> params, Map<String, Object> outParams)
       throws ComponentNotInitializedException, ComponentException, ParameterException {
     StringBuffer xml = new StringBuffer();
-    IDataSourceObject[] objects = this.getObjects(params, paramsOut);
+    IDataSourceObject[] objects = this.getObjects(params, outParams);
     try {
       xml.append(XML_HEADER);
       xml.append(XML_START_COMPONENTS).append(" id=\"").append(this.Id).append("\">");
@@ -308,10 +311,10 @@ public class Component {
       if (renderErrorObject) {
         if (params.containsKey(PresConstants.VALIDATION_ERROR_MESSAGES)) {
           componentRequestManager.get().getHttpResponse().setHeader("toobs.error.validation", "true");
-          List globalErrorList = (List)params.get(PresConstants.VALIDATION_ERROR_MESSAGES);
+          List<ObjectError> globalErrorList = (List<ObjectError>)params.get(PresConstants.VALIDATION_ERROR_MESSAGES);
           for (int g = 0; g < globalErrorList.size(); g++) {
             xml.append(XML_START_ERRORS);
-            List errorList = (List)globalErrorList.get(g);
+            List<ObjectError> errorList = (List<ObjectError>)globalErrorList.get(g);
             for (int i = 0; i < errorList.size(); i++) {
               xml.append(BetwixtUtil.toXml(errorList.get(i)));
             }
@@ -319,10 +322,10 @@ public class Component {
           }
         }
         if (params.containsKey(PresConstants.VALIDATION_ERROR_OBJECTS)) {
-          List globalMessageList = (List)params.get(PresConstants.VALIDATION_ERROR_OBJECTS);
+          List<IDataSourceObject> globalMessageList = (List<IDataSourceObject>)params.get(PresConstants.VALIDATION_ERROR_OBJECTS);
           for (int g = 0; g < globalMessageList.size(); g++) {
             xml.append(XML_START_ERROR_OBJS);
-            List errorList = (List)globalMessageList.get(g);        
+            List<IDataSourceObject> errorList = (List<IDataSourceObject>)globalMessageList.get(g);
             for (int i = 0; i < errorList.size(); i++) {
               xml.append(BetwixtUtil.toXml(errorList.get(i)));
             }
@@ -346,27 +349,27 @@ public class Component {
    * @throws ComponentNotInitializedException
    * @throws ComponentException
    */
-  private String callXMLPipeline(String contentType, String inputXMLString, Map inParams, URIResolver uriResolver)
+  private String callXMLPipeline(String contentType, String inputXMLString, Map<String, Object> inParams, URIResolver uriResolver)
       throws ComponentException, ParameterException {
     StringBuffer outputString = new StringBuffer();
-    Vector outputXML = new Vector();
+    List<String> outputXML = new ArrayList<String>();
 
     try {
       // Initialize variables needed to run transformer.
       IXMLTransformer xmlTransformer = null;
-      Vector inputXSLs = new Vector();
-      HashMap params = new HashMap();
-      Vector inputXML = new Vector();
+      List<String> inputXSLs = new ArrayList<String>();
+      Map<String, Object> params = new HashMap<String, Object>();
+      List<String> inputXML = new ArrayList<String>();
 
       // Prepare XML
       inputXML.add(inputXMLString);
 
       // Prepare XSLs and Params.
-      Vector contentTransforms = (Vector) this.getTransforms().get(contentType);
+      List<Transform> contentTransforms = this.getTransforms().get(contentType);
       if (contentTransforms != null && contentTransforms.size() > 0) {
-        Iterator it = contentTransforms.iterator();
+        Iterator<Transform> it = contentTransforms.iterator();
         while (it.hasNext()) {
-          Transform transform = (Transform) it.next();
+          Transform transform = it.next();
           inputXSLs.add(transform.getTransformName());
           //Fix the params using the param mapping for 
           //this configuration.
@@ -381,26 +384,23 @@ public class Component {
 
       // Figure out which Transformer to run and prepare as
       // necessary for that Transformer.
-      Vector xslSources = new Vector();
-      xslSources.addAll(inputXSLs);
-      if (xslSources.size() > 1) {
+      if (inputXSLs.size() > 1) {
         if (!"xhtml".equals(contentType)) {
-          xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_XML, uriResolver);
+          xmlTransformer = this.xmlTransformer;
         } else {
-          xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_HTML, uriResolver);
+          xmlTransformer = this.htmlTransformer;
         }
       } else {
-        xmlTransformer = XMLTransformerFactory.getInstance().getDefaultTransformer(uriResolver);
+        xmlTransformer = this.defaultTransformer;
       }
 
       // Do Transformation
-      xslSources.trimToSize();
-      if (xslSources.size() > 0) {
+      if (inputXSLs.size() > 0) {
         params.put("context", Configuration.getInstance().getMainContext() + "/");
         if (inParams.get("appContext") != null) {
           params.put("appContext", inParams.get("appContext"));
         }
-        outputXML = xmlTransformer.transform(xslSources, inputXML, params);
+        outputXML = xmlTransformer.transform(inputXSLs, inputXML, params);
       } else {
         outputXML = inputXML;
       }
@@ -412,22 +412,23 @@ public class Component {
 
     // Prepare output
     for (int ox = 0; ox < outputXML.size(); ox++) {
-      outputString.append((String) outputXML.get(ox));
+      outputString.append(outputXML.get(ox));
     }
     // Return
     return outputString.toString();
 
   }
 
-  private Object checkForValidation(Map paramsIn, GetObject getObjDef, String guid) throws ComponentException, ComponentNotInitializedException {
-    List<Object> errorObjects = (List<Object>)paramsIn.get(PresConstants.VALIDATION_ERROR_OBJECTS);
+  @SuppressWarnings("unchecked")
+  private IDataSourceObject checkForValidation(Map<String, Object> paramsIn, GetObject getObjDef, String guid) throws ComponentException, ComponentNotInitializedException {
+    List<IDataSourceObject> errorObjects = (List<IDataSourceObject>)paramsIn.get(PresConstants.VALIDATION_ERROR_OBJECTS);
     if(errorObjects != null)
     {
       for(int i = 0; i < errorObjects.size(); i++)
       {
         Object errorObject = errorObjects.get(i);
-        Class errorObjClass = errorObject.getClass();
-        
+        Class<? extends Object> errorObjClass = errorObject.getClass();
+
         //if the error obj class and the returned value object match...
         String errorObjClassName = errorObjClass.getName();
         errorObjClassName = errorObjClassName.substring(errorObjClassName.lastIndexOf(".") + 1);
@@ -482,11 +483,11 @@ public class Component {
     return this.Id;
   }
 
-  public void setTransforms(Map transforms) {
+  public void setTransforms(Map<String, List<Transform>> transforms) {
     this.transforms = transforms;
   }
 
-  public Map getTransforms() {
+  public Map<String, List<Transform>> getTransforms() {
     return this.transforms;
   }
 
@@ -528,6 +529,30 @@ public class Component {
 
   public void setStyles(String[] styles) {
     this.styles = styles;
+  }
+
+  public IXMLTransformer getDefaultTransformer() {
+    return defaultTransformer;
+  }
+
+  public void setDefaultTransformer(IXMLTransformer defaultTransformer) {
+    this.defaultTransformer = defaultTransformer;
+  }
+
+  public IXMLTransformer getHtmlTransformer() {
+    return htmlTransformer;
+  }
+
+  public void setHtmlTransformer(IXMLTransformer htmlTransformer) {
+    this.htmlTransformer = htmlTransformer;
+  }
+
+  public IXMLTransformer getXmlTransformer() {
+    return xmlTransformer;
+  }
+
+  public void setXmlTransformer(IXMLTransformer xmlTransformer) {
+    this.xmlTransformer = xmlTransformer;
   }
 
 }

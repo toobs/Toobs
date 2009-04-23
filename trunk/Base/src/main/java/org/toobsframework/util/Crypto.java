@@ -15,16 +15,13 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESKeySpec;
 
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
+import org.apache.commons.codec.binary.Base64;
 
 public class Crypto {
   private static final String ALGORITHM = "DES";
   private static Crypto instance = null;
   private Cipher encipher = null;
   private Cipher decipher = null;
-  private BASE64Encoder encoder = new BASE64Encoder();  
-  private BASE64Decoder decoder = new BASE64Decoder();  
   
   private static byte[] keyData = {
     (byte)0xc7, (byte)0x73, (byte)0x21, (byte)0x8c,
@@ -104,7 +101,7 @@ public class Crypto {
     String output = input;
     try {
       byte[] enc = encipher.doFinal(input.getBytes("UTF-8"));
-      output = encoder.encode(enc);
+      output = new String(Base64.encodeBase64(enc));
     } catch (IllegalBlockSizeException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -122,7 +119,7 @@ public class Crypto {
   public String decrypt(String input) {
     String output = input;
     try {
-      byte[] dec = decoder.decodeBuffer(input);
+      byte[] dec = Base64.decodeBase64(input.getBytes());
       byte[] utf8 = decipher.doFinal(dec);
       output = new String(utf8, "UTF8");
     } catch (IOException e) {

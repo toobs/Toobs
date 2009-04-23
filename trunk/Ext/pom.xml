@@ -1,0 +1,30 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <parent>
+    <artifactId>toobsframework</artifactId>
+    <groupId>org.toobsframework</groupId>
+    <version>0.0.6-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.toobsframework</groupId>
+  <artifactId>ext</artifactId>
+  <name>ext</name>
+  <version>${toobs.version}</version>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.toobsframework</groupId>
+      <artifactId>base</artifactId>
+      <version>${toobs.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.xmlgraphics</groupId>
+      <artifactId>fop</artifactId>
+    </dependency>
+  </dependencies>
+
+</project>

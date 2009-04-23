@@ -39,7 +39,7 @@
         <xs:element ref="clc:DoItRef" minOccurs="0" maxOccurs="1"/>
       </xs:sequence>
       <xs:attribute name="id" type="xs:string" use="required"/>
-      <xs:attribute name="extends" type="xs:string" use="optional"/>
+      <xs:attribute name="extend" type="xs:string" use="optional"/>
       <xs:attribute name="noAccessLayout" type="xs:string" use="optional"/>
       <xs:attribute name="embedded" type="xs:boolean" default="false"/>
     </xs:complexType>

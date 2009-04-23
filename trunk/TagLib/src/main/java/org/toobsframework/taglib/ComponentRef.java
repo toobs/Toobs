@@ -6,54 +6,38 @@
  */
 package org.toobsframework.taglib;
 
-import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.pres.util.PresConstants;
 import org.toobsframework.pres.component.manager.IComponentManager;
-import org.toobsframework.pres.component.config.Component;
 import org.toobsframework.pres.component.ComponentException;
 import org.toobsframework.pres.component.ComponentNotFoundException;
 import org.toobsframework.pres.component.ComponentInitializationException;
 import org.toobsframework.pres.component.ComponentNotInitializedException;
-import org.toobsframework.pres.layout.manager.IComponentLayoutManager;
-import org.toobsframework.pres.layout.ComponentLayoutNotFoundException;
-import org.toobsframework.pres.layout.ComponentLayoutInitializationException;
-import org.toobsframework.pres.chart.manager.IChartManager;
-import org.toobsframework.pres.chart.ChartBuilder;
-import org.toobsframework.pres.xsl.ComponentHelper;
 import org.toobsframework.util.Configuration;
 import org.toobsframework.servlet.ContextHelper;
 import org.toobsframework.exception.ParameterException;
-import org.toobsframework.transformpipeline.domain.XMLTransformerException;
 import org.springframework.beans.factory.BeanFactory;
 
 import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.JspContext;
-import javax.servlet.jsp.tagext.SimpleTagSupport;
+import javax.servlet.jsp.tagext.BodyTagSupport;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
 import java.util.HashMap;
 
-public class ComponentRef extends SimpleTagSupport {
+public class ComponentRef extends BodyTagSupport {
+
+  private static final long serialVersionUID = -5899228093269316358L;
 
   private static BeanFactory beanFactory;
 
   private static ComponentRequestManager reqManager;
   private static IComponentManager compManager;
-  private static boolean debugComponents;
-  private static String layoutExtension;
-  private static String componentExtension;
-  private static String chartExtension;
 
   static {
     beanFactory = ContextHelper.getWebApplicationContext();
     reqManager = (ComponentRequestManager)beanFactory.getBean("componentRequestManager");
     compManager = (IComponentManager)beanFactory.getBean("IComponentManager");
-    debugComponents = Configuration.getInstance().getDebugComponents();
-    layoutExtension = Configuration.getInstance().getLayoutExtension();
-    componentExtension = Configuration.getInstance().getComponentExtension();
-    chartExtension = Configuration.getInstance().getChartExtension();
   }
 
   private String componentId;
@@ -64,6 +48,10 @@ public class ComponentRef extends SimpleTagSupport {
 
   public void setParameterMap(Map parameterMap) {
     this.parameterMap = parameterMap;
+  }
+
+  protected void addParam(String name, Object value) {
+    this.parameterMap.put(name, value);
   }
 
   public void setdataObject(Object dataObject) {
@@ -81,7 +69,7 @@ public class ComponentRef extends SimpleTagSupport {
     this.contentType = contentType;
   }
 
-  public void doTag() throws JspException, IOException {
+  public int doEndTag() throws JspException {
 
     //Setup deploytime
     long deployTime;
@@ -114,7 +102,7 @@ public class ComponentRef extends SimpleTagSupport {
     }
     String output = "";
     try {
-      output = this.compManager.renderComponent(component, contentType, reqManager.get().getParams(), reqManager.get().getParams(), true);
+      output = compManager.renderComponent(component, contentType, reqManager.get().getParams(), reqManager.get().getParams(), true);
     } catch (ComponentNotInitializedException e) {
       throw new JspException("Component with Id:" + componentId +": is not intitialized.", e);
     } catch (ComponentException e) {
@@ -122,14 +110,17 @@ public class ComponentRef extends SimpleTagSupport {
     } catch (ParameterException e) {
       throw new JspException("Could not resolve parameters for component with Id:" + componentId, e);
     } finally {
-      this.reqManager.unset();
+      reqManager.unset();
     }
     
     //Now output results
-    JspContext context = getJspContext();
-    Writer writer = context.getOut();
-    writer.write(output);
-    return;
+    try {
+      pageContext.getOut().write(output);
+    } catch (IOException e) {
+      throw new JspException("Could not output result for component with Id:" + componentId, e);
+    }
+
+    return EVAL_PAGE;
   }
 
 }
