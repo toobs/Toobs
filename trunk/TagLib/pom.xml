@@ -2,8 +2,8 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.toobsframework</groupId>
-  <artifactId>taglib</artifactId>
-  <name>taglib</name>
+  <artifactId>toobsframework-taglib</artifactId>
+  <name>toobsframework-taglib</name>
   <version>${toobs.version}</version>
   <description>
     JSP Tags for calling components from within a JSP layout framework.
@@ -30,10 +30,10 @@
   </build>
   <dependencies>
     <dependency>
-  	  <groupId>org.toobsframework</groupId>
-  	  <artifactId>presentation</artifactId>
-  	  <version>${toobs.version}</version>
-  	</dependency>
+      <groupId>org.toobsframework</groupId>
+      <artifactId>toobsframework-presentation</artifactId>
+      <version>${toobs.version}</version>
+    </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>servlet-api</artifactId>

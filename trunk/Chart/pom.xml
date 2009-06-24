@@ -6,8 +6,8 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.toobsframework</groupId>
-  <artifactId>chart</artifactId>
-  <name>chart</name>
+  <artifactId>toobsframework-chart</artifactId>
+  <name>toobsframework-chart</name>
   <version>${toobs.version}</version>
 
   <build>
@@ -47,12 +47,12 @@
   <dependencies>
     <dependency>
       <groupId>org.toobsframework</groupId>
-      <artifactId>base</artifactId>
+      <artifactId>toobsframework-base</artifactId>
       <version>${toobs.version}</version>
     </dependency>
     <dependency>
       <groupId>org.toobsframework</groupId>
-      <artifactId>presentation</artifactId>
+      <artifactId>toobsframework-presentation</artifactId>
       <version>${toobs.version}</version>
     </dependency>
 
