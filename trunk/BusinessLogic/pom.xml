@@ -6,19 +6,23 @@
   <version>${toobs.version}</version>
   <description/>
   <parent>
-  	<artifactId>toobsframework</artifactId>
-  	<groupId>org.toobsframework</groupId>
-  	<version>0.0.6-SNAPSHOT</version>
+    <artifactId>toobsframework</artifactId>
+    <groupId>org.toobsframework</groupId>
+    <version>0.0.6-SNAPSHOT</version>
   </parent>
   <dependencies>
-  	<dependency>
-  	  <groupId>org.toobsframework</groupId>
-  	  <artifactId>toobsframework-base</artifactId>
-  	  <version>${toobs.version}</version>
-  	</dependency>
-  	<dependency>
-  	  <groupId>rhino</groupId>
-  	  <artifactId>js</artifactId>
+    <dependency>
+      <groupId>org.toobsframework</groupId>
+      <artifactId>base</artifactId>
+      <version>${toobs.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>rhino</groupId>
+      <artifactId>js</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-orm</artifactId>
     </dependency>
   </dependencies>
 </project>

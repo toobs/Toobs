@@ -8,11 +8,10 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.AbstractController;
 
-@SuppressWarnings("unchecked")
 public class AppController extends AbstractController {
 
   private static Log log = LogFactory.getLog(AppController.class);
-  
+
   private IAppHandler appHandler;
   
   /**

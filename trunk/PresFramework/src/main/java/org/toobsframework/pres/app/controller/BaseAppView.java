@@ -16,16 +16,17 @@ public class BaseAppView implements IAppView {
   private String viewName;
   private boolean isComponentView;
   private Map<String,String> urlParams;
+  private String contentType;
   
   public BaseAppView() {
     this(null,null);
   }
 
   public BaseAppView(String appName, String viewName) {
-    this(appName,viewName, false);
+    this(appName,viewName, "xhtml", false);
   }
 
-  public BaseAppView(String appName, String viewName, boolean isComponentView) {
+  public BaseAppView(String appName, String viewName, String contentType, boolean isComponentView) {
     this(appName, viewName, isComponentView, null);
   }
 
@@ -89,6 +90,14 @@ public class BaseAppView implements IAppView {
         log.debug("Url Param name: [" + entry.getKey() + "] value: [" + entry.getValue() + "]");
       }
     }
+  }
+
+  public void setContentType(String contentType) {
+    this.contentType = contentType;
+  }
+
+  public String getContentType() {
+    return contentType;
   }
 
 }

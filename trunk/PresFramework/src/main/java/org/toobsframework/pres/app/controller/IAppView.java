@@ -19,4 +19,5 @@ public interface IAppView {
   public abstract Map<String,String> getUrlParams();
 
   public abstract void debugUrlParams();
+  public abstract String getContentType();
 }

@@ -101,10 +101,14 @@
       <groupId>commons-jxpath</groupId>
       <artifactId>commons-jxpath</artifactId>
       <exclusions>
-      	<exclusion>
-      		<artifactId>xerces</artifactId>
-      		<groupId>xerces</groupId>
-      	</exclusion>
+        <exclusion>
+          <artifactId>xerces</artifactId>
+          <groupId>xerces</groupId>
+        </exclusion>
+        <exclusion>
+          <groupId>xml-apis</groupId>
+          <artifactId>xml-apis</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>

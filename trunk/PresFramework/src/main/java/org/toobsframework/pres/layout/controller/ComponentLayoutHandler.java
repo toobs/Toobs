@@ -108,7 +108,7 @@ public class ComponentLayoutHandler implements IComponentLayoutHandler {
             throw cnfe;
           }
         } else {
-          output = layout.render(componentRequestManager.get(), null, extension);
+          output = layout.render(componentRequestManager.get(), extension);
         }
         
         if (layout.getDoItRef() != null) {

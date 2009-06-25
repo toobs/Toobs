@@ -2,7 +2,6 @@ package org.toobsframework.pres.app.controller;
 
 import java.io.PrintWriter;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -14,19 +13,10 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UrlPathHelper;
 import org.toobsframework.pres.app.AppManager;
 import org.toobsframework.pres.app.AppReader;
-import org.toobsframework.pres.component.config.Parameter;
 import org.toobsframework.doitref.IDoItRefQueue;
-import org.toobsframework.exception.PermissionException;
-import org.toobsframework.pres.component.ComponentException;
-import org.toobsframework.pres.layout.ComponentLayoutNotFoundException;
-import org.toobsframework.pres.layout.RuntimeLayout;
-import org.toobsframework.pres.layout.manager.IComponentLayoutManager;
 import org.toobsframework.pres.security.IComponentSecurity;
 import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.pres.util.ParameterUtil;
-import org.toobsframework.pres.util.PresConstants;
-import org.toobsframework.util.Configuration;
-
 
 @SuppressWarnings("unchecked")
 public class AppHandler implements IAppHandler {
@@ -50,11 +40,10 @@ public class AppHandler implements IAppHandler {
     String urlPath = this.urlPathHelper.getLookupPathForRequest(request);
 
     IAppView appView = urlResolver.resolve( (AppReader)appManager, urlPath, request.getMethod() );
-    
     if (log.isDebugEnabled()) {
-      
+
       appManager.showApps();
-      
+
       log.debug("AppView App   : " + appView.getAppName());
       log.debug("AppView isComp: " + appView.isComponentView());
       log.debug("AppView View  : " + appView.getViewName());
@@ -70,7 +59,7 @@ public class AppHandler implements IAppHandler {
     componentRequestManager.set(request, response, params);
 
     output = appManager.renderView(appView, componentRequestManager.get());
-    
+
     //Write out to the response.
     response.setContentType("text/html; charset=UTF-8");
     response.setHeader("Pragma",        "no-cache");                           // HTTP 1.0

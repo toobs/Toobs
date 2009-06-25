@@ -11,8 +11,11 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 
+import javax.xml.transform.URIResolver;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.xalan.trace.TraceListener;
 import org.exolab.castor.xml.MarshalException;
 import org.exolab.castor.xml.Unmarshaller;
 import org.exolab.castor.xml.ValidationException;
@@ -27,6 +30,7 @@ import org.toobsframework.pres.app.controller.IAppView;
 import org.toobsframework.pres.component.Component;
 import org.toobsframework.pres.component.ComponentException;
 import org.toobsframework.pres.component.ComponentInitializationException;
+import org.toobsframework.pres.component.ComponentNotInitializedException;
 import org.toobsframework.pres.component.config.Components;
 import org.toobsframework.pres.component.datasource.api.DataSourceInitializationException;
 import org.toobsframework.pres.component.datasource.manager.DataSourceNotFoundException;
@@ -36,6 +40,9 @@ import org.toobsframework.pres.layout.RuntimeLayout;
 import org.toobsframework.pres.layout.config.Layout;
 import org.toobsframework.pres.layout.config.Layouts;
 import org.toobsframework.pres.layout.manager.ComponentLayoutManager;
+import org.toobsframework.transformpipeline.domain.IXMLTransformer;
+import org.toobsframework.transformpipeline.domain.XMLTransformerException;
+import org.toobsframework.transformpipeline.domain.XMLTransformerFactory;
 import org.toobsframework.transformpipeline.domain.XSLUriResolverImpl;
 import org.toobsframework.util.FilesystemFilter;
 import org.toobsframework.util.IRequest;
@@ -44,40 +51,49 @@ public class AppManager implements AppReader {
 
   private static final Log log = LogFactory.getLog(AppManager.class);
 
-  private static String appsDirName = "apps";
-  private static File appsDir;
-  private static Hashtable<String,ToobsApplication> appRegistry;
-  private static boolean initDone = false;
+  private String appsDirName = "apps";
+  private File appsDir;
+  private Hashtable<String,ToobsApplication> appRegistry;
+  private boolean doReload = false;
 
-  public AppManager() {
+  private boolean useTranslets = false;
+  private boolean useChain = false;
+
+  private TraceListener paramListener;
+
+
+  public AppManager() throws ComponentLayoutInitializationException {
     log.info("Constructing new AppLoader");
-    appRegistry = new Hashtable<String,ToobsApplication>();
-    try {
-      init();
-      initDone = true;
-    } catch (ComponentLayoutInitializationException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-    
   }
 
   public boolean containsApp(String appRoot) {
     return appRegistry.containsKey(appRoot);
   }
 
-  public ToobsApplication getApp(String appRoot) throws AppNotFoundException {
+  public ToobsApplication getApp(String appRoot) throws AppNotFoundException, ComponentLayoutInitializationException, XMLTransformerException {
     ToobsApplication toobsApp = null;
+    if (doReload) {
+      this.loadConfig();
+    }
+
     if (!appRegistry.containsKey(appRoot)) {
       throw new AppNotFoundException();
     }
     toobsApp = appRegistry.get(appRoot);
-    //synchronized(toobsApp) {
-      return toobsApp;
-    //}
+
+    return toobsApp;
   }
 
-  public void init() throws ComponentLayoutInitializationException {
+  public void init() throws XMLTransformerException, ComponentLayoutInitializationException {
+    appRegistry = new Hashtable<String,ToobsApplication>();
+
+    XMLTransformerFactory.getInstance().setUseChain(useChain);
+    XMLTransformerFactory.getInstance().setUseTranslets(useTranslets);
+
+    loadConfig();
+  }
+
+  public void loadConfig() throws ComponentLayoutInitializationException, XMLTransformerException {
     
     if ( appsDir == null || !appsDir.exists() ) {
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
@@ -120,41 +136,43 @@ public class AppManager implements AppReader {
     
   }
   
-  private void configureApplication(ToobsApplication toobsApp, File appDir, File appFile) throws ComponentLayoutInitializationException {
+  private void configureApplication(ToobsApplication toobsApp, File appDir, File appFile) throws ComponentLayoutInitializationException, XMLTransformerException {
     InputStreamReader reader = null;
 
     try {
-      
+
       reader = new InputStreamReader(new FileInputStream(appFile));
-      
       Unmarshaller unmarshaller = new Unmarshaller(
           Class.forName(Applications.class.getName()));
 
       unmarshaller.setValidation(false);
-      
+
       Applications applications = (Applications) unmarshaller.unmarshal(reader);
-      
+
       ToobsApp toobsAppDef = applications.getToobsApp(0);
-      
+
       configureRoot(toobsApp,toobsAppDef.getRoot());
       configureXSL(toobsApp,toobsAppDef.getXSLConfig());
-      configureLayouts(toobsApp,toobsAppDef.getLayoutConfig(), appDir);
-      configureComponents(toobsApp,toobsAppDef.getComponentConfig(), appDir);
-      
+
+      URIResolver uriResolver = new XSLUriResolverImpl(toobsApp.getXslLocations());
+
+      IXMLTransformer xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_XML, uriResolver, paramListener);
+      IXMLTransformer htmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_HTML, uriResolver, paramListener);
+      IXMLTransformer defaultTransformer = XMLTransformerFactory.getInstance().getDefaultTransformer(uriResolver);
+
+      configureLayouts(toobsApp,toobsAppDef.getLayoutConfig(), appDir, xmlTransformer, htmlTransformer, defaultTransformer);
+      configureComponents(toobsApp,toobsAppDef.getComponentConfig(), appDir, xmlTransformer, htmlTransformer, defaultTransformer);
+
       appRegistry.put(toobsApp.getRoot(), toobsApp);
 
     } catch (MarshalException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new ComponentLayoutInitializationException(e);
     } catch (ValidationException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new ComponentLayoutInitializationException(e);
     } catch (FileNotFoundException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new ComponentLayoutInitializationException(e);
     } catch (ClassNotFoundException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      throw new ComponentLayoutInitializationException(e);
     } finally {
       if (reader != null) {
         try {
@@ -165,13 +183,10 @@ public class AppManager implements AppReader {
 
   }
 
-  private void configureComponents(ToobsApplication toobsApp, ComponentConfig componentConfig, File appDir) {
+  private void configureComponents(ToobsApplication toobsApp, ComponentConfig componentConfig, File appDir, IXMLTransformer xmlTransformer, IXMLTransformer htmlTransformer, IXMLTransformer defaultTransformer) throws ComponentLayoutInitializationException {
 
-    //ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     InputStreamReader reader = null;
     Map<String,Component> compMap = new HashMap<String,Component>();
-
-    //String appPrefix = appsDirName + "/" + toobsApp.getName() + "/";
 
     for ( int i = 0; i < componentConfig.getConfigLocationCount(); i++ ) {
       ConfigLocation cLoc = componentConfig.getConfigLocation(i);
@@ -185,20 +200,13 @@ public class AppManager implements AppReader {
         log.warn("Could not locate Layout configuration location: " + cLoc.getDir() + " for app: " + toobsApp.getName());
         continue;
       }
-      
+
       String fileName = null;
+      // TODO directory traversal if config files not defined
       for ( int j = 0; j < cLoc.getConfigFile().length; j++) {
 
-        //fileName = appPrefix + cLoc.getConfigFile(j).getName();
         fileName = compDir.getAbsolutePath() + "/" + cLoc.getConfigFile(j).getName();
-        
-        /*
-        URL configFileURL = classLoader.getResource(fileName);
-        if (configFileURL == null) {
-          log.warn("Layout Configuration file " + fileName + " not found");
-          continue;
-        }
-        */
+
         File configFile = new File(fileName);
         if (!configFile.exists()) {
           log.warn("Layout Configuration file " + fileName + " not found");
@@ -221,7 +229,10 @@ public class AppManager implements AppReader {
               comp = new Component();
               
               ComponentManager.configureComponent(compDef, comp, fileName, compMap);
-              
+              comp.setXmlTransformer(xmlTransformer);
+              comp.setDefaultTransformer(defaultTransformer);
+              comp.setHtmlTransformer(htmlTransformer);
+
               if (compMap.containsKey(compDef.getId())) {
                 log.warn("Overriding layout with Id: " + compDef.getId());
               }
@@ -229,26 +240,19 @@ public class AppManager implements AppReader {
             }
           }
         } catch (MarshalException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
+          throw new ComponentLayoutInitializationException(e);
         } catch (ValidationException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
+          throw new ComponentLayoutInitializationException(e);
         } catch (IOException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
+          throw new ComponentLayoutInitializationException(e);
         } catch (ClassNotFoundException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
+          throw new ComponentLayoutInitializationException(e);
         } catch (DataSourceInitializationException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
+          throw new ComponentLayoutInitializationException(e);
         } catch (DataSourceNotFoundException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
+          throw new ComponentLayoutInitializationException(e);
         } catch (ComponentInitializationException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
+          throw new ComponentLayoutInitializationException(e);
         }
 
       }
@@ -257,13 +261,10 @@ public class AppManager implements AppReader {
     
   }
 
-  private void configureLayouts(ToobsApplication toobsApp, LayoutConfig layoutConfig, File appDir) throws ComponentLayoutInitializationException {
+  private void configureLayouts(ToobsApplication toobsApp, LayoutConfig layoutConfig, File appDir, IXMLTransformer xmlTransformer, IXMLTransformer htmlTransformer, IXMLTransformer defaultTransformer) throws ComponentLayoutInitializationException {
 
-    //ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     InputStreamReader reader = null;
     Map<String,RuntimeLayout> layoutMap = new HashMap<String,RuntimeLayout>();
-
-    //String appPrefix = appsDirName + "/" + toobsApp.getName() + "/";
 
     for ( int i = 0; i < layoutConfig.getConfigLocationCount(); i++ ) {
       ConfigLocation cLoc = layoutConfig.getConfigLocation(i);
@@ -288,18 +289,11 @@ public class AppManager implements AppReader {
       }
       
       String fileName = null;
+      // TODO directory traversal if config files not defined
       for ( int j = 0; j < cLoc.getConfigFile().length; j++) {
 
-        //fileName = appPrefix + cLoc.getConfigFile(j).getName();
         fileName = layoutDir.getAbsolutePath() + "/" + cLoc.getConfigFile(j).getName();
-        
-        /*
-        URL configFileURL = classLoader.getResource(fileName);
-        if (configFileURL == null) {
-          log.warn("Layout Configuration file " + fileName + " not found");
-          continue;
-        }
-        */
+
         File configFile = new File(fileName);
         if (!configFile.exists()) {
           log.warn("Layout Configuration file " + fileName + " not found");
@@ -322,7 +316,10 @@ public class AppManager implements AppReader {
               layout = new RuntimeLayout();
               
               ComponentLayoutManager.configureLayout(compLayout, layout, layoutMap);
-              
+              layout.setXmlTransformer(xmlTransformer);
+              layout.setDefaultTransformer(defaultTransformer);
+              layout.setHtmlTransformer(htmlTransformer);
+
               if (layoutMap.containsKey(compLayout.getId())) {
                 log.warn("Overriding layout with Id: " + compLayout.getId());
               }
@@ -330,17 +327,13 @@ public class AppManager implements AppReader {
             }
           }
         } catch (MarshalException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
+          throw new ComponentLayoutInitializationException(e);
         } catch (ValidationException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
+          throw new ComponentLayoutInitializationException(e);
         } catch (IOException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
+          throw new ComponentLayoutInitializationException(e);
         } catch (ClassNotFoundException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
+          throw new ComponentLayoutInitializationException(e);
         }
 
       }
@@ -385,14 +378,6 @@ public class AppManager implements AppReader {
     }
   }
 
-  public String getAppsDirName() {
-    return appsDirName;
-  }
-
-  public void setAppsDirName(String appsDirName) {
-    this.appsDirName = appsDirName;
-  }
-
   public void showApps() {
     log.debug("Installed Applications");
     Enumeration<String> keys = appRegistry.keys();
@@ -403,12 +388,37 @@ public class AppManager implements AppReader {
   }
 
   public String renderView(IAppView appView, IRequest request) throws AppNotFoundException, ComponentException, ParameterException {
-    if (appView.isComponentView()) {
-      return null;
-    } else {
-      RuntimeLayout layout = getApp(appView.getAppName()).getLayouts().get(appView.getViewName());
-      return layout.render(request, new XSLUriResolverImpl(getApp(appView.getAppName()).getXslLocations()));
+    try {
+      if (appView.isComponentView()) {
+        Component component = getApp(appView.getAppName()).getComponents().get(appView.getViewName());
+        component.render(appView.getContentType(), request.getParams(), request.getParams());
+        return null;
+      } else {
+        RuntimeLayout layout = getApp(appView.getAppName()).getLayouts().get(appView.getViewName());
+        return layout.render(request);
+      }
+    } catch (ComponentNotInitializedException e) {
+      throw new ComponentException(e);
+    } catch (ComponentLayoutInitializationException e) {
+      throw new ComponentException(e);
+    } catch (XMLTransformerException e) {
+      throw new ComponentException(e);
     }
   }
-  
+
+  public String getAppsDirName() {
+    return appsDirName;
+  }
+
+  public void setAppsDirName(String appsDirName) {
+    this.appsDirName = appsDirName;
+  }
+
+  public void setParamListener(TraceListener paramListener) {
+    this.paramListener = paramListener;
+  }
+
+  public TraceListener getParamListener() {
+    return paramListener;
+  }
 }

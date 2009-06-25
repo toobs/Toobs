@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.TooManyListenersException;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.xml.transform.ErrorListener;
 import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
@@ -31,6 +32,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xalan.trace.TraceListener;
 import org.apache.xalan.trace.TraceManager;
+import org.apache.xalan.transformer.TransformerHandlerImpl;
 import org.apache.xalan.transformer.TransformerImpl;
 import org.apache.xerces.impl.Version;
 import org.apache.xml.serializer.OutputPropertiesFactory;
@@ -41,7 +43,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
-public class CachingChainedTransformer extends BaseXMLTransformer {
+public class CachingChainedTransformer extends BaseXMLTransformer implements ErrorListener {
 
   private static Log log = LogFactory.getLog(CachingChainedTransformer.class);
 
@@ -91,6 +93,7 @@ public class CachingChainedTransformer extends BaseXMLTransformer {
     ByteArrayInputStream  xmlInputStream = null;
     ByteArrayOutputStream xmlOutputStream = null;
     XMLReader reader = null;
+    List<TransformerHandler> tHandlers = null;
     try {
       if (saxTFactory != null) {
 
@@ -99,7 +102,7 @@ public class CachingChainedTransformer extends BaseXMLTransformer {
 
         Serializer serializer = SerializerFactory.getSerializer(outputProperties);
 
-        List<TransformerHandler> tHandlers = new ArrayList<TransformerHandler>();
+        tHandlers = new ArrayList<TransformerHandler>();
         TransformerHandler tHandler = null;
 
         String xslFile = null;
@@ -190,6 +193,11 @@ public class CachingChainedTransformer extends BaseXMLTransformer {
       throw new XMLTransformerException(ex);
     } finally {
       try {
+        if (tHandlers != null) {
+          for (TransformerHandler tHandler : tHandlers) {
+            ((TransformerHandlerImpl)tHandler).clearCoRoutine();
+          }
+        }
         if (reader != null) {
           XMLReaderManager.getInstance().releaseXMLReader(reader);
         }
@@ -239,6 +247,21 @@ public class CachingChainedTransformer extends BaseXMLTransformer {
 
   public void setOutputProperties(Properties outputProperties) {
     this.outputProperties = outputProperties;
+  }
+
+  public void error(TransformerException exception) throws TransformerException {
+    // TODO Auto-generated method stub
+    
+  }
+
+  public void fatalError(TransformerException exception) throws TransformerException {
+    // TODO Auto-generated method stub
+    
+  }
+
+  public void warning(TransformerException exception) throws TransformerException {
+    // TODO Auto-generated method stub
+    
   }
 
 }

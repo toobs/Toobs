@@ -112,6 +112,7 @@ public class Component {
 
       //Call the appropriate action.
       Map<String,Object> outParams = new HashMap<String,Object>();
+      // TODO SNIP!!!
       if (thisObjDef.getObjectAction().equals("get")) {
         Object guidObj = null;
         String thisGuidParam = ParameterUtil.resolveParam(thisObjDef.getGuidParam(), params)[0];
@@ -198,6 +199,7 @@ public class Component {
           throw new ComponentException("Datasource Not Initialized", e);
         }
       }
+      // TODO SNIP!!!
       ParameterUtil.mapScriptParams(outParams, paramsIn);
       if(thisObjDef.getOutputParameters() != null){
         ParameterUtil.mapOutputParameters(thisObjDef.getOutputParameters().getParameter(), paramsIn, this.Id, theseObjects);

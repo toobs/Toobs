@@ -7,8 +7,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.transform.URIResolver;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.toobsframework.pres.component.ComponentException;
@@ -20,7 +18,6 @@ import org.toobsframework.exception.ParameterException;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
 import org.toobsframework.transformpipeline.domain.XMLTransformerException;
-import org.toobsframework.transformpipeline.domain.XMLTransformerFactory;
 import org.toobsframework.util.BetwixtUtil;
 import org.toobsframework.util.Configuration;
 import org.toobsframework.util.IRequest;
@@ -28,7 +25,7 @@ import org.toobsframework.util.IRequest;
 
 @SuppressWarnings("unchecked")
 public class RuntimeLayout {
-  private static Log log = LogFactory.getLog(RuntimeLayout.class);
+  private static final Log log = LogFactory.getLog(RuntimeLayout.class);
 
   private static final String XML_HEADER = "<RuntimeLayout>";
   private static final String XML_FOOTER = "</RuntimeLayout>";
@@ -39,7 +36,11 @@ public class RuntimeLayout {
   private RuntimeLayoutConfig config;
   private String layoutXml;
   private DoItRef doItRef;
-  
+
+  private IXMLTransformer defaultTransformer;
+  private IXMLTransformer htmlTransformer;
+  private IXMLTransformer xmlTransformer;
+
   public RuntimeLayoutConfig getConfig() {
     return config;
   }
@@ -79,14 +80,10 @@ public class RuntimeLayout {
   }
   
   public String render(IRequest request) throws ComponentException, ParameterException {
-    return this.render(request, null, "xhtml");  
+    return this.render(request, "xhtml");  
   }
-  
-  public String render(IRequest request, URIResolver uriResolver) throws ComponentException, ParameterException {
-    return this.render(request, uriResolver, "xhtml");
-  }
-  
-  public String render(IRequest request, URIResolver uriResolver, String contentType) throws ComponentException, ParameterException {
+
+  public String render(IRequest request, String contentType) throws ComponentException, ParameterException {
     IXMLTransformer xmlTransformer = null;
     StringBuffer outputString = new StringBuffer();
     Map layoutParams = new HashMap();
@@ -111,20 +108,14 @@ public class RuntimeLayout {
         throw new ComponentException("Component Layout with id: " + this.id + " does not have a transform for content type: " + contentType);
       }
 
-      if (log.isDebugEnabled())
-        log.debug("uriResolver: " + uriResolver);
-
       if (inputXSLs.size() > 1) {
         if (!"xhtml".equals(contentType)) {
-          xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_XML, uriResolver, null);
-          if (request.getParams().get("outputFormat") != null) {
-            layoutParams.put("outputFormat", request.getParams().get("outputFormat"));
-          }
+          xmlTransformer = this.xmlTransformer;
         } else {
-          xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_HTML, uriResolver, null);
+          xmlTransformer = this.htmlTransformer;
         }
       } else {
-        xmlTransformer = XMLTransformerFactory.getInstance().getDefaultTransformer(uriResolver);
+        xmlTransformer = this.defaultTransformer;
       }
 
       ParameterUtil.mapParameters("Layout:" + this.id, config.getAllTransformParams(), request.getParams(), layoutParams, this.id);
@@ -157,5 +148,29 @@ public class RuntimeLayout {
   }
   public void setTransforms(Map<String, List> transforms) {
     this.transforms = transforms;
+  }
+
+  public IXMLTransformer getDefaultTransformer() {
+    return defaultTransformer;
+  }
+
+  public void setDefaultTransformer(IXMLTransformer defaultTransformer) {
+    this.defaultTransformer = defaultTransformer;
+  }
+
+  public IXMLTransformer getHtmlTransformer() {
+    return htmlTransformer;
+  }
+
+  public void setHtmlTransformer(IXMLTransformer htmlTransformer) {
+    this.htmlTransformer = htmlTransformer;
+  }
+
+  public IXMLTransformer getXmlTransformer() {
+    return xmlTransformer;
+  }
+
+  public void setXmlTransformer(IXMLTransformer xmlTransformer) {
+    this.xmlTransformer = xmlTransformer;
   }
 }
