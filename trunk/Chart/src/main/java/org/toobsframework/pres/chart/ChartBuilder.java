@@ -45,11 +45,11 @@ import org.toobsframework.pres.chart.config.DomainAxisDef;
 import org.toobsframework.pres.chart.config.RangeAxisDef;
 import org.toobsframework.pres.chart.config.types.AxisDefNumberFormaterType;
 import org.toobsframework.exception.ParameterException;
-import org.toobsframework.pres.component.datasource.api.DataSourceNotInitializedException;
-import org.toobsframework.pres.component.datasource.api.IDataSource;
-import org.toobsframework.pres.component.datasource.api.InvalidSearchContextException;
-import org.toobsframework.pres.component.datasource.api.InvalidSearchFilterException;
-import org.toobsframework.pres.component.datasource.api.ObjectCreationException;
+import org.toobsframework.pres.component.dataprovider.api.DataProviderNotInitializedException;
+import org.toobsframework.pres.component.dataprovider.api.IDataProvider;
+import org.toobsframework.pres.component.dataprovider.api.InvalidSearchContextException;
+import org.toobsframework.pres.component.dataprovider.api.InvalidSearchFilterException;
+import org.toobsframework.pres.component.dataprovider.api.ObjectCreationException;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.util.Configuration;
 import org.toobsframework.util.IRequest;
@@ -64,7 +64,7 @@ public class ChartBuilder implements BeanFactoryAware {
     this.beanFactory = beanFactory;
   }
 
-  private IDataSource datasource;
+  private IDataProvider datasource;
 
   public String buildAsImage(ChartDefinition chartDef, IRequest componentRequest, int width, int height) throws ChartException {
     JFreeChart chart = this.build(chartDef, componentRequest);
@@ -305,7 +305,7 @@ public class ChartBuilder implements BeanFactoryAware {
     } catch (InvalidSearchFilterException e) {
       log.error("Chart data search exception " + e.getMessage(), e);
       throw new ChartException(e);
-    } catch (DataSourceNotInitializedException e) {
+    } catch (DataProviderNotInitializedException e) {
       log.error("Chart data search exception " + e.getMessage(), e);
       throw new ChartException(e);
     }
@@ -391,11 +391,11 @@ public class ChartBuilder implements BeanFactoryAware {
     return chart;
   }
   
-  public IDataSource getDatasource() {
+  public IDataProvider getDatasource() {
     return datasource;
   }
 
-  public void setDatasource(IDataSource datasource) {
+  public void setDatasource(IDataProvider datasource) {
     this.datasource = datasource;
   }
 

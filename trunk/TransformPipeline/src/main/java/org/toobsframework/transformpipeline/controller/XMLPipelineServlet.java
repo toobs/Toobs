@@ -153,7 +153,9 @@ public class XMLPipelineServlet
       List outputXML = xmlTransformer.transform(
         xslSources,
         (ArrayList) request.getAttribute(IXMLTransformer.INPUT_XML_REQUEST_PARAM),
-        (HashMap) request.getAttribute(IXMLTransformer.INPUT_PARAM_REQUEST_PARAM));
+        (HashMap) request.getAttribute(IXMLTransformer.INPUT_PARAM_REQUEST_PARAM),
+        null);
+      // OJO : Check with sean/jason if this is still used (jaimegarza)
 
       PrintWriter writer = response.getWriter();
 

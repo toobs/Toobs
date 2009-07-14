@@ -8,7 +8,7 @@
   <parent>
     <artifactId>toobsframework</artifactId>
     <groupId>org.toobsframework</groupId>
-    <version>0.0.6-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
   </parent>
   <build>
     <plugins>

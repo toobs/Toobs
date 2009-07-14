@@ -14,6 +14,9 @@ import org.apache.commons.logging.LogFactory;
 import org.exolab.castor.xml.MarshalException;
 import org.exolab.castor.xml.Unmarshaller;
 import org.exolab.castor.xml.ValidationException;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.toobsframework.pres.base.ManagerBase;
 import org.toobsframework.pres.doit.DoItInitializationException;
 import org.toobsframework.pres.doit.config.DoIt;
 import org.toobsframework.pres.doit.config.DoItConfig;
@@ -23,107 +26,47 @@ import org.toobsframework.util.Configuration;
 /**
  * @author sean
  */
-@SuppressWarnings("unchecked")
-public final class DoItManager implements IDoItManager {
+public final class DoItManager extends ManagerBase implements IDoItManager {
 
   private static Log log = LogFactory.getLog(DoItManager.class);
 
-  private Map registry;
-  private static boolean doReload = true;
-  private static boolean initDone = false;
-  private static long[] lastModified;
 
-  private List configFiles = null;
+  private Map<String, DoIt> registry;
 
   private DoItManager() throws DoItInitializationException {
     log.info("Constructing new DoItManager");
-    registry = new HashMap();
+    registry = new HashMap<String, DoIt>();
   }
 
   public DoIt getDoIt(String Id) throws DoItInitializationException {
-    if (doReload || !initDone) {
+    if (isDoReload() || !isInitDone()) {
       //Date initStart = new Date();
       this.init();
       //Date initEnd = new Date();
       //log.info("Init Time: " + (initEnd.getTime() - initStart.getTime()));
     }
-    synchronized (registry) {
-      if (!registry.containsKey(Id)) {
-        throw new DoItInitializationException("DoIt " + Id + " not found");
-      }
-      return (DoIt) registry.get(Id);
+    if (!registry.containsKey(Id)) {
+      throw new DoItInitializationException("DoIt " + Id + " not found");
     }
+    return registry.get(Id);
   }
 
   // Read from config file
   private void init() throws DoItInitializationException {
-    synchronized (registry) {
-      InputStreamReader reader = null;
-      if(configFiles == null) {
-        return;
+    loadConfig(DoItConfig.class);
+  }
+
+  @Override
+  protected void registerConfiguration(Object object, String fileName) {
+    DoItConfig doItConfig = (DoItConfig) object;
+    DoIt[] doIts = doItConfig.getDoIt();
+    for (int i = 0; i < doIts.length; i++) {
+      DoIt thisDoIt = doIts[i];
+      if (registry.containsKey(thisDoIt.getName()) && !isInitDone()) {
+        log.warn("Overriding doit with Id: " + thisDoIt.getName());
       }
-      int l = configFiles.size();
-      if (lastModified == null) {
-        //log.info("LastModified is null " + this.toString() + " Registry " + registry);
-        lastModified = new long[l];
-      }
-      for(int fileCounter = 0; fileCounter < l; fileCounter++) {
-        String fileName = (String)configFiles.get(fileCounter);
-        try {
-          ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-          URL configFileURL = classLoader.getResource(fileName);
-          File configFile = new File(configFileURL.getFile());
-          if (configFile.lastModified() <= lastModified[fileCounter]) {
-            continue;
-          }
-          log.info("Reloading DoItConfig - " + fileName);
-          //registry.clear();
-          reader = new InputStreamReader(configFileURL.openStream());
-          Unmarshaller unmarshaller = new Unmarshaller(Class.forName(DoItConfig.class
-              .getName()));
-          unmarshaller.setValidation(false);
-          DoItConfig doItConfig = (DoItConfig) unmarshaller.unmarshal(reader);
-          Enumeration doIts = doItConfig.enumerateDoIt();
-          while(doIts.hasMoreElements()) {
-            DoIt thisDoIt = (DoIt) doIts.nextElement();
-            if (registry.containsKey(thisDoIt.getName()) && !initDone) {
-              log.warn("Overriding doit with Id: " + thisDoIt.getName());
-            }
-            this.registry.put(thisDoIt.getName(), thisDoIt);
-          }
-          lastModified[fileCounter] = configFile.lastModified();
-        } catch (MarshalException e) {
-          throw new DoItInitializationException(e);
-        } catch (ValidationException e) {
-          throw new DoItInitializationException(e);
-        } catch (IOException e) {
-          throw new DoItInitializationException(e);
-        } catch (ClassNotFoundException e) {
-          throw new DoItInitializationException(e);
-        } finally {
-          if (reader != null) {
-            try {
-              reader.close();
-            } catch (IOException e) {
-            }
-          }
-        }
-      }
-      doReload = Configuration.getInstance().getReloadDoits();
-      initDone = true;
+      this.registry.put(thisDoIt.getName(), thisDoIt);
     }
-  }
-
-  public List getConfigFiles() {
-    return configFiles;
-  }
-
-  public void setConfigFiles(List configFiles) {
-    this.configFiles = configFiles;
-  }
-
-  public void addConfigFiles(List configFiles) {
-    this.configFiles.addAll(configFiles);
   }
 
 }

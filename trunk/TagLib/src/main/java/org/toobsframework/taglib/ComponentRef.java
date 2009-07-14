@@ -8,11 +8,13 @@ package org.toobsframework.taglib;
 
 import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.pres.util.PresConstants;
+import org.toobsframework.pres.xsl.ComponentTransformerHelper;
 import org.toobsframework.pres.component.manager.IComponentManager;
 import org.toobsframework.pres.component.ComponentException;
 import org.toobsframework.pres.component.ComponentNotFoundException;
 import org.toobsframework.pres.component.ComponentInitializationException;
 import org.toobsframework.pres.component.ComponentNotInitializedException;
+import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 import org.toobsframework.util.Configuration;
 import org.toobsframework.servlet.ContextHelper;
 import org.toobsframework.exception.ParameterException;
@@ -31,13 +33,13 @@ public class ComponentRef extends BodyTagSupport {
 
   private static BeanFactory beanFactory;
 
-  private static ComponentRequestManager reqManager;
-  private static IComponentManager compManager;
+  //private static ComponentRequestManager reqManager;
+  //private static IComponentManager compManager;
 
   static {
     beanFactory = ContextHelper.getWebApplicationContext();
-    reqManager = (ComponentRequestManager)beanFactory.getBean("componentRequestManager");
-    compManager = (IComponentManager)beanFactory.getBean("IComponentManager");
+    //reqManager = (ComponentRequestManager)beanFactory.getBean("componentRequestManager");
+    //compManager = (IComponentManager)beanFactory.getBean("IComponentManager");
   }
 
   private String componentId;
@@ -45,6 +47,7 @@ public class ComponentRef extends BodyTagSupport {
   private Map    parameterMap = new HashMap();
   private String dataObjectName;
   private Object dataObject;
+  private String transformerHelper;
 
   public void setParameterMap(Map parameterMap) {
     this.parameterMap = parameterMap;
@@ -71,6 +74,7 @@ public class ComponentRef extends BodyTagSupport {
 
   public int doEndTag() throws JspException {
 
+    ComponentTransformerHelper transformerHelper = (ComponentTransformerHelper) beanFactory.getBean(this.transformerHelper);
     //Setup deploytime
     long deployTime;
     if (parameterMap.get(PresConstants.DEPLOY_TIME) == null) {
@@ -80,16 +84,16 @@ public class ComponentRef extends BodyTagSupport {
     }
 
     //Setup Component Request
-    reqManager.set(null, null, parameterMap);
+    transformerHelper.getComponentRequestManager().set(null, null, parameterMap);
 
     if(dataObject != null && dataObjectName != null) {
-      reqManager.get().putParam(dataObjectName, dataObject);
+      transformerHelper.getComponentRequestManager().get().putParam(dataObjectName, dataObject);
     }
 
     //Find component
     org.toobsframework.pres.component.Component component = null;
     try {
-      component = compManager.getComponent(componentId, deployTime);
+      component = transformerHelper.getComponentManager().getComponent(componentId, deployTime);
     } catch (ComponentNotFoundException e) {
       throw new JspException("Could not find component with Id:" + componentId, e);
     } catch (ComponentInitializationException e) {
@@ -102,7 +106,9 @@ public class ComponentRef extends BodyTagSupport {
     }
     String output = "";
     try {
-      output = compManager.renderComponent(component, contentType, reqManager.get().getParams(), reqManager.get().getParams(), true);
+      output = transformerHelper.getComponentManager().renderComponent(component, contentType, 
+          transformerHelper.getComponentRequestManager().get().getParams(), 
+          transformerHelper.getComponentRequestManager().get().getParams(), transformerHelper, true);
     } catch (ComponentNotInitializedException e) {
       throw new JspException("Component with Id:" + componentId +": is not intitialized.", e);
     } catch (ComponentException e) {
@@ -110,7 +116,7 @@ public class ComponentRef extends BodyTagSupport {
     } catch (ParameterException e) {
       throw new JspException("Could not resolve parameters for component with Id:" + componentId, e);
     } finally {
-      reqManager.unset();
+      transformerHelper.getComponentRequestManager().unset();
     }
     
     //Now output results
@@ -121,6 +127,20 @@ public class ComponentRef extends BodyTagSupport {
     }
 
     return EVAL_PAGE;
+  }
+
+  /**
+   * @return the transformerHelper
+   */
+  public String getTransformerHelper() {
+    return transformerHelper;
+  }
+
+  /**
+   * @param transformerHelper the transformerHelper to set
+   */
+  public void setTransformerHelper(String transformerHelper) {
+    this.transformerHelper = transformerHelper;
   }
 
 }

@@ -44,7 +44,8 @@ public class StaticXSLTransformer extends BaseXMLTransformer {
   public List transform(
       List inputXSLs,
       List inputXMLs,
-      Map inputParams) throws XMLTransformerException {
+      Map inputParams,
+      IXMLTransformerHelper transformerHelper) throws XMLTransformerException {
 
     if (log.isDebugEnabled()) {
       log.debug("TRANSFORM XML STARTED");
@@ -119,6 +120,7 @@ public class StaticXSLTransformer extends BaseXMLTransformer {
               xslSource,
               xmlSource,
               inputParams,
+              transformerHelper,
               xmlResult,
               xslFile);
   
@@ -181,6 +183,7 @@ public class StaticXSLTransformer extends BaseXMLTransformer {
       Source xslSource,
       Source xmlSource,
       Map params,
+      IXMLTransformerHelper transformerHelper,
       StreamResult xmlResult,
       String xslFile) throws XMLTransformerException {
 
@@ -207,6 +210,9 @@ public class StaticXSLTransformer extends BaseXMLTransformer {
           transformer.setParameter( (String) thisParam.getKey(),
                                    (String) thisParam.getValue());
         }
+      }
+      if (transformerHelper != null) {
+        transformer.setParameter(TRANSFORMER_HELPER, transformerHelper);
       }
 
       // 3. Use the Transformer to transform an XML Source and send the

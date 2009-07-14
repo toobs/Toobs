@@ -52,8 +52,12 @@ public class BeanMonkey {
   static {
     String objectClassProperty = "";
     try {
-      objectClassProperty = Configuration.getInstance().getProperty("toobs.beanmonkey.objectClass"); 
-      objectClass = Class.forName(objectClassProperty);
+      objectClassProperty = Configuration.getInstance().getProperty("toobs.beanmonkey.objectClass");
+      if (objectClassProperty == null) {
+        objectClass = Object.class; // so that it does not crash, but nobody subclasses it, so we should be cool
+      } else {
+        objectClass = Class.forName(objectClassProperty);
+      }
     } catch (ClassNotFoundException e) {
       log.error("Class for toobs.beanmonkey.objectClass property: " + objectClassProperty + " not found");
     }

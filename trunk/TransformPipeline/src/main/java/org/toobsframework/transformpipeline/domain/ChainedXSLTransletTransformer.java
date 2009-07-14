@@ -43,11 +43,12 @@ public class ChainedXSLTransletTransformer extends BaseXMLTransformer {
   public List transform(
       List inputXSLs,
       List inputXMLs,
-      Map inputParams) throws XMLTransformerException {
+      Map inputParams,
+      IXMLTransformerHelper transformerHelper) throws XMLTransformerException {
 
     ArrayList resultingXMLs = new ArrayList();
     for (int i = 0; i < inputXMLs.size(); i++) {
-      resultingXMLs.add(transform(inputXSLs, (String)inputXMLs.get(i), inputParams));
+      resultingXMLs.add(transform(inputXSLs, (String)inputXMLs.get(i), inputParams, transformerHelper));
     }
     return resultingXMLs;
   }
@@ -55,7 +56,8 @@ public class ChainedXSLTransletTransformer extends BaseXMLTransformer {
   public String transform(
       List inputXSLs,
       String inputXML,
-      Map inputParams) throws XMLTransformerException {
+      Map inputParams,
+      IXMLTransformerHelper transformerHelper) throws XMLTransformerException {
 
     String outputXML = null;
     ByteArrayInputStream  xmlInputStream = null;
@@ -106,6 +108,9 @@ public class ChainedXSLTransletTransformer extends BaseXMLTransformer {
             transformer.setParameter( (String) thisParam.getKey(),
                                       (String) thisParam.getValue());
           }
+        }
+        if (transformerHelper != null) {
+          transformer.setParameter(TRANSFORMER_HELPER, transformerHelper);
         }
         tHandlers.add(tHandler);
       }

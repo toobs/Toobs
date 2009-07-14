@@ -32,7 +32,8 @@ public class TransletTransformer extends BaseXMLTransformer {
   public List transform(
       List inputXSLTranslets,
       List inputXMLs,
-      Map inputParams) throws XMLTransformerException {
+      Map inputParams,
+      IXMLTransformerHelper transformerHelper) throws XMLTransformerException {
 
     if (log.isDebugEnabled()) {
       log.debug("TRANSFORM XML STARTED");
@@ -69,6 +70,7 @@ public class TransletTransformer extends BaseXMLTransformer {
               xslClass,
               xmlSource,
               inputParams,
+              transformerHelper,
               xmlResult);
 
           resultingXMLs.add(((ByteArrayOutputStream) xmlResult.getOutputStream()).toString("UTF-8"));
@@ -100,6 +102,7 @@ public class TransletTransformer extends BaseXMLTransformer {
       String xslTranslet,
       StreamSource xmlSource,
       Map params,
+      IXMLTransformerHelper transformerHelper,
       StreamResult xmlResult) throws XMLTransformerException {
 
     try {
@@ -135,6 +138,9 @@ public class TransletTransformer extends BaseXMLTransformer {
           transformer.setParameter( (String) thisParam.getKey(),
                                    (String) thisParam.getValue());
         }
+      }
+      if (transformerHelper != null) {
+        transformer.setParameter(TRANSFORMER_HELPER, transformerHelper);
       }
 
       // 3. Use the Transformer to transform an XML Source and send the

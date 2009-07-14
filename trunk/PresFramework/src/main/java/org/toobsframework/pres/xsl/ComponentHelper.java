@@ -1,6 +1,5 @@
 package org.toobsframework.pres.xsl;
 
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -9,65 +8,48 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
 
-import javax.servlet.http.HttpSession;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.TransformerException;
 
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.BeanFactory;
-import org.toobsframework.pres.component.config.Parameter;
-import org.toobsframework.pres.component.manager.IComponentManager;
-
+import org.apache.xalan.transformer.TransformerImpl;
+import org.apache.xml.serializer.SerializationHandler;
 import org.toobsframework.data.beanutil.BeanMonkey;
 import org.toobsframework.pres.component.Component;
 import org.toobsframework.pres.component.Transform;
-import org.toobsframework.pres.layout.manager.IComponentLayoutManager;
-import org.toobsframework.pres.util.ComponentRequestManager;
+import org.toobsframework.pres.component.config.Parameter;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.pres.util.PresConstants;
-import org.toobsframework.servlet.ContextHelper;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
 import org.toobsframework.transformpipeline.domain.XMLTransformerException;
-import org.toobsframework.transformpipeline.domain.XMLTransformerFactory;
 import org.toobsframework.util.Configuration;
 import org.toobsframework.util.IRequest;
+import org.w3c.dom.Node;
 
 
 @SuppressWarnings("unchecked")
 public class ComponentHelper {
 
+  private static final String COMPONENT_HELPER_PARAMETERS = "componentHelperParameters";
+
   /** To get the logger instance */
   private static Log log = LogFactory.getLog(ComponentHelper.class);
   
-  protected static BeanFactory beanFactory;
-
-  protected static ComponentRequestManager reqManager;
-  protected static IComponentManager compManager;
-  protected static IComponentLayoutManager layoutManager;
-  protected static boolean debugComponents;
-  protected static String layoutExtension;
-  protected static String componentExtension;
+  protected boolean debugComponents;
+  protected String layoutExtension;
+  protected String componentExtension;
   
-  static {
-    beanFactory = ContextHelper.getWebApplicationContext();
-    reqManager = (ComponentRequestManager)beanFactory.getBean("componentRequestManager");
-    compManager = (IComponentManager)beanFactory.getBean("IComponentManager");
-    layoutManager = (IComponentLayoutManager)beanFactory.getBean("IComponentLayoutManager");
+  public ComponentHelper() {
     debugComponents = Configuration.getInstance().getDebugComponents();
     layoutExtension = Configuration.getInstance().getLayoutExtension();
     componentExtension = Configuration.getInstance().getComponentExtension();
   }
-
+  
   /**
    * Function extention for decoding an xml escaped string.  Replaces
    * &lt; &gt; &quot etc. with actual characters.
    *
-   * @exception XMLTransformerException if a Transform Exception Occured.
+   * @exception XMLTransformerException if a Transform Exception Occurred.
    * @return String
    */
   public static String getSummary(String str, String length) throws
@@ -76,7 +58,293 @@ public class ComponentHelper {
     return strippedString;
   }
 
-  private static long getDeployTime(IRequest request) {
+  // ----------------------------------- BEGIN Public Tag Definitions --------------------------------------- //
+  
+  /**
+   * Public Tag - Component - insert a component in the result stream
+   * <p>
+   * <pre><code>
+   *   &lt;toobs:component componentId="<i>id</i>" contentType="<i>type</i>" loader="<i>loader</i>"&gt;
+   *   &lt;/toobs:component>
+   * </code></pre>
+   * 
+   * implicit DTD for component
+   * 
+   * <pre><code>
+   * &lt;!ELEMENT toobs:component (toobs:parameter*)&gt
+   * &lt;!ATTLIST toobs:component
+   * componentId CDATA #REQUIRED
+   * contentType CDATA #IMPLIED
+   * loader NMTOKENS #IMPLIED&gt;
+   * </code></pre>
+   * 
+   * Where
+   * <p>
+   * <ul>
+   * <li>componentId - is the Id of the component, as specified in the .cc.xml file
+   * <li>contentType - is the type of content to be rendered - default="xhtml")
+   * <li>loader - is the type of component loading desired,either "direct" or "lazy" (lazy is used for ajax) - default="direct")
+   * </ul>
+   */
+  public void component(org.apache.xalan.extensions.XSLProcessorContext processorContext, 
+      org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+    
+    // initialize
+    TransformerImpl transformer = processorContext.getTransformer();
+    Object th = transformer.getParameter(IXMLTransformer.TRANSFORMER_HELPER);
+    if (th == null || !(th instanceof ComponentTransformerHelper)) {
+      throw new TransformerException("Internal error: the property " + IXMLTransformer.TRANSFORMER_HELPER + " needs to be properly initialized prior to calling the transformation.");
+    }
+    ComponentTransformerHelper transformerHelper = (ComponentTransformerHelper) th;
+    
+    // Get tag attributes
+    String componentId = extensionElement.getAttribute("componentId", processorContext.getContextNode(), processorContext.getTransformer());
+    String contentType = extensionElement.getAttribute("contentType", processorContext.getContextNode(), processorContext.getTransformer());
+    String loader = extensionElement.getAttribute("loader", processorContext.getContextNode(), processorContext.getTransformer());
+    
+    if (contentType == null || contentType.length() == 0) {
+      contentType = "xhtml";
+    }
+    if (loader == null) {
+      loader = "direct";
+    }
+    
+    // Obtain parameters
+    List<Node> parameterList = new ArrayList<Node>();
+    transformer.setParameter(COMPONENT_HELPER_PARAMETERS, parameterList);
+    transformer.executeChildTemplates(extensionElement, true);
+    transformer.setParameter(COMPONENT_HELPER_PARAMETERS, new Boolean(false));
+
+    // Compute result
+    Random randomGenerator = new Random();
+    StringBuffer sb = new StringBuffer(); 
+    IRequest request = transformerHelper.getComponentRequestManager().get();
+    if (request == null) {
+      throw new TransformerException("Internal error: Invalid request passed to the layout throught the " + IXMLTransformer.TRANSFORMER_HELPER);
+    }
+    
+    try {
+  
+      if(loader.equalsIgnoreCase("direct")) {
+        Map<String, Object> inParams = getRequestParameters("Component:", componentId, request.getParams(), parameterList);
+        Component component = transformerHelper.getComponentManager().getComponent(ParameterUtil.resolveParam(componentId, inParams)[0], getDeployTime(request));
+        appendStyle(sb, component);
+        String randId = componentId + "_"+ randomGenerator.nextInt();
+        if(debugComponents && !component.getId().equalsIgnoreCase("componentFrame")) {
+          prependDebug(sb, component, randId, contentType);
+        }
+        sb.append(transformerHelper.getComponentManager().renderComponent(component, contentType, inParams, request.getParams(), transformerHelper, false));
+        if(debugComponents && !component.getId().equalsIgnoreCase("componentFrame")) {
+          appendDebug(sb, component, randId, contentType);
+        }
+        appendControllers(sb, component);
+        
+      } else if (loader.equalsIgnoreCase("lazy")) {
+        Map inParams = getRequestParameters("Component:", componentId, new HashMap(), parameterList);
+        appendLazyAJAXCall(sb, componentId, inParams);
+      }
+      SerializationHandler handler = transformer.getResultTreeHandler();
+      boolean previousEscaping = handler.setEscaping(false);
+      processorContext.outputToResultTree(extensionElement.getStylesheet(), sb.toString());
+      handler.setEscaping(previousEscaping);
+    } catch (Exception e) {
+      throw new TransformerException("Error executing toobs component insertion: " + e.getMessage(), e);
+    }
+  }
+  
+  /**
+   * Public Tag - Parameter - pass a parameter to a component or layout
+   * <p>
+   * <pre><code>
+   *   &lt;toobs:parameter useContext="<i>true-or-false</i>" /&gt;
+   * </code></pre>
+   * 
+   * implicit DTD for parameter
+   * 
+   * <pre><code>
+   * &lt;!ELEMENT toobs:parameter (EMPTY)?>
+   * &lt;!ATTLIST toobs:parameter
+   * useContext CDATA #IMPLIED&gt;
+   * </code></pre>
+   * 
+   * Where
+   * <p>
+   * <ul>
+   * <li>useContext - true or false, defines if the node to be used as a parameter is the node in context for
+   *   the current path in the xslt.  If true, the node is obtained and passed to the surrounding component or layour tags
+   * </ul>
+   */
+  public void parameter(org.apache.xalan.extensions.XSLProcessorContext processorContext, 
+      org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+    TransformerImpl transformer = processorContext.getTransformer();
+    Object p = transformer.getParameter(COMPONENT_HELPER_PARAMETERS);
+    
+    if (p == null || !(p instanceof List)) {
+      throw new TransformerException("toobs parameter declarartion needs to be nested inside of a toobs component");
+    }
+    List<Node> parameterList = (List<Node>) p;
+
+    String useContext = extensionElement.getAttribute("use-context", processorContext.getContextNode(), processorContext.getTransformer());
+    if (useContext != null && (useContext.equalsIgnoreCase("true") || useContext.equalsIgnoreCase("yes") || useContext.equalsIgnoreCase("1"))) {
+      // in this case, use the context node to copy the parameter to the component call
+      parameterList.add(processorContext.getContextNode());
+    } else {
+      // in this case, use the parameters supplied in the tag
+      // TODO: P2- Implement direct parameter passing in xslt
+    }
+    
+    // this method does not execute any child templates.  No xslt instructions can be nested under it
+  }
+  
+  /**
+   * Public Tag - Layout - insert a sub-layout in the result stream
+   * <p>
+   * <pre><code>
+   *   &lt;toobs:layout layoutId="<i>id</i>"&gt;
+   *   &lt;/toobs:layout>
+   * </code></pre>
+   * 
+   * implicit DTD for layout
+   * 
+   * <pre><code>
+   * &lt;!ELEMENT toobs:layout (toobs:parameter*)&gt
+   * &lt;!ATTLIST toobs:layout
+   * layoutId CDATA #REQUIRED&gt;
+   * </code></pre>
+   * 
+   * Where
+   * <p>
+   * <ul>
+   * <li>layoutId - is the Id of the layout, as specified in the .clc.xml file
+   * </ul>
+   */
+  public void layout(org.apache.xalan.extensions.XSLProcessorContext processorContext, 
+      org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+    
+    // Initialize
+    TransformerImpl transformer = processorContext.getTransformer();
+    Object th = transformer.getParameter(IXMLTransformer.TRANSFORMER_HELPER);
+    if (th == null || !(th instanceof ComponentTransformerHelper)) {
+      throw new TransformerException("Internal error: the property " + IXMLTransformer.TRANSFORMER_HELPER + " needs to be properly initialized prior to calling the transformation.");
+    }
+    ComponentTransformerHelper transformerHelper = (ComponentTransformerHelper) th;
+    
+    // Obtain Tag Attributes
+    String layoutId = extensionElement.getAttribute("layoutId", processorContext.getContextNode(), processorContext.getTransformer());
+  
+    // Obtain parameters
+    List<Node> parameterList = new ArrayList<Node>();
+    transformer.setParameter(COMPONENT_HELPER_PARAMETERS, parameterList);
+    transformer.executeChildTemplates(extensionElement, true);
+    transformer.setParameter(COMPONENT_HELPER_PARAMETERS, new Boolean(false));
+
+    // Compute Results
+    IRequest request = transformerHelper.getComponentRequestManager().get();
+    if (request == null) {
+      throw new TransformerException("Internal error: Invalid request passed to the layout throught the " + IXMLTransformer.TRANSFORMER_HELPER);
+    }
+
+    try {
+      request.setParams(getRequestParameters("Layout:", layoutId, request.getParams(), parameterList));      
+      String s = transformerHelper.getComponentLayoutManager().getLayout(ParameterUtil.resolveParam(layoutId, request.getParams())[0], getDeployTime(request)).render(request, transformerHelper);
+      SerializationHandler handler = transformer.getResultTreeHandler();
+
+      boolean previousEscaping = handler.setEscaping(false);
+      processorContext.outputToResultTree(extensionElement.getStylesheet(), s);
+      handler.setEscaping(previousEscaping);
+     
+    } catch (Exception ex) {
+      throw new TransformerException("Error obtaining layout with id=" + layoutId + ": " + ex.getMessage(), ex);
+    }
+  }
+
+  /**
+   * Public Tag - ComponentUrl - insert a component or sub-layout by URL the result stream
+   * <p>
+   * <pre><code>
+   *   &lt;toobs:componentUrl url="<i>url</i>" contentType="<i>type</i>"</i>" /&gt;
+   * </code></pre>
+   * 
+   * implicit DTD for componentUrl
+   * 
+   * <pre><code>
+   * &lt;!ELEMENT toobs:componentUrl (EMPTY)?&gt
+   * &lt;!ATTLIST toobs:componentUrl
+   * url CDATA #REQUIRED
+   * contentType CDATA #IMPLIED&gt;
+   * </code></pre>
+   * 
+   * Where
+   * <p>
+   * <ul>
+   * <li>url is the url coming from the browser
+   * <li>contentType - is the type of content to be rendered - default="xhtml")
+   * </ul>
+   */
+  public void componentUrl(org.apache.xalan.extensions.XSLProcessorContext processorContext, 
+      org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+
+    // Initialize
+    TransformerImpl transformer = processorContext.getTransformer();
+    Object th = transformer.getParameter(IXMLTransformer.TRANSFORMER_HELPER);
+    if (th == null || !(th instanceof ComponentTransformerHelper)) {
+      throw new TransformerException("Internal error: the property " + IXMLTransformer.TRANSFORMER_HELPER + " needs to be properly initialized prior to calling the transformation.");
+    }
+    ComponentTransformerHelper transformerHelper = (ComponentTransformerHelper) th;
+    
+    // Get attributes
+    String componentUrl = extensionElement.getAttribute("url", processorContext.getContextNode(), processorContext.getTransformer());
+    String contentType = extensionElement.getAttribute("contentType", processorContext.getContextNode(), processorContext.getTransformer());
+    
+    if (contentType == null || contentType.length() == 0) {
+      contentType = "xhtml";
+    }
+
+    // Compute Results
+    IRequest request = transformerHelper.getComponentRequestManager().get();
+    if (request == null) {
+      throw new TransformerException("Internal error: Invalid request passed to the layout throught the " + IXMLTransformer.TRANSFORMER_HELPER);
+    }
+    try {
+      StringBuffer sb = new StringBuffer(); 
+      Map inParams = new HashMap(request.getParams());
+      String componentId = parseUrl("Component:", componentUrl, request, inParams);
+      if (componentId.indexOf(layoutExtension) != -1) {
+        sb.append(transformerHelper.getComponentLayoutManager().getLayout(ParameterUtil.resolveParam(componentId.replace(layoutExtension, ""), request.getParams())[0], getDeployTime(request)).render(request, transformerHelper));
+      } else {
+        Component component = transformerHelper.getComponentManager().getComponent(ParameterUtil.resolveParam(componentId, inParams)[0], getDeployTime(request));
+        sb.append(transformerHelper.getComponentManager().renderComponent(component, contentType, inParams, request.getParams(), transformerHelper, false));
+        appendControllers(sb, component);
+      }
+
+      SerializationHandler handler = transformer.getResultTreeHandler();
+      boolean previousEscaping = handler.setEscaping(false);
+      processorContext.outputToResultTree(extensionElement.getStylesheet(), sb.toString());
+      handler.setEscaping(previousEscaping);
+    } catch (Exception ex) {
+      throw new TransformerException("Error obtaining component with url=" + componentUrl + ": " + ex.getMessage(), ex);
+    }
+  }
+   
+ 
+  /*
+  public String getUserAgent(ComponentTransformerHelper transformerHelper) throws XMLTransformerException {
+    try {
+      IRequest request = transformerHelper.getComponentRequestManager().get();
+      if (request == null) {
+        throw new XMLTransformerException("Invalid request");
+      }
+      return request.getHttpRequest().getHeader("user-agent");
+    } catch (Exception ex) {
+      log.error(ex.getMessage(), ex);
+      throw new XMLTransformerException(ex);
+    }
+  }*/
+  
+  // ----------------------------------- END Public Tag Definitions --------------------------------------- //
+
+  
+  protected long getDeployTime(IRequest request) {
     long deployTime = 0L;
     if (request.getParams().containsKey(PresConstants.DEPLOY_TIME)) {
       deployTime = Long.parseLong((String)request.getParams().get(PresConstants.DEPLOY_TIME));
@@ -86,76 +354,8 @@ public class ComponentHelper {
     return deployTime;
   }
 
-  public static String componentRef(String componentId, String contentType, Object parameters) throws
-  XMLTransformerException {
-    return componentRef(componentId, contentType, "direct", parameters);
-  }
 
-  public static String componentRef(String componentId, String contentType, String loader, Object parameters) throws
-      XMLTransformerException {
-
-    Random randomGenerator = new Random();
-    try {
-      StringBuffer sb = new StringBuffer(); 
-      IRequest request = reqManager.get();
-      if (request == null) {
-        throw new XMLTransformerException("Invalid request");
-      }
-      if (contentType == null || contentType.length() == 0) {
-    	contentType = "xhtml";
-      }
-      if(loader.equalsIgnoreCase("direct")) {
-        Map inParams = getRequestParameters("Component:", componentId, request.getParams(), parameters);
-        Component component = compManager.getComponent(ParameterUtil.resolveParam(componentId, inParams)[0], getDeployTime(request));
-        appendStyle(sb, component);
-        String randId = componentId + "_"+ randomGenerator.nextInt();
-        if(debugComponents && !component.getId().equalsIgnoreCase("componentFrame")) {
-          prependDebug(sb, component, randId, contentType);
-        }
-        sb.append(compManager.renderComponent(component, contentType, inParams, request.getParams(), false));
-        if(debugComponents && !component.getId().equalsIgnoreCase("componentFrame")) {
-          appendDebug(sb, component, randId, contentType);
-        }
-        appendControllers(sb, component);
-        
-      } else if (loader.equalsIgnoreCase("lazy")) {
-        Map inParams = getRequestParameters("Component:", componentId, new HashMap(), parameters);
-        appendLazyAJAXCall(sb, componentId, inParams);
-      }
-      return sb.toString();
-    } catch (Exception ex) {
-      throw new XMLTransformerException(ex);
-    }
-  }
-  
-  public static String componentUrl(String componentUrl, String contentType) throws
-    XMLTransformerException {
-
-    try {
-      StringBuffer sb = new StringBuffer(); 
-      IRequest request = reqManager.get();
-      if (request == null) {
-        throw new XMLTransformerException("Invalid request");
-      }
-      if (contentType == null || contentType.length() == 0) {
-        contentType = "xhtml";
-      }
-      Map inParams = new HashMap(request.getParams());
-      String componentId = parseUrl("Component:", componentUrl, request, inParams);
-      if (componentId.indexOf(layoutExtension) != -1) {
-        return layoutManager.getLayout(ParameterUtil.resolveParam(componentId.replace(layoutExtension, ""), request.getParams())[0], getDeployTime(request)).render(request);
-      } else {
-        Component component = compManager.getComponent(ParameterUtil.resolveParam(componentId, inParams)[0], getDeployTime(request));
-        sb.append(compManager.renderComponent(component, contentType, inParams, request.getParams(), false));
-        appendControllers(sb, component);
-      }
-      return sb.toString();
-    } catch (Exception ex) {
-      throw new XMLTransformerException(ex);
-    }
-  }
-
-  private static void appendLazyAJAXCall(StringBuffer sb, String componentId, Map parameters) {
+  protected void appendLazyAJAXCall(StringBuffer sb, String componentId, Map parameters) {
     Random randomGenerator = new Random();
     //Create container id
     String container = componentId + "_"+ randomGenerator.nextInt();
@@ -178,7 +378,7 @@ public class ComponentHelper {
     sb.append("</script>\n");
   }
 
-  private static void appendStyle(StringBuffer sb, Component component) {
+  protected void appendStyle(StringBuffer sb, Component component) {
     if (component.getStyles().length > 0) {
       for (int i=0; i < component.getStyles().length; i++) {
         if (component.getStyles()[i].length() > 0) {
@@ -188,7 +388,7 @@ public class ComponentHelper {
     }
   }
 
-  private static void prependDebug(StringBuffer sb, Component component, String randId, String contentType) {
+  protected void prependDebug(StringBuffer sb, Component component, String randId, String contentType) {
     sb.append("<div id=\"" + randId + "_stats\" style=\"display:none;\" class=\"component_stats bluebox\">");
     sb.append("<h2>File: " + component.getFileName() + "</h2>");
     sb.append("<h2>Component: " + component.getId() + "</h2>");
@@ -206,11 +406,12 @@ public class ComponentHelper {
     sb.append("<div id=\"" + randId + "\" class=\"component_stats_wrapper\" >");
   }
 
-  private static void appendDebug(StringBuffer sb, Component component, String randId, String contentType) {
+  
+  protected void appendDebug(StringBuffer sb, Component component, String randId, String contentType) {
     sb.append("</div>");
   }
 
-  private static void appendControllers(StringBuffer sb, Component component) {
+  protected void appendControllers(StringBuffer sb, Component component) {
     if (component.getControllerNames().length > 0) {
       sb.append("<script type=\"text/javascript\">\n");
       for (int i=0; i < component.getControllerNames().length; i++) {
@@ -222,27 +423,12 @@ public class ComponentHelper {
     }
   }
   
-  public static String componentLayoutRef(String layoutId, Object parameters) throws
-      XMLTransformerException {
-    
-    try {
-      IRequest request = reqManager.get();
-      if (request == null) {
-        throw new XMLTransformerException("Invalid request");
-      }
-      request.setParams(getRequestParameters("Layout:", layoutId, request.getParams(), parameters));      
-      return layoutManager.getLayout(ParameterUtil.resolveParam(layoutId, request.getParams())[0], getDeployTime(request)).render(request);
-    } catch (Exception ex) {
-      throw new XMLTransformerException(ex);
-    }
-  }
-
-  public static String inlineUrl(String transformUrl, Object inputNode) throws
+  /*public String inlineUrl(String transformUrl, Object inputNode) throws
     XMLTransformerException {
   
     try {
       StringBuffer sb = new StringBuffer(); 
-      IRequest request = reqManager.get();
+      IRequest request = componentRequestManager.get();
       if (request == null) {
         throw new XMLTransformerException("Invalid request");
       }
@@ -279,14 +465,14 @@ public class ComponentHelper {
     } catch (Exception ex) {
       throw new XMLTransformerException(ex);
     }
-  }
+  }*/
   
-  public static String transformEmail(String transformUrl, String emailContent, Object inputNode) throws
+  /*public String transformEmail(String transformUrl, String emailContent, Object inputNode) throws
     XMLTransformerException {
 
   try {
     StringBuffer sb = new StringBuffer(); 
-    IRequest request = reqManager.get();
+    IRequest request = componentRequestManager.get();
     if (request == null) {
       throw new XMLTransformerException("Invalid request");
     }
@@ -345,15 +531,16 @@ public class ComponentHelper {
   } catch (Exception ex) {
     throw new XMLTransformerException(ex);
   }
-}
+}*/
 
-  public static String getParam(String name, String defaultValue) throws XMLTransformerException {
+  /*
+  public String getParam(String name, String defaultValue) throws XMLTransformerException {
     if (name == null) {
       throw new XMLTransformerException("getParam: name must not be null");
     }
     Object value = defaultValue;
     try {
-      IRequest request = reqManager.get();
+      IRequest request = componentRequestManager.get();
       Map params = request.getParams();
       // Not overriding existing
       if (params.containsKey(name)) {
@@ -365,16 +552,18 @@ public class ComponentHelper {
     return String.valueOf(value);
   }
 
-  public static boolean setParam(String name, String value) throws XMLTransformerException {
+  public boolean setParam(String name, String value) throws XMLTransformerException {
     return setParam(name, value, false);
   }
-
-  public static boolean setParam(String name, String value, boolean overwrite) throws XMLTransformerException {
+*/
+  
+  /*
+  public boolean setParam(String name, String value, boolean overwrite) throws XMLTransformerException {
     if (name == null || value == null) {
       throw new XMLTransformerException("setParam: name and value must not be null");
     }
     try {
-      IRequest request = reqManager.get();
+      IRequest request = componentRequestManager.get();
       Map params = request.getParams();
       // Not overriding existing
       if (overwrite || !params.containsKey(name)) {
@@ -395,13 +584,15 @@ public class ComponentHelper {
     }
     return true;
   }
-
-  public static boolean setSessionParam(String name, String value) throws XMLTransformerException {
+*/
+  
+  /*
+  public boolean setSessionParam(String name, String value) throws XMLTransformerException {
     if (name == null || value == null) {
       throw new XMLTransformerException("setSessionParam: name and value must not be null");
     }
     try {
-      IRequest request = reqManager.get();
+      IRequest request = componentRequestManager.get();
       HttpSession session = request.getHttpRequest().getSession();
       session.setAttribute(name, value);
       Map params = request.getParams();
@@ -411,14 +602,15 @@ public class ComponentHelper {
     }
     return true;
   }
+  */
 
-  public static Object getNumberParam(String name, boolean asAverage) throws XMLTransformerException {
+  /*public Object getNumberParam(String name, boolean asAverage) throws XMLTransformerException {
     if (name == null) {
       throw new XMLTransformerException("getNumberParam: name must not be null");
     }
     Double value = new Double(0);
     try {
-      IRequest request = reqManager.get();
+      IRequest request = componentRequestManager.get();
       Map params = request.getParams();
       // Not overriding existing
       if (params.containsKey(name)) {
@@ -433,13 +625,15 @@ public class ComponentHelper {
     }
     return value;
   }
-
-  public static boolean setNumberParam(String name, Object value, boolean trackAverage) throws XMLTransformerException {
+*/
+  
+  /*
+  public boolean setNumberParam(String name, Object value, boolean trackAverage) throws XMLTransformerException {
     if (name == null || value == null) {
       throw new XMLTransformerException("setParam: name and value must not be null");
     }
     try {
-      IRequest request = reqManager.get();
+      IRequest request = componentRequestManager.get();
       Map params = request.getParams();
 
       if (params.containsKey(name)) {
@@ -459,14 +653,15 @@ public class ComponentHelper {
       throw new XMLTransformerException(ex);
     }
     return true;
-  }
+  }*/
 
-  public static boolean resetNumberParam(String name) throws XMLTransformerException {
+  /*
+  public boolean resetNumberParam(String name) throws XMLTransformerException {
     if (name == null) {
       throw new XMLTransformerException("setParam: name and value must not be null");
     }
     try {
-      IRequest request = reqManager.get();
+      IRequest request = componentRequestManager.get();
       Map params = request.getParams();
 
       if (params.containsKey(name)) {
@@ -479,9 +674,9 @@ public class ComponentHelper {
       throw new XMLTransformerException(ex);
     }
     return true;
-  }
+  }*/
 
-  protected static String parseUrl(String context, 
+  protected String parseUrl(String context, 
       String componentUrl, 
       IRequest request, 
       Map inParams) throws Exception {
@@ -529,11 +724,8 @@ public class ComponentHelper {
     }
     return componentId.replace(componentExtension, "");
   }
-
-  private static Map getRequestParameters(String context, 
-      String scopeId, 
-      Map requestParams, 
-      Object parameters) throws Exception {
+  
+  protected Map getRequestParameters(String context, String scopeId, Map requestParams, Object parameters) throws Exception {
     Map outParams = new HashMap(requestParams);
     if (parameters != null) {
       ArrayList paramList = new ArrayList();
@@ -544,13 +736,20 @@ public class ComponentHelper {
         while ((currentNode = nodeIter.nextNode()) != null) {
           processNode(currentNode, paramList);
         }
-      }
+      } else //...
       // This is the Translet case
       if (parameters instanceof org.apache.xml.dtm.ref.DTMAxisIterNodeList) {
         org.apache.xml.dtm.ref.DTMAxisIterNodeList nodeList = (org.apache.xml.dtm.ref.DTMAxisIterNodeList)parameters;
         int nodes = nodeList.getLength();
         for (int i = 0; i < nodes; i++) {
           processNode(nodeList.item(i), paramList);
+        }
+      } else //...
+      // this is the nested toobs tags case
+      if (parameters instanceof List) {
+        List<Node> nodes = (List<Node>) parameters;
+        for (Node node : nodes) {
+          processNode(node, paramList);
         }
       }
       Parameter[] paramMap = new Parameter[paramList.size()];
@@ -560,7 +759,7 @@ public class ComponentHelper {
     return outParams;
   }
   
-  private static void processNode(org.w3c.dom.Node currentNode, ArrayList paramList) throws Exception {
+  protected void processNode(org.w3c.dom.Node currentNode, ArrayList paramList) throws Exception {
     if (currentNode != null && currentNode.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE) {
       org.w3c.dom.NamedNodeMap nodeMap = currentNode.getAttributes();
       Map nodeAttributes = new HashMap();
@@ -586,19 +785,7 @@ public class ComponentHelper {
   }
   */
   
-  public static String getUserAgent() throws XMLTransformerException {
-    try {
-      IRequest request = reqManager.get();
-      if (request == null) {
-        throw new XMLTransformerException("Invalid request");
-      }
-      return request.getHttpRequest().getHeader("user-agent");
-    } catch (Exception ex) {
-      log.error(ex.getMessage(), ex);
-      throw new XMLTransformerException(ex);
-    }
-  }
-  
+  /*
   public static String pageLinks(int pageSize, int firstResult, int totalRows, int pagesDisplayed) {
     StringBuffer sb = new StringBuffer();
     int currentPage=firstResult;
@@ -621,6 +808,5 @@ public class ComponentHelper {
     }
     
     return sb.toString();
-  }
-
+  }*/
 }

@@ -9,6 +9,6 @@ public interface IDoItManager {
 
   public abstract DoIt getDoIt(String Id) throws Exception;
 
-  public void addConfigFiles(List configFiles);
+  public void addConfigFiles(List<String> configFiles);
   
 }

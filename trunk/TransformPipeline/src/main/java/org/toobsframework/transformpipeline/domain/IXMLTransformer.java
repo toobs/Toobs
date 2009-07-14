@@ -31,6 +31,8 @@ public interface IXMLTransformer {
   public static final String USE_CHAIN = "xmlpipeline.UseChain";
 
   public static final String CACHE_XSL_FILES = "xmlpipeline.CacheXSLFiles";
+  
+  public static final String TRANSFORMER_HELPER = "transformerHelper";
 
   /**
    * Contains the transformation logic.
@@ -47,7 +49,7 @@ public interface IXMLTransformer {
   public List<String> transform(
       List<String> inputXSLs,
       List<String> inputXMLs,
-      Map<String, Object> params) throws XMLTransformerException;
+      Map<String, Object> params, IXMLTransformerHelper transformerHelper) throws XMLTransformerException;
 
   public void setOutputProperties(Properties outputProperties);
   

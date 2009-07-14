@@ -75,11 +75,12 @@ public class CachingChainedTransformer extends BaseXMLTransformer implements Err
   public List<String> transform(
       List<String> inputXSLs,
       List<String> inputXMLs,
-      Map<String, Object> inputParams) throws XMLTransformerException {
+      Map<String, Object> inputParams,
+      IXMLTransformerHelper transformerHelper) throws XMLTransformerException {
 
     List<String> resultingXMLs = new ArrayList<String>();
     for (int i = 0; i < inputXMLs.size(); i++) {
-      resultingXMLs.add(transform(inputXSLs, (String)inputXMLs.get(i), inputParams));
+      resultingXMLs.add(transform(inputXSLs, (String)inputXMLs.get(i), inputParams, transformerHelper));
     }
     return resultingXMLs;
   }
@@ -87,7 +88,8 @@ public class CachingChainedTransformer extends BaseXMLTransformer implements Err
   private String transform(
       List<String> inputXSLs,
       String inputXML,
-      Map<String, Object> inputParams) throws XMLTransformerException {
+      Map<String, Object> inputParams,
+      IXMLTransformerHelper transformerHelper) throws XMLTransformerException {
 
     String outputXML = null;
     ByteArrayInputStream  xmlInputStream = null;
@@ -138,6 +140,9 @@ public class CachingChainedTransformer extends BaseXMLTransformer implements Err
               Map.Entry<String, Object> thisParam = paramIt.next();
               transformer.setParameter( thisParam.getKey(), thisParam.getValue());
             }
+          }
+          if (transformerHelper != null) {
+            transformer.setParameter(TRANSFORMER_HELPER, transformerHelper);
           }
           tHandlers.add(tHandler);
         }
@@ -193,11 +198,6 @@ public class CachingChainedTransformer extends BaseXMLTransformer implements Err
       throw new XMLTransformerException(ex);
     } finally {
       try {
-        if (tHandlers != null) {
-          for (TransformerHandler tHandler : tHandlers) {
-            ((TransformerHandlerImpl)tHandler).clearCoRoutine();
-          }
-        }
         if (reader != null) {
           XMLReaderManager.getInstance().releaseXMLReader(reader);
         }

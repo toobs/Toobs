@@ -23,7 +23,7 @@ import org.toobsframework.biz.validation.IValidator;
 import org.toobsframework.data.IObjectLoader;
 import org.toobsframework.data.beanutil.BeanMonkey;
 import org.toobsframework.exception.ValidationException;
-import org.toobsframework.pres.component.datasource.api.IDataSource;
+import org.toobsframework.pres.component.dataprovider.api.IDataProvider;
 import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.pres.util.PresConstants;
@@ -412,8 +412,8 @@ public class DoItRunner implements IDoItRunner {
     return inputObject;
   }
   
-  public IDataSource getDatasource() {
-    return (IDataSource) BeanMonkey.getBeanFactoryInstance().getBean("DefaultDatasource");
+  public IDataProvider getDatasource() {
+    return (IDataProvider) BeanMonkey.getBeanFactoryInstance().getBean("DefaultDatasource");
   }
   
   public ComponentRequestManager getComponentRequestManager() {

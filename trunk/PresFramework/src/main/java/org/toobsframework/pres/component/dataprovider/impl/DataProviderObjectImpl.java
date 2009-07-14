@@ -1,4 +1,4 @@
-package org.toobsframework.pres.component.datasource.impl;
+package org.toobsframework.pres.component.dataprovider.impl;
 
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
@@ -8,22 +8,22 @@ import java.util.Map;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.toobsframework.pres.component.datasource.api.IDataSourceObject;
-import org.toobsframework.pres.component.datasource.api.IDataSourceObjectProperty;
-import org.toobsframework.pres.component.datasource.api.InvalidContextException;
-import org.toobsframework.pres.component.datasource.api.LockException;
-import org.toobsframework.pres.component.datasource.api.NotAMappedPropertyException;
-import org.toobsframework.pres.component.datasource.api.NotAnIndexedPropertyException;
-import org.toobsframework.pres.component.datasource.api.ObjectSaveException;
-import org.toobsframework.pres.component.datasource.api.PropertyNotFoundException;
-import org.toobsframework.pres.component.datasource.api.TypeMismatchException;
-import org.toobsframework.pres.component.datasource.api.UnlockException;
+import org.toobsframework.pres.component.dataprovider.api.IDataProviderObject;
+import org.toobsframework.pres.component.dataprovider.api.IDataProviderObjectProperty;
+import org.toobsframework.pres.component.dataprovider.api.InvalidContextException;
+import org.toobsframework.pres.component.dataprovider.api.LockException;
+import org.toobsframework.pres.component.dataprovider.api.NotAMappedPropertyException;
+import org.toobsframework.pres.component.dataprovider.api.NotAnIndexedPropertyException;
+import org.toobsframework.pres.component.dataprovider.api.ObjectSaveException;
+import org.toobsframework.pres.component.dataprovider.api.PropertyNotFoundException;
+import org.toobsframework.pres.component.dataprovider.api.TypeMismatchException;
+import org.toobsframework.pres.component.dataprovider.api.UnlockException;
 import org.toobsframework.util.BetwixtUtil;
 
 
-public class DataSourceObjectImpl implements IDataSourceObject {
+public class DataProviderObjectImpl implements IDataProviderObject {
 
-  private static Log log = LogFactory.getLog(DataSourceObjectImpl.class);
+  private static Log log = LogFactory.getLog(DataProviderObjectImpl.class);
 
   private Object valueObject = null;
   private boolean isXml = false;
@@ -58,15 +58,15 @@ public class DataSourceObjectImpl implements IDataSourceObject {
     return false;
   }
 
-  public IDataSourceObjectProperty getProperty(String propertyName)
+  public IDataProviderObjectProperty getProperty(String propertyName)
       throws PropertyNotFoundException {
 
-    DataSourcePropertyImpl dsProperty = null;
+    DataProviderPropertyImpl dsProperty = null;
 
     try {
       PropertyDescriptor property = PropertyUtils.getPropertyDescriptor(this
           .getValueObject(), propertyName);
-      dsProperty = new DataSourcePropertyImpl(property);
+      dsProperty = new DataProviderPropertyImpl(property);
       dsProperty.setPropertyValue(property.getReadMethod().invoke(this,
           (Object[]) null));
     } catch (IllegalAccessException e) {
@@ -80,12 +80,12 @@ public class DataSourceObjectImpl implements IDataSourceObject {
     return dsProperty;
   }
 
-  public IDataSourceObjectProperty[] getProperties() {
+  public IDataProviderObjectProperty[] getProperties() {
     // TODO Auto-generated method stub
     return null;
   }
 
-  public IDataSourceObjectProperty[] getProperties(String[] propertyNames)
+  public IDataProviderObjectProperty[] getProperties(String[] propertyNames)
       throws PropertyNotFoundException {
     // TODO Auto-generated method stub
     return null;
@@ -128,12 +128,12 @@ public class DataSourceObjectImpl implements IDataSourceObject {
 
   }
 
-  public IDataSourceObject[] getChildren() {
+  public IDataProviderObject[] getChildren() {
     // TODO Auto-generated method stub
     return null;
   }
 
-  public IDataSourceObject getChild(int index) {
+  public IDataProviderObject getChild(int index) {
     // TODO Auto-generated method stub
     return null;
   }
@@ -151,7 +151,7 @@ public class DataSourceObjectImpl implements IDataSourceObject {
 
   }
 
-  public void addChild(String context, IDataSourceObjectProperty[] properties)
+  public void addChild(String context, IDataProviderObjectProperty[] properties)
       throws InvalidContextException {
     // TODO Auto-generated method stub
 

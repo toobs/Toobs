@@ -17,7 +17,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.web.util.WebUtils;
 import org.toobsframework.pres.component.config.Parameter;
-import org.toobsframework.pres.component.datasource.api.IDataSourceObject;
+import org.toobsframework.pres.component.dataprovider.api.IDataProviderObject;
 import org.toobsframework.pres.doit.config.Forward;
 import org.toobsframework.exception.ParameterException;
 import org.toobsframework.util.Configuration;
@@ -146,7 +146,7 @@ public class ParameterUtil {
       Map inParams, 
       Map outParams, 
       String scopeId, 
-      List<IDataSourceObject> objects) throws ParameterException {
+      List<IDataProviderObject> objects) throws ParameterException {
     JXPathContext context = JXPathContext.newContext(inParams);
     for(int j = 0; j < paramMap.length; j++){
       Parameter thisParam = paramMap[j];
@@ -261,7 +261,7 @@ public class ParameterUtil {
     }
   }
 
-  public static void mapOutputParameters(Parameter[] paramMap, Map paramsIn, String scopeId, List<IDataSourceObject> objects) {
+  public static void mapOutputParameters(Parameter[] paramMap, Map paramsIn, String scopeId, List<IDataProviderObject> objects) {
     for(int j = 0; j < paramMap.length; j++){
       Parameter thisParam = paramMap[j];
       if (thisParam.getScope() != null && 

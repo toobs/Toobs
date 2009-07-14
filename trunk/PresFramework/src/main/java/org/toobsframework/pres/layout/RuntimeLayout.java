@@ -17,6 +17,7 @@ import org.toobsframework.pres.layout.config.Section;
 import org.toobsframework.exception.ParameterException;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
+import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 import org.toobsframework.transformpipeline.domain.XMLTransformerException;
 import org.toobsframework.util.BetwixtUtil;
 import org.toobsframework.util.Configuration;
@@ -79,11 +80,11 @@ public class RuntimeLayout {
     this.layoutXml = layoutXml;
   }
   
-  public String render(IRequest request) throws ComponentException, ParameterException {
-    return this.render(request, "xhtml");  
+  public String render(IRequest request, IXMLTransformerHelper transformerHelper) throws ComponentException, ParameterException {
+    return this.render(request, "xhtml", transformerHelper);  
   }
-
-  public String render(IRequest request, String contentType) throws ComponentException, ParameterException {
+  
+  public String render(IRequest request, String contentType, IXMLTransformerHelper transformerHelper) throws ComponentException, ParameterException {
     IXMLTransformer xmlTransformer = null;
     StringBuffer outputString = new StringBuffer();
     Map layoutParams = new HashMap();
@@ -125,7 +126,7 @@ public class RuntimeLayout {
       if (request.getParams().get("appContext") != null) {
         layoutParams.put("appContext", request.getParams().get("appContext"));
       }
-      outputXML = xmlTransformer.transform(inputXSLs, inputXMLs, layoutParams);
+      outputXML = xmlTransformer.transform(inputXSLs, inputXMLs, layoutParams, transformerHelper);
     } catch (XMLTransformerException e) {
       throw new ComponentException(e);
     }

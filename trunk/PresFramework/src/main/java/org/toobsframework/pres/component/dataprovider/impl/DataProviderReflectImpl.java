@@ -1,4 +1,4 @@
-package org.toobsframework.pres.component.datasource.impl;
+package org.toobsframework.pres.component.dataprovider.impl;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -16,28 +16,28 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.toobsframework.data.beanutil.BeanMonkey;
-import org.toobsframework.pres.component.datasource.api.DataSourceInitializationException;
-import org.toobsframework.pres.component.datasource.api.DataSourceNotInitializedException;
-import org.toobsframework.pres.component.datasource.api.IDataSource;
-import org.toobsframework.pres.component.datasource.api.IDataSourceObject;
-import org.toobsframework.pres.component.datasource.api.InvalidContextException;
-import org.toobsframework.pres.component.datasource.api.ObjectCreationException;
-import org.toobsframework.pres.component.datasource.api.ObjectNotFoundException;
-import org.toobsframework.pres.component.datasource.api.PropertyNotFoundException;
-import org.toobsframework.pres.component.datasource.api.TypeMismatchException;
+import org.toobsframework.pres.component.dataprovider.api.DataProviderInitializationException;
+import org.toobsframework.pres.component.dataprovider.api.DataProviderNotInitializedException;
+import org.toobsframework.pres.component.dataprovider.api.IDataProvider;
+import org.toobsframework.pres.component.dataprovider.api.IDataProviderObject;
+import org.toobsframework.pres.component.dataprovider.api.InvalidContextException;
+import org.toobsframework.pres.component.dataprovider.api.ObjectCreationException;
+import org.toobsframework.pres.component.dataprovider.api.ObjectNotFoundException;
+import org.toobsframework.pres.component.dataprovider.api.PropertyNotFoundException;
+import org.toobsframework.pres.component.dataprovider.api.TypeMismatchException;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.util.constants.PlatformConstants;
 
 
 @SuppressWarnings("unchecked")
-public class DataSourceReflectImpl implements  BeanFactoryAware { //IDataSource,
+public class DataProviderReflectImpl implements  BeanFactoryAware { //IDataSource,
 
   private BeanFactory beanFactory;
   public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
     this.beanFactory = beanFactory;
   }
 
-  private Log log = LogFactory.getLog(DataSourceReflectImpl.class);
+  private Log log = LogFactory.getLog(DataProviderReflectImpl.class);
 
   public String getId() {
     // TODO Auto-generated method stub
@@ -49,14 +49,14 @@ public class DataSourceReflectImpl implements  BeanFactoryAware { //IDataSource,
     return null;
   }
 
-  public void init(Map params) throws DataSourceInitializationException {
+  public void init(Map params) throws DataProviderInitializationException {
     log.info("entered init");
   }
 
-  public IDataSourceObject getObject(String objectType, String dao,
+  public IDataProviderObject getObject(String objectType, String dao,
       String objectId, Map params, Map outParams) throws ObjectNotFoundException,
-      DataSourceNotInitializedException {
-    DataSourceObjectImpl dsObj = new DataSourceObjectImpl();
+      DataProviderNotInitializedException {
+    DataProviderObjectImpl dsObj = new DataProviderObjectImpl();
     try {
 
       Object service = beanFactory.getBean(dao);
@@ -74,11 +74,11 @@ public class DataSourceReflectImpl implements  BeanFactoryAware { //IDataSource,
     return dsObj;
   }
   
-  public IDataSourceObject createObject(Object valueObject) throws DataSourceNotInitializedException {
+  public IDataProviderObject createObject(Object valueObject) throws DataProviderNotInitializedException {
     if (valueObject == null) {
       return null;
     }
-    DataSourceObjectImpl dsObj = new DataSourceObjectImpl();
+    DataProviderObjectImpl dsObj = new DataProviderObjectImpl();
     dsObj.setValueObject(valueObject);
     return dsObj;
   }
@@ -101,7 +101,7 @@ public class DataSourceReflectImpl implements  BeanFactoryAware { //IDataSource,
       //Massage Objects.
       Iterator it = objects.iterator();
       while(it.hasNext()){
-        DataSourceObjectImpl dsObj = new DataSourceObjectImpl();
+        DataProviderObjectImpl dsObj = new DataProviderObjectImpl();
         dsObj.setValueObject(it.next());
         retObjects.add(dsObj);
       }
@@ -133,7 +133,7 @@ public class DataSourceReflectImpl implements  BeanFactoryAware { //IDataSource,
         //Massage Objects.
         Iterator it = objects.iterator();
         while(it.hasNext()){
-          DataSourceObjectImpl dsObj = new DataSourceObjectImpl();
+          DataProviderObjectImpl dsObj = new DataProviderObjectImpl();
           dsObj.setValueObject(it.next());
           retObjects.add(dsObj);
         }
@@ -146,7 +146,7 @@ public class DataSourceReflectImpl implements  BeanFactoryAware { //IDataSource,
   }
 
   public Boolean deleteObject(String objectDao, String objectId, String permissionContext, Map params, Map outParams)
-      throws ObjectNotFoundException, DataSourceNotInitializedException {
+      throws ObjectNotFoundException, DataProviderNotInitializedException {
     Boolean retObj;
 
     params.put("guid", objectId);
@@ -168,7 +168,7 @@ public class DataSourceReflectImpl implements  BeanFactoryAware { //IDataSource,
   }
 
   public Boolean purgeObject(String objectDao, String objectId, String permissionContext, Map params, Map outParams)
-      throws ObjectNotFoundException, DataSourceNotInitializedException {
+      throws ObjectNotFoundException, DataProviderNotInitializedException {
     Boolean retObj;
     
     params.put("guid", objectId);
@@ -189,11 +189,11 @@ public class DataSourceReflectImpl implements  BeanFactoryAware { //IDataSource,
     return retObj;
   }
 
-  public IDataSourceObject updateObject(String objectType, String objectDao,
+  public IDataProviderObject updateObject(String objectType, String objectDao,
       String returnObjectType, String objectId, String permissionContext, Map valueMap, Map outParams) throws ObjectNotFoundException,
       PropertyNotFoundException, TypeMismatchException,
-      DataSourceNotInitializedException {
-    DataSourceObjectImpl dsObj = new DataSourceObjectImpl();
+      DataProviderNotInitializedException {
+    DataProviderObjectImpl dsObj = new DataProviderObjectImpl();
     try {
 
       valueMap.put("guid", objectId);
@@ -226,11 +226,11 @@ public class DataSourceReflectImpl implements  BeanFactoryAware { //IDataSource,
     return dsObj;
   }
 
-  public IDataSourceObject updateObjectCollection(String objectType, String objectDao,
+  public IDataProviderObject updateObjectCollection(String objectType, String objectDao,
       String returnObjectType, String objectId, String permissionContext, String indexParam, Map valueMap, Map outParams) throws ObjectNotFoundException,
       PropertyNotFoundException, TypeMismatchException,
-      DataSourceNotInitializedException {
-    DataSourceObjectImpl dsObj = new DataSourceObjectImpl();
+      DataProviderNotInitializedException {
+    DataProviderObjectImpl dsObj = new DataProviderObjectImpl();
     try {
 
       valueMap.put("guid", objectId);
@@ -264,10 +264,10 @@ public class DataSourceReflectImpl implements  BeanFactoryAware { //IDataSource,
     return dsObj;
   }
 
-  public IDataSourceObject createObject(String objectType, String objectDao,
+  public IDataProviderObject createObject(String objectType, String objectDao,
       String returnObjectType, String permissionContext, Map params, Map outParams) throws ObjectCreationException,
-      DataSourceNotInitializedException, InvalidContextException {
-    DataSourceObjectImpl dsObj = new DataSourceObjectImpl();
+      DataProviderNotInitializedException, InvalidContextException {
+    DataProviderObjectImpl dsObj = new DataProviderObjectImpl();
 
     params.put("objectDao", objectDao);
     params.put("objectClass", objectType);
@@ -300,10 +300,10 @@ public class DataSourceReflectImpl implements  BeanFactoryAware { //IDataSource,
     return dsObj;
   }
   
-  public IDataSourceObject createObjectCollection(String objectType, String objectDao,
+  public IDataProviderObject createObjectCollection(String objectType, String objectDao,
       String returnObjectType, String permissionContext, String indexParam, Map params, Map outParams) throws ObjectCreationException,
-      DataSourceNotInitializedException, InvalidContextException {
-    DataSourceObjectImpl dsObj = new DataSourceObjectImpl();
+      DataProviderNotInitializedException, InvalidContextException {
+    DataProviderObjectImpl dsObj = new DataProviderObjectImpl();
 
     params.put("objectDao", objectDao);
     params.put("objectClass", objectType);

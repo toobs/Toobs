@@ -14,27 +14,30 @@ import java.io.InputStreamReader;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.exolab.castor.xml.Unmarshaller;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.toobsframework.pres.layout.ComponentLayoutInitializationException;
 import org.toobsframework.pres.layout.ComponentLayoutNotFoundException;
+import org.toobsframework.pres.base.ManagerBase;
 import org.toobsframework.pres.component.config.ContentType;
 import org.toobsframework.pres.layout.RuntimeLayout;
 import org.toobsframework.pres.layout.RuntimeLayoutConfig;
 import org.toobsframework.pres.layout.config.Layout;
 import org.toobsframework.pres.layout.config.Layouts;
+import org.toobsframework.pres.resources.IResourceCacheLoader;
+import org.toobsframework.pres.resources.ResourceCacheDescriptor;
+import org.toobsframework.pres.resources.ResourceUnmarshaller;
 import org.toobsframework.exception.PermissionException;
 
-public final class ComponentLayoutManager implements IComponentLayoutManager {
+public final class ComponentLayoutManager extends ManagerBase implements IComponentLayoutManager {
 
   private static Log log = LogFactory.getLog(ComponentLayoutManager.class);
 
-  private static Map<String, RuntimeLayout> registry;
-  private static boolean doReload = false;
-  private static boolean initDone = false;
-  private static long[] lastModified;
-  private static long localDeployTime = 0L;
+  private static PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
-  private List<String> configFiles = null;
-  
+  private Map<String, RuntimeLayout> registry;
+  private long localDeployTime = 0L;
+
   private ComponentLayoutManager() throws ComponentLayoutInitializationException {
     log.info("Constructing new ComponentLayoutManager");
     registry = new HashMap<String, RuntimeLayout>();
@@ -43,114 +46,67 @@ public final class ComponentLayoutManager implements IComponentLayoutManager {
   public RuntimeLayout getLayout(String Id, long deployTime)
       throws ComponentLayoutNotFoundException, ComponentLayoutInitializationException {
     //if (doReload || !initDone) {
-    if (doReload || deployTime > localDeployTime) {
+    if (isDoReload() || deployTime > localDeployTime) {
       Date initStart = new Date();
       this.init();
       Date initEnd = new Date();
       log.info("Init Time: " + (initEnd.getTime() - initStart.getTime()));
     }
-    synchronized (registry) {
-      if (!registry.containsKey(Id)) {
-        ComponentLayoutNotFoundException ex = new ComponentLayoutNotFoundException();
-        ex.setComponentLayoutId(Id);
-        throw ex;
-      }
-      localDeployTime = deployTime;
-      return (RuntimeLayout) registry.get(Id);
+    if (!registry.containsKey(Id)) {
+      ComponentLayoutNotFoundException ex = new ComponentLayoutNotFoundException();
+      ex.setComponentLayoutId(Id);
+      throw ex;
     }
+    localDeployTime = deployTime;
+    return (RuntimeLayout) registry.get(Id);
   }
   
   public RuntimeLayout getLayout(PermissionException permissionException)
     throws ComponentLayoutNotFoundException, ComponentLayoutInitializationException {
     String objectErrorPage = permissionException.getAction() + permissionException.getObjectTypeName();
-    synchronized (registry) {
-      if (!registry.containsKey(objectErrorPage)) {
-        log.info("Permission Error page " + objectErrorPage + " not defined");
-        return null;
-      }
-      return (RuntimeLayout) registry.get(objectErrorPage);
+    if (!registry.containsKey(objectErrorPage)) {
+      log.info("Permission Error page " + objectErrorPage + " not defined");
+      return null;
     }
+    return (RuntimeLayout) registry.get(objectErrorPage);
   }
 
   // Read from config file
   public void init() throws ComponentLayoutInitializationException {
-    synchronized (registry) {
-      InputStreamReader reader = null;
-      if(configFiles == null) {
-        return;
-      }
-      int l = configFiles.size();
-      if (lastModified == null) {
-        log.info("LastModified is null " + this.toString() + " Registry " + registry);
-        lastModified = new long[l];
-      }
-      for(int fileCounter = 0; fileCounter < l; fileCounter++) {
-        String fileName = (String)configFiles.get(fileCounter);
-        try {
-          if (log.isDebugEnabled()) {
-            log.debug("Checking Configuration file: " + fileName);
-          }
-          ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-          URL configFileURL = classLoader.getResource(fileName);
-          if (configFileURL == null) {
-            log.warn("Configuration file " + fileName + " not found");
-            continue;
-          }
-          File configFile = new File(configFileURL.getFile());
-          if (log.isDebugEnabled()) {
-            log.debug("Layout Config: " + fileName + " File Mod: " + new Date(configFile.lastModified()) + " Last Mod: " + new Date(lastModified[fileCounter]));
-          }
-          if (configFile.lastModified() <= lastModified[fileCounter]) {
-            continue;
-          }
-          log.info("Reloading Layouts file [" + fileName + "]");
-          //registry.clear();
-          reader = new InputStreamReader(configFileURL.openStream());
-          Unmarshaller unmarshaller = new Unmarshaller(
-              Class.forName(Layouts.class.getName()));
-          unmarshaller.setValidation(false);
-          Layouts componentLayoutConfig = (Layouts) unmarshaller.unmarshal(reader);
-          if (componentLayoutConfig.getFullReload()) {
-            lastModified = new long[l];
-          }
-          Layout[] layouts = componentLayoutConfig.getLayout();
-          //HashMap tempLayoutMap = new HashMap();
-          if ((layouts != null) && (layouts.length > 0)) {
-            Layout compLayout = null;
-            RuntimeLayout layout = null;
-            for (int i = 0; i < layouts.length; i ++) {
-              compLayout = layouts[i];
-              
-              layout = new RuntimeLayout();
-              
-              configureLayout(compLayout, layout, registry);
-              
-              if (registry.containsKey(compLayout.getId()) && !initDone) {
-                log.warn("Overriding layout with Id: " + compLayout.getId());
-              }
-              registry.put(compLayout.getId(), layout);
-            }
-          }
-          //doReload = Configuration.getInstance().getReloadComponents();
-          lastModified[fileCounter] = configFile.lastModified();
-          doReload = false;
-        } catch (Exception ex) {
-          log.error("ComponentLayout initialization failed " + ex.getMessage(), ex);
-          doReload = true;
-        } finally {
-          if (reader != null) {
-            try {
-              reader.close();
-            } catch (IOException e) {
-            }
+    loadConfig(Layouts.class);
+    {
+      {
+          {
           }
         }
-      }
-      initDone = true;
+        
     }
   }
 
-  public static void configureLayout(Layout compLayout, RuntimeLayout layout, Map<String, RuntimeLayout> layoutRegistry) throws ComponentLayoutInitializationException, IOException {
+  @Override
+  protected void registerConfiguration(Object object, String fileName) {
+    Layouts componentLayoutConfig = (Layouts) object;
+    Layout[] layouts = componentLayoutConfig.getLayout();
+    if ((layouts != null) && (layouts.length > 0)) {
+      Layout compLayout = null;
+      RuntimeLayout layout = null;
+      for (int j = 0; j < layouts.length; j ++) {
+        try {
+          compLayout = layouts[j];
+          layout = new RuntimeLayout();
+          configureLayout(compLayout, layout, registry);
+        
+          if (registry.containsKey(compLayout.getId()) && !isInitDone()) {
+            log.warn("Overriding layout with Id: " + compLayout.getId());
+          }
+          registry.put(compLayout.getId(), layout);
+        } catch (Exception e) {
+          log.warn("Error configuring and registering component " + compLayout.getId() + ": " + e.getMessage(), e);
+        }
+      }
+    }
+  }
+  public static void configureLayout(Layout compLayout, RuntimeLayout layout, Map<String, RuntimeLayout> registry) throws ComponentLayoutInitializationException, IOException {
     RuntimeLayoutConfig layoutConfig = new RuntimeLayoutConfig();
 
     // Inherited from extended definition
@@ -159,7 +115,7 @@ public final class ComponentLayoutManager implements IComponentLayoutManager {
       String[] extSplit = extendStr.split(";");
       for (int ext = 0; ext < extSplit.length; ext++) {
         String extension = extSplit[ext];
-        RuntimeLayout extend = (RuntimeLayout)layoutRegistry.get(extension);
+        RuntimeLayout extend = registry.get(extension);
         if (extend == null) {
           log.error("The Layout extension " + extension + " for " + compLayout.getId() + 
               " could not be located in the registry.\n"
@@ -235,18 +191,6 @@ public final class ComponentLayoutManager implements IComponentLayoutManager {
       log.debug("Layout " + compLayout.getId() + " xml " + layout.getLayoutXml());
     }
     
-  }
-
-  public List<String> getConfigFiles() {
-    return configFiles;
-  }
-
-  public void setConfigFiles(List<String> configFiles) {
-    this.configFiles = configFiles;
-  }
-  
-  public void addConfigFiles(List<String> configFiles) {
-    this.configFiles.addAll(configFiles);
   }
 
 }

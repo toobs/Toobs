@@ -5,7 +5,10 @@
            attributeFormDefault="unqualified">
  <xs:element name="Components">
   <xs:annotation>
-   <xs:documentation>Configuration for components</xs:documentation>
+   <xs:documentation>
+   This configuration describes multiple components, usually inside a .cc.xml file
+   Inside of Components, multiple Component (zero or many) elements can be located
+   </xs:documentation>
   </xs:annotation>
   <xs:complexType>
    <xs:sequence>
@@ -15,7 +18,14 @@
  </xs:element>
  <xs:element name="Component">
   <xs:annotation>
-   <xs:documentation>This holds the component</xs:documentation>
+   <xs:documentation>
+    This element holds the component definition.  It is composed by multiple Style elements,
+    Controller elements, GetObject elements and one Pipeline element.
+    
+    Each component needs to be identified by a unique id attribute
+    The attributes are as follows:
+    renderErrorObject (true/false) - to show ...
+   </xs:documentation>
   </xs:annotation>
   <xs:complexType>
    <xs:sequence>
@@ -28,14 +38,15 @@
    <xs:attribute name="renderErrorObject" type="xs:boolean" default="false"/>
   </xs:complexType>
  </xs:element>
- <xs:element name="DataSourceProperty">
+ <xs:element name="DataProviderProperty">
   <xs:annotation>
-   <xs:documentation>This holds a DataSource property</xs:documentation>
+   <xs:documentation>This element holds a DataProvider property, which is composed of a DataProviderPropertyName,
+    followed by multiple DataProviderPropertyVaue elements</xs:documentation>
   </xs:annotation>
   <xs:complexType>
    <xs:sequence>
-    <xs:element name="DataSourcePropertyName" type="xs:string"/>
-    <xs:element name="DataSourcePropertyValue" type="xs:string" maxOccurs="unbounded"/>
+    <xs:element name="DataProviderPropertyName" type="xs:string"/>
+    <xs:element name="DataProviderPropertyValue" type="xs:string" maxOccurs="unbounded"/>
    </xs:sequence>
   </xs:complexType>
  </xs:element>
@@ -78,14 +89,15 @@
     <xs:element ref="cc:Parameters" minOccurs="0"/>
     <xs:element ref="cc:OutputParameters" minOccurs="0"/>
    </xs:sequence>
-   <xs:attribute name="objectAction" use="required" type="xs:string"/>
-   <xs:attribute name="daoObject" use="required" type="xs:string"/>
+   <xs:attribute name="action" use="required" type="xs:string"/>
+   <xs:attribute name="serviceProvider" use="optional" type="xs:string" default="" />
+   <xs:attribute name="property" use="optional" type="xs:string" default="" />
    <xs:attribute name="returnedValueObject" use="optional" type="xs:string"/>
    <xs:attribute name="guidParam" type="xs:string"/>
    <xs:attribute name="searchCriteria" type="xs:string"/>
    <xs:attribute name="searchMethod" type="xs:string"/>
    <xs:attribute name="permissionAction" type="xs:string"/>
-   <xs:attribute name="datasource" type="xs:string" default="DefaultDatasource"/>
+   <xs:attribute name="dataProvider" type="xs:string" default="toobsDataProvider"/>
    <xs:attribute name="noCache" type="xs:boolean" default="false"/>
   </xs:complexType>
  </xs:element>
@@ -135,4 +147,5 @@
   </xs:element>
   <xs:element name="JexlExpression" type="xs:string"/>
   <xs:element name="JexlScript" type="xs:string"/>
+
 </xs:schema>

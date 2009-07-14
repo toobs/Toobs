@@ -23,6 +23,7 @@ import org.toobsframework.pres.security.IComponentSecurity;
 import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.pres.util.PresConstants;
+import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 import org.toobsframework.util.Configuration;
 
 
@@ -35,6 +36,7 @@ public class ComponentLayoutHandler implements IComponentLayoutHandler {
   
   private IComponentLayoutManager componentLayoutManager = null;
   private ComponentRequestManager componentRequestManager = null;
+  private IXMLTransformerHelper transformerHelper = null;
   private IDoItRefQueue doItRefQueue = null;
   private IComponentSecurity layoutSecurity;
   
@@ -102,13 +104,13 @@ public class ComponentLayoutHandler implements IComponentLayoutHandler {
         if (!hasAccess && layout.getConfig().getNoAccessLayout() != null) {
           try {
             layout = this.componentLayoutManager.getLayout(layout.getConfig().getNoAccessLayout(), deployTime);
-            output = layout.render(componentRequestManager.get());
+            output = layout.render(componentRequestManager.get(), transformerHelper);
           } catch (ComponentLayoutNotFoundException cnfe) {
             log.warn("No Access Component Layout " + layout.getConfig().getNoAccessLayout() + " not found.");
             throw cnfe;
           }
         } else {
-          output = layout.render(componentRequestManager.get(), extension);
+          output = layout.render(componentRequestManager.get(), extension, transformerHelper);
         }
         
         if (layout.getDoItRef() != null) {
@@ -124,7 +126,7 @@ public class ComponentLayoutHandler implements IComponentLayoutHandler {
         log.info("Root cause " + t.getClass().getName() + " " + t.getMessage());
         if (t instanceof PermissionException
             && (layout = this.componentLayoutManager.getLayout((PermissionException)t)) != null) {
-          output = layout.render(componentRequestManager.get());
+          output = layout.render(componentRequestManager.get(), transformerHelper);
         } else {
           throw e;
         }
@@ -186,6 +188,20 @@ public class ComponentLayoutHandler implements IComponentLayoutHandler {
 
   public void setLayoutSecurity(IComponentSecurity layoutSecurity) {
     this.layoutSecurity = layoutSecurity;
+  }
+
+  /**
+   * @return the transformerHelper
+   */
+  public IXMLTransformerHelper getTransformerHelper() {
+    return transformerHelper;
+  }
+
+  /**
+   * @param transformerHelper the transformerHelper to set
+   */
+  public void setTransformerHelper(IXMLTransformerHelper transformerHelper) {
+    this.transformerHelper = transformerHelper;
   }
 
 }

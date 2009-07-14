@@ -1,14 +1,14 @@
-package org.toobsframework.pres.component.datasource.impl;
+package org.toobsframework.pres.component.dataprovider.impl;
 
 import java.beans.PropertyDescriptor;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.toobsframework.pres.component.datasource.api.IDataSourceObjectProperty;
-import org.toobsframework.pres.component.datasource.api.PropertyType;
+import org.toobsframework.pres.component.dataprovider.api.IDataProviderObjectProperty;
+import org.toobsframework.pres.component.dataprovider.api.PropertyType;
 
 
-public class DataSourcePropertyImpl implements IDataSourceObjectProperty {
+public class DataProviderPropertyImpl implements IDataProviderObjectProperty {
 
   private String parentId;
   private String propertyName;
@@ -16,7 +16,7 @@ public class DataSourcePropertyImpl implements IDataSourceObjectProperty {
   private Class valueType;
   private Object propertyValue;
   
-  public DataSourcePropertyImpl(PropertyDescriptor propertyDescriptor) {
+  public DataProviderPropertyImpl(PropertyDescriptor propertyDescriptor) {
    
     this.propertyType = null;
     this.valueType = propertyDescriptor.getPropertyType();

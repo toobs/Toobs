@@ -16,6 +16,7 @@ import org.toobsframework.pres.component.manager.IComponentManager;
 import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.pres.util.PresConstants;
+import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 import org.toobsframework.util.Configuration;
 
 
@@ -38,6 +39,7 @@ public class ComponentViewHandler implements IComponentViewHandler {
   
   private IComponentManager componentManager = null;
   private ComponentRequestManager componentRequestManager = null;
+  private IXMLTransformerHelper transformerHelper = null;
   
   /**
    * 
@@ -86,7 +88,7 @@ public class ComponentViewHandler implements IComponentViewHandler {
         isTilesRequest = false;
       }
       try {
-        output = this.componentManager.renderComponent(component, contentType, componentRequestManager.get().getParams(), componentRequestManager.get().getParams(), true);
+        output = this.componentManager.renderComponent(component, contentType, componentRequestManager.get().getParams(), componentRequestManager.get().getParams(), transformerHelper, true);
       } catch (Exception e) {
         throw e;
       } finally {
@@ -129,6 +131,20 @@ public class ComponentViewHandler implements IComponentViewHandler {
   public void setComponentRequestManager(
       ComponentRequestManager componentRequestManager) {
     this.componentRequestManager = componentRequestManager;
+  }
+
+  /**
+   * @return the transformerHelper
+   */
+  public IXMLTransformerHelper getTransformerHelper() {
+    return transformerHelper;
+  }
+
+  /**
+   * @param transformerHelper the transformerHelper to set
+   */
+  public void setTransformerHelper(IXMLTransformerHelper transformerHelper) {
+    this.transformerHelper = transformerHelper;
   }
   
 }

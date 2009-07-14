@@ -32,8 +32,8 @@ import org.toobsframework.pres.component.ComponentException;
 import org.toobsframework.pres.component.ComponentInitializationException;
 import org.toobsframework.pres.component.ComponentNotInitializedException;
 import org.toobsframework.pres.component.config.Components;
-import org.toobsframework.pres.component.datasource.api.DataSourceInitializationException;
-import org.toobsframework.pres.component.datasource.manager.DataSourceNotFoundException;
+import org.toobsframework.pres.component.dataprovider.api.DataProviderInitializationException;
+import org.toobsframework.pres.component.dataprovider.manager.DataProviderNotFoundException;
 import org.toobsframework.pres.component.manager.ComponentManager;
 import org.toobsframework.pres.layout.ComponentLayoutInitializationException;
 import org.toobsframework.pres.layout.RuntimeLayout;
@@ -247,9 +247,9 @@ public class AppManager implements AppReader {
           throw new ComponentLayoutInitializationException(e);
         } catch (ClassNotFoundException e) {
           throw new ComponentLayoutInitializationException(e);
-        } catch (DataSourceInitializationException e) {
+        } catch (DataProviderInitializationException e) {
           throw new ComponentLayoutInitializationException(e);
-        } catch (DataSourceNotFoundException e) {
+        } catch (DataProviderNotFoundException e) {
           throw new ComponentLayoutInitializationException(e);
         } catch (ComponentInitializationException e) {
           throw new ComponentLayoutInitializationException(e);
@@ -391,14 +391,14 @@ public class AppManager implements AppReader {
     try {
       if (appView.isComponentView()) {
         Component component = getApp(appView.getAppName()).getComponents().get(appView.getViewName());
-        component.render(appView.getContentType(), request.getParams(), request.getParams());
+        // TODO: component.render(appView.getContentType(), request.getParams(), null, request.getParams());
         return null;
       } else {
         RuntimeLayout layout = getApp(appView.getAppName()).getLayouts().get(appView.getViewName());
-        return layout.render(request);
+        return layout.render(request, null);
       }
-    } catch (ComponentNotInitializedException e) {
-      throw new ComponentException(e);
+    //} catch (ComponentNotInitializedException e) {
+    //  throw new ComponentException(e);
     } catch (ComponentLayoutInitializationException e) {
       throw new ComponentException(e);
     } catch (XMLTransformerException e) {

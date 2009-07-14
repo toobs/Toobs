@@ -1,4 +1,4 @@
-package org.toobsframework.pres.component.datasource.impl;
+package org.toobsframework.pres.component.dataprovider.impl;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -11,30 +11,30 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.toobsframework.biz.scriptmanager.IScriptManager;
-import org.toobsframework.pres.component.datasource.api.DataSourceInitializationException;
-import org.toobsframework.pres.component.datasource.api.DataSourceNotInitializedException;
-import org.toobsframework.pres.component.datasource.api.IDataSource;
-import org.toobsframework.pres.component.datasource.api.IDataSourceObject;
-import org.toobsframework.pres.component.datasource.api.InvalidContextException;
-import org.toobsframework.pres.component.datasource.api.ObjectCreationException;
-import org.toobsframework.pres.component.datasource.api.ObjectNotFoundException;
-import org.toobsframework.pres.component.datasource.api.PropertyNotFoundException;
-import org.toobsframework.pres.component.datasource.api.TypeMismatchException;
+import org.toobsframework.pres.component.dataprovider.api.DataProviderInitializationException;
+import org.toobsframework.pres.component.dataprovider.api.DataProviderNotInitializedException;
+import org.toobsframework.pres.component.dataprovider.api.IDataProvider;
+import org.toobsframework.pres.component.dataprovider.api.IDataProviderObject;
+import org.toobsframework.pres.component.dataprovider.api.InvalidContextException;
+import org.toobsframework.pres.component.dataprovider.api.ObjectCreationException;
+import org.toobsframework.pres.component.dataprovider.api.ObjectNotFoundException;
+import org.toobsframework.pres.component.dataprovider.api.PropertyNotFoundException;
+import org.toobsframework.pres.component.dataprovider.api.TypeMismatchException;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.util.constants.PlatformConstants;
 
 
 @SuppressWarnings("unchecked")
-public class RhinoDataSourceImpl implements IDataSource {
+public class RhinoDataProviderImpl implements IDataProvider {
 
-  private Log log = LogFactory.getLog(RhinoDataSourceImpl.class);
+  private Log log = LogFactory.getLog(RhinoDataProviderImpl.class);
   
   private IScriptManager scriptManager;
   
-  public IDataSourceObject getObject(String objectType, String objectDao,
+  public IDataProviderObject getObject(String objectType, String objectDao, String propertyName,
       String objectId, Map params, Map outParams) throws ObjectNotFoundException,
-      DataSourceNotInitializedException {
-    DataSourceObjectImpl dsObj = new DataSourceObjectImpl();
+      DataProviderNotInitializedException {
+    DataProviderObjectImpl dsObj = new DataProviderObjectImpl();
     try {
       // Get Object
       params.put("guid", objectId);
@@ -71,7 +71,7 @@ public class RhinoDataSourceImpl implements IDataSource {
       //Massage Objects.
       Iterator it = objects.iterator();
       while(it.hasNext()){
-        DataSourceObjectImpl dsObj = new DataSourceObjectImpl();
+        DataProviderObjectImpl dsObj = new DataProviderObjectImpl();
         dsObj.setValueObject(it.next());
         retObjects.add(dsObj);
       }
@@ -103,7 +103,7 @@ public class RhinoDataSourceImpl implements IDataSource {
         //Massage Objects.
         Iterator it = objects.iterator();
         while(it.hasNext()){
-          DataSourceObjectImpl dsObj = new DataSourceObjectImpl();
+          DataProviderObjectImpl dsObj = new DataProviderObjectImpl();
           dsObj.setValueObject(it.next());
           retObjects.add(dsObj);
         }
@@ -116,7 +116,7 @@ public class RhinoDataSourceImpl implements IDataSource {
   }
   
   public Boolean deleteObject(String objectDao, String objectId, String permissionContext, String namespace, Map params, Map outParams)
-      throws ObjectNotFoundException, DataSourceNotInitializedException {
+      throws ObjectNotFoundException, DataProviderNotInitializedException {
     Boolean retObj;
   
     params.put("guid", objectId);
@@ -138,7 +138,7 @@ public class RhinoDataSourceImpl implements IDataSource {
   }
   
   public Boolean purgeObject(String objectDao, String objectId, String permissionContext, String namespace, Map params, Map outParams)
-      throws ObjectNotFoundException, DataSourceNotInitializedException {
+      throws ObjectNotFoundException, DataProviderNotInitializedException {
     Boolean retObj;
     
     params.put("guid", objectId);
@@ -159,11 +159,11 @@ public class RhinoDataSourceImpl implements IDataSource {
     return retObj;
   }
   
-  public IDataSourceObject updateObject(String objectType, String objectDao,
+  public IDataProviderObject updateObject(String objectType, String objectDao,
       String returnObjectType, String objectId, String permissionContext, String namespace, Map valueMap, Map outParams) throws ObjectNotFoundException,
       PropertyNotFoundException, TypeMismatchException,
-      DataSourceNotInitializedException {
-    DataSourceObjectImpl dsObj = new DataSourceObjectImpl();
+      DataProviderNotInitializedException {
+    DataProviderObjectImpl dsObj = new DataProviderObjectImpl();
     try {
   
       valueMap.put("guid", objectId);
@@ -194,11 +194,11 @@ public class RhinoDataSourceImpl implements IDataSource {
     return dsObj;
   }
   
-  public IDataSourceObject updateObjectCollection(String objectType, String objectDao,
+  public IDataProviderObject updateObjectCollection(String objectType, String objectDao,
       String returnObjectType, String objectId, String permissionContext, String indexParam, String namespace, Map valueMap, Map outParams) throws ObjectNotFoundException,
       PropertyNotFoundException, TypeMismatchException,
-      DataSourceNotInitializedException {
-    DataSourceObjectImpl dsObj = new DataSourceObjectImpl();
+      DataProviderNotInitializedException {
+    DataProviderObjectImpl dsObj = new DataProviderObjectImpl();
     try {
   
       valueMap.remove("guid");
@@ -229,10 +229,10 @@ public class RhinoDataSourceImpl implements IDataSource {
     return dsObj;
   }
   
-  public IDataSourceObject createObject(String objectType, String objectDao,
+  public IDataProviderObject createObject(String objectType, String objectDao,
       String returnObjectType, String permissionContext, String namespace, Map params, Map outParams) throws ObjectCreationException,
-      DataSourceNotInitializedException, InvalidContextException {
-    DataSourceObjectImpl dsObj = new DataSourceObjectImpl();
+      DataProviderNotInitializedException, InvalidContextException {
+    DataProviderObjectImpl dsObj = new DataProviderObjectImpl();
   
     params.put("objectDao", objectDao);
     params.put("namespace", namespace);
@@ -265,10 +265,10 @@ public class RhinoDataSourceImpl implements IDataSource {
     return dsObj;
   }
   
-  public IDataSourceObject createObjectCollection(String objectType, String objectDao,
+  public IDataProviderObject createObjectCollection(String objectType, String objectDao,
       String returnObjectType, String permissionContext, String indexParam, String namespace, Map params, Map outParams) throws ObjectCreationException,
-      DataSourceNotInitializedException, InvalidContextException {
-    DataSourceObjectImpl dsObj = new DataSourceObjectImpl();
+      DataProviderNotInitializedException, InvalidContextException {
+    DataProviderObjectImpl dsObj = new DataProviderObjectImpl();
   
     params.put("namespace", namespace);
     params.put("returnObjectType", returnObjectType);
@@ -297,7 +297,7 @@ public class RhinoDataSourceImpl implements IDataSource {
   }
   
   public Object callAction(String objectType, String action, String objectDao, String objectId, String permissionContext, String namespace, Map params, Map outParams) throws ObjectCreationException {
-    DataSourceObjectImpl dsObj = new DataSourceObjectImpl();
+    DataProviderObjectImpl dsObj = new DataProviderObjectImpl();
     
     params.put("guid", objectId);
     params.put("namespace", namespace);
@@ -346,7 +346,7 @@ public class RhinoDataSourceImpl implements IDataSource {
     } else if (action.equalsIgnoreCase("createCollection")) {
       returnObj = this.createObjectCollection(objectType, dao, returnObjectType, permissionContext, indexParam, namespace, params, outParams);
     } else if (action.equalsIgnoreCase("get")) {
-      returnObj = this.getObject(returnObjectType, dao, guid, params, outParams);
+      returnObj = this.getObject(returnObjectType, dao, "", guid, params, outParams);
     } else if (action.equalsIgnoreCase("delete")) {
       returnObj = this.deleteObject(dao, guid, permissionContext, namespace, params, outParams);
     } else if (action.equalsIgnoreCase("purge")) {
