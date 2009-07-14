@@ -13,7 +13,7 @@
   <dependencies>
     <dependency>
       <groupId>org.toobsframework</groupId>
-      <artifactId>base</artifactId>
+      <artifactId>toobsframework-base</artifactId>
       <version>${toobs.version}</version>
     </dependency>
     <dependency>
