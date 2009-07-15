@@ -29,32 +29,6 @@ public class DefaultDataProviderImpl implements IDataProvider {
     return beanFactory.getBean(serviceProviderName);
   }
 
-  public IDataProviderObject createObject(String objectType, String objectDao,
-      String returnObjectType, String permissionContext, String namespace,
-      Map<String, Object> params, Map<String, Object> outParams)
-      throws ObjectCreationException, DataProviderNotInitializedException,
-      InvalidContextException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  public IDataProviderObject createObjectCollection(String objectType,
-      String objectDao, String returnObjectType, String permissionContext,
-      String indexParam, String namespace, Map<String, Object> params,
-      Map<String, Object> outParams) throws ObjectCreationException,
-      DataProviderNotInitializedException, InvalidContextException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  public Boolean deleteObject(String dao, String objectId,
-      String permissionContext, String namespace, Map<String, Object> params,
-      Map<String, Object> outParams) throws ObjectNotFoundException,
-      DataProviderNotInitializedException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
   public Object dispatchAction(String action, String dao, String objectType,
       String returnObjectType, String guidParam, String permissionContext,
       String indexParam, String namespace, Map<String, Object> params,
@@ -71,7 +45,7 @@ public class DefaultDataProviderImpl implements IDataProvider {
     if (action == null) {
       throw new ObjectNotFoundException("action was not provided for the dispatch");
     }
-    if (action.equalsIgnoreCase("update")) {
+    /*if (action.equalsIgnoreCase("update")) {
       returnObj = this.updateObject(objectType, dao, returnObjectType, guid, permissionContext, namespace, params, outParams);
     } else if (action.equalsIgnoreCase("updateCollection")) {
       returnObj = this.updateObjectCollection(objectType, dao, returnObjectType, guid, permissionContext, indexParam, namespace, params, outParams);
@@ -85,7 +59,7 @@ public class DefaultDataProviderImpl implements IDataProvider {
       returnObj = this.deleteObject(dao, guid, permissionContext, namespace, params, outParams);
     } else {
       returnObj = null; //this.callAction(objectType, action, dao, guid, permissionContext, namespace, params, outParams);
-    }
+    }*/
   
     return returnObj;
   }
@@ -121,26 +95,6 @@ public class DefaultDataProviderImpl implements IDataProvider {
       Map<String, Object> outParams) throws ObjectCreationException,
       InvalidSearchContextException, InvalidSearchFilterException,
       DataProviderNotInitializedException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  public IDataProviderObject updateObject(String objectType, String objectDao,
-      String returnObjectType, String objectId, String permissionContext,
-      String namespace, Map<String, Object> valueMap,
-      Map<String, Object> outParams) throws ObjectNotFoundException,
-      PropertyNotFoundException, TypeMismatchException,
-      DataProviderNotInitializedException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  public IDataProviderObject updateObjectCollection(String objectType,
-      String objectDao, String returnObjectType, String objectId,
-      String permissionContext, String namespace, String indexParam,
-      Map<String, Object> valueMap, Map<String, Object> outParams)
-      throws ObjectNotFoundException, PropertyNotFoundException,
-      TypeMismatchException, DataProviderNotInitializedException {
     // TODO Auto-generated method stub
     return null;
   }
