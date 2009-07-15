@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+  <bean id="contextHelper" class="org.toobsframework.servlet.ContextHelper" />
+  
+  <bean id="componentLayoutHandler" class="org.toobsframework.pres.layout.controller.ComponentLayoutHandler">
+    <property name="componentLayoutManager" ref="componentLayoutManager"/>
+    <property name="componentRequestManager" ref="componentRequestManager"/>
+    <property name="transformerHelper" ref="transformerHelper"/>
+  </bean>
+
+  <bean id="componentViewHandler" class="org.toobsframework.pres.component.controller.ComponentViewHandler">
+    <property name="componentManager" ref="componentManager"/>
+    <property name="componentRequestManager" ref="componentRequestManager"/>
+    <property name="transformerHelper" ref="transformerHelper"/>
+  </bean>
+
+  <bean id="doItHandler" class="org.toobsframework.pres.doit.controller.DoItHandler">
+    <property name="doItManager" ref="doItManager"/>
+    <property name="doItRunner" ref="doItRunner"/>
+    <property name="componentRequestManager" ref="componentRequestManager"/>
+  </bean>
+
+  <bean id="componentLayoutManager" class="org.toobsframework.pres.layout.manager.ComponentLayoutManager">
+    <property name="configFiles">
+      <list>
+        <value>classpath:**/*.clc.xml</value>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="componentManager" class="org.toobsframework.pres.component.manager.ComponentManager" init-method="init">
+    <property name="configFiles">
+      <list>
+        <value>classpath:**/*.cc.xml</value>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="doItManager" class="org.toobsframework.pres.doit.manager.DoItManager">
+    <property name="configFiles">
+      <list>
+        <value>classpath:**/*.doit.xml</value>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="doItRunner" class="org.toobsframework.pres.doit.DoItRunner">
+    <property name="componentRequestManager" ref="componentRequestManager"/>
+  </bean>
+
+  <bean id="componentRequestManager" class="org.toobsframework.pres.util.ComponentRequestManager"/>
+  
+  <bean id="transformerHelper" class="org.toobsframework.pres.xsl.ComponentTransformerHelper">
+    <property name="componentManager" ref="componentManager"/>
+    <property name="componentLayoutManager" ref="componentLayoutManager"/>
+    <property name="componentRequestManager" ref="componentRequestManager"/>
+  </bean>
+  
+  <bean id="toobsDataProvider" class="org.toobsframework.pres.component.dataprovider.impl.DefaultDataProviderImpl" />
+</beans>
