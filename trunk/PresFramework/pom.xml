@@ -76,8 +76,28 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.toobsframework</groupId>
+        <artifactId>toobsframework-mojo</artifactId>
+        <version>${toobs.version}</version>
+        <executions>
+          <execution>
+           <id>release-xsd</id>
+           <goals>
+             <goal>release-xsd</goal>
+           </goals>
+           <configuration>
+             <source>src/main/castor</source>
+             <target>target/release-xsds</target>
+             <version>${toobs.schema.version}</version>
+             <verbose>false</verbose>
+           </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
+  
   <dependencies>
     <dependency>
       <groupId>org.toobsframework</groupId>

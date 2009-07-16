@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?><project>
+  <parent>
+    <artifactId>toobsframework</artifactId>
+    <groupId>org.toobsframework</groupId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.toobsframework</groupId>
+  <artifactId>toobsframework-mojo</artifactId>
+  <packaging>maven-plugin</packaging>
+  <name>Maven plugins for building the rest of the toobs framework</name>
+  <version>${toobs.version}</version>
+  <url>http://maven.apache.org</url>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-plugin-api</artifactId>
+      <version>2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>1.4</version>
+    </dependency>
+  </dependencies>
+</project>
