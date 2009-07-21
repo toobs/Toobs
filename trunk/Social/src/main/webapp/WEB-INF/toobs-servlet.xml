@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+  
+  <bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+    <property name="basename" value="messages"/>
+  </bean>
+  
+  <bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+    <property name="alwaysUseFullPath" value="true"/>
+    <property name="mappings">
+      <props>
+          <prop key="/**/*.xhtml">componentLayoutController</prop>
+          <prop key="/**/*.xcomp">componentController</prop>
+          <prop key="/**/*.xpost">updateController</prop>
+      </props>
+    </property>
+  </bean>
+  
+  <bean id="componentLayoutController" class="org.toobsframework.pres.layout.controller.ComponentLayoutController">
+    <property name="componentLayoutHandler" ref="componentLayoutHandler"/>
+  </bean>
+    
+  <bean id="componentController" class="org.toobsframework.pres.component.controller.ComponentViewController">
+    <property name="componentViewHandler" ref="componentViewHandler"/>
+  </bean>
+    
+  <bean id="updateController"    class="org.toobsframework.pres.doit.controller.DoItController">
+    <property name="doItHandler" ref="doItHandler"/>
+  </bean>
+
+</beans>

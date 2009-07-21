@@ -1,0 +1,65 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <parent>
+    <artifactId>toobsframework</artifactId>
+    <groupId>org.toobsframework</groupId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.toobsframework</groupId>
+  <artifactId>toosframework-social-example</artifactId>
+  <packaging>war</packaging>
+  <name>Toobs example - social app</name>
+  <version>0.1.0-SNAPSHOT</version>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>castor-maven-plugin</artifactId>
+        <version>2.0-alpha1</version>
+        <executions>
+          <execution>
+            <id>generate::social</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <schema>Social/src/main/castor/social.xsd</schema>
+              <packaging>org.toobsframework.social.persistence.model</packaging>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>maven-jetty-plugin</artifactId>
+        <version>6.1.10</version>
+        <configuration>
+          <contextPath>/social</contextPath>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  
+  <dependencies>
+    <dependency>
+      <groupId>org.toobsframework</groupId>
+      <artifactId>toobsframework-base</artifactId>
+      <version>${toobs.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.toobsframework</groupId>
+      <artifactId>toobsframework-presentation</artifactId>
+      <version>${toobs.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-webmvc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.castor</groupId>
+      <artifactId>castor</artifactId>
+    </dependency>
+  </dependencies>
+</project>

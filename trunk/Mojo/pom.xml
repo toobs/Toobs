@@ -8,7 +8,7 @@
   <groupId>org.toobsframework</groupId>
   <artifactId>toobsframework-mojo</artifactId>
   <packaging>maven-plugin</packaging>
-  <name>Maven plugins for building the rest of the toobs framework</name>
+  <name>Maven plugins for building the framework</name>
   <version>${toobs.version}</version>
   <url>http://maven.apache.org</url>
   <dependencies>

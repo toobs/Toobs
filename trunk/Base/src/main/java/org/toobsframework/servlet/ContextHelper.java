@@ -23,7 +23,7 @@ public class ContextHelper implements ApplicationContextAware {
   private static ApplicationContext webApplicationContext = null;
 
   public static ApplicationContext getWebApplicationContext() {
-    if (webApplicationContext != null) {
+    if (webApplicationContext == null) {
       log.error("Configuration error: No bean of type " + ContextHelper.class.getName() + " has been defined in a spring configuration.  This will result in further errors.");
     }
     return webApplicationContext;
@@ -38,7 +38,7 @@ public class ContextHelper implements ApplicationContextAware {
   }
 
   public static Object getBean(String beanName) {
-    if (webApplicationContext != null) {
+    if (webApplicationContext == null) {
       log.error("Configuration error: No bean of type " + ContextHelper.class.getName() + " has been defined in a spring configuration.  This will result in further errors.");
     }
     return webApplicationContext.getBean(beanName);

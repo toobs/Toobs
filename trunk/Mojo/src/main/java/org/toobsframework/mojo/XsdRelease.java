@@ -57,6 +57,35 @@ public class XsdRelease extends AbstractMojo {
    */
   private String url;
 
+  private String fixupSchemaFilename(String line) {
+    line = replace(line, ".xsd", "-" + version + ".xsd");
+    return line;
+  }
+  
+  private String fixupSchemaLocation(String line) {
+    if (url != null && url.length() > 0) {
+      line = replace(line, "schemaLocation=\"", "schemaLocation=\"" + url);
+    }
+    return line;
+  }
+  
+  private String fixupNamespace(String line, String from, String to) {
+    line = replace(line, "targetNamespace=\""+ from + "\"", "targetNameSpace=\"" + to + "\"");
+    line = replace(line, "xmlns:" + from + "=\""+ from + "\"", "xmlns:" + from + "\"=" + to + "\""); // keep the namespace prefix
+    line = replace(line, "xmlns=\""+ from + "\"", "xmlns=\"" + to + "\""); 
+    line = replace(line, "import namespace=\"" + from + "\"", "import namespace\"" + to + "\"");
+    return line;
+  }
+  
+  private String fixupLine(String line) {
+    line = fixupSchemaFilename(line);
+    line = fixupSchemaLocation(line);
+    line = fixupNamespace(line, "cc", "http://www.toobsframework.org/schema/component");
+    line = fixupNamespace(line, "clc", "http://www.toobsframework.org/schema/componentLayout");
+    line = fixupNamespace(line, "dc", "http://www.toobsframework.org/schema/doIt");
+    return line;
+  }
+
   @SuppressWarnings("unchecked")
   public void execute() throws MojoExecutionException {
     int count = 0;
@@ -121,10 +150,7 @@ public class XsdRelease extends AbstractMojo {
         
         List<String> outputLines = new ArrayList<String>(inputLines.size());
         for (String inputLine : inputLines) {
-          String line = replace(inputLine, ".xsd", "-" + version + ".xsd");
-          if (url != null && url.length() > 0) {
-            line = replace(line, "schemaLocation=\"", "schemaLocation=\"" + url);
-          }
+          String line = fixupLine(inputLine);
           outputLines.add(line);
           /*getLog().info(">>" + line);*/
         }

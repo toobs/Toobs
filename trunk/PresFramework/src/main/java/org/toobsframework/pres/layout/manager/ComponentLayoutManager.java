@@ -11,8 +11,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import javax.xml.transform.URIResolver;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.xalan.trace.TraceListener;
 import org.exolab.castor.xml.Unmarshaller;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -27,6 +30,10 @@ import org.toobsframework.pres.layout.config.Layouts;
 import org.toobsframework.pres.resources.IResourceCacheLoader;
 import org.toobsframework.pres.resources.ResourceCacheDescriptor;
 import org.toobsframework.pres.resources.ResourceUnmarshaller;
+import org.toobsframework.transformpipeline.domain.IXMLTransformer;
+import org.toobsframework.transformpipeline.domain.XMLTransformerException;
+import org.toobsframework.transformpipeline.domain.XMLTransformerFactory;
+import org.toobsframework.transformpipeline.domain.XSLUriResolverImpl;
 import org.toobsframework.exception.PermissionException;
 
 public final class ComponentLayoutManager extends ManagerBase implements IComponentLayoutManager {
@@ -38,8 +45,15 @@ public final class ComponentLayoutManager extends ManagerBase implements ICompon
   private Map<String, RuntimeLayout> registry;
   private long localDeployTime = 0L;
 
+  private URIResolver uriResolver;
+  private IXMLTransformer defaultTransformer;
+  private IXMLTransformer htmlTransformer;
+  private IXMLTransformer xmlTransformer;
+  private TraceListener paramListener;
+
   private ComponentLayoutManager() throws ComponentLayoutInitializationException {
     log.info("Constructing new ComponentLayoutManager");
+    setUriResolver(new XSLUriResolverImpl());
     registry = new HashMap<String, RuntimeLayout>();
   }
   
@@ -48,7 +62,11 @@ public final class ComponentLayoutManager extends ManagerBase implements ICompon
     //if (doReload || !initDone) {
     if (isDoReload() || deployTime > localDeployTime) {
       Date initStart = new Date();
-      this.init();
+      try {
+        this.init();
+      } catch (XMLTransformerException e) {
+        throw new ComponentLayoutInitializationException("initialization failed:" +e.getMessage(), e);
+      }
       Date initEnd = new Date();
       log.info("Init Time: " + (initEnd.getTime() - initStart.getTime()));
     }
@@ -72,15 +90,12 @@ public final class ComponentLayoutManager extends ManagerBase implements ICompon
   }
 
   // Read from config file
-  public void init() throws ComponentLayoutInitializationException {
+  public void init() throws ComponentLayoutInitializationException, XMLTransformerException {
+    xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_XML, uriResolver, paramListener);
+    htmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_HTML, uriResolver, paramListener);
+    defaultTransformer = XMLTransformerFactory.getInstance().getDefaultTransformer(uriResolver);
+
     loadConfig(Layouts.class);
-    {
-      {
-          {
-          }
-        }
-        
-    }
   }
 
   @Override
@@ -94,7 +109,7 @@ public final class ComponentLayoutManager extends ManagerBase implements ICompon
         try {
           compLayout = layouts[j];
           layout = new RuntimeLayout();
-          configureLayout(compLayout, layout, registry);
+          configureLayout(compLayout, layout, defaultTransformer, htmlTransformer, xmlTransformer, registry);
         
           if (registry.containsKey(compLayout.getId()) && !isInitDone()) {
             log.warn("Overriding layout with Id: " + compLayout.getId());
@@ -106,7 +121,9 @@ public final class ComponentLayoutManager extends ManagerBase implements ICompon
       }
     }
   }
-  public static void configureLayout(Layout compLayout, RuntimeLayout layout, Map<String, RuntimeLayout> registry) throws ComponentLayoutInitializationException, IOException {
+  public static void configureLayout(Layout compLayout, RuntimeLayout layout, 
+      IXMLTransformer defaultTransformer, IXMLTransformer htmlTransformer, IXMLTransformer xmlTransformer, 
+      Map<String, RuntimeLayout> registry) throws ComponentLayoutInitializationException, IOException {
     RuntimeLayoutConfig layoutConfig = new RuntimeLayoutConfig();
 
     // Inherited from extended definition
@@ -186,6 +203,9 @@ public final class ComponentLayoutManager extends ManagerBase implements ICompon
     layout.setConfig(layoutConfig);
     
     layout.setDoItRef(compLayout.getDoItRef());
+    layout.setHtmlTransformer(htmlTransformer);
+    layout.setDefaultTransformer(defaultTransformer);
+    layout.setXmlTransformer(xmlTransformer);
     
     if (log.isDebugEnabled()) {
       log.debug("Layout " + compLayout.getId() + " xml " + layout.getLayoutXml());
@@ -193,4 +213,19 @@ public final class ComponentLayoutManager extends ManagerBase implements ICompon
     
   }
 
+  public void setUriResolver(URIResolver uriResolver) {
+    this.uriResolver = uriResolver;
+  }
+
+  public URIResolver getUriResolver() {
+    return uriResolver;
+  }
+
+  public void setParamListener(TraceListener paramListener) {
+    this.paramListener = paramListener;
+  }
+
+  public TraceListener getParamListener() {
+    return paramListener;
+  }
 }

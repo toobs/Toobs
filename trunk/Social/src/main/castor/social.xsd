@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema 
+   xmlns="http://www.w3.org/2001/XMLSchema" 
+   targetNamespace="http://www.toobsframework.org/social" 
+   xmlns:tns="http://www.toobsframework.org/social" elementFormDefault="qualified">
+
+    <element name="directory">
+      <complexType>
+        <sequence>
+          <element name="user" maxOccurs="unbounded" minOccurs="0">
+            <complexType>
+              <sequence>
+                <element name="firstName" type="string"></element>
+                <element name="lastName" type="string"></element>
+                <element name="password" type="string"></element>
+                <element name="userId" type="string"></element>
+                <element name="friend" maxOccurs="unbounded" minOccurs="0">
+                  <complexType>
+                    <sequence>
+                      <element name="userId" type="string"/>
+                    </sequence>
+                  </complexType>
+                </element>
+              </sequence>
+            </complexType>
+          </element>
+
+          <element name="post" maxOccurs="unbounded" minOccurs="0">
+            <complexType>
+              <sequence>
+                <element name="from" type="string"></element>
+                <element name="to" type="string"></element>
+                <element name="on" type="dateTime"></element>
+                <element name="comment" type="string"></element>
+              </sequence>
+            </complexType>
+          </element>
+        
+        </sequence>
+      </complexType>
+    </element>
+
+</schema>

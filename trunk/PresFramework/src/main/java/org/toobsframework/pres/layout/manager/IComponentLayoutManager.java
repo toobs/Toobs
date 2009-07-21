@@ -6,6 +6,7 @@ import org.toobsframework.exception.PermissionException;
 import org.toobsframework.pres.layout.ComponentLayoutInitializationException;
 import org.toobsframework.pres.layout.ComponentLayoutNotFoundException;
 import org.toobsframework.pres.layout.RuntimeLayout;
+import org.toobsframework.transformpipeline.domain.XMLTransformerException;
 
 
 public interface IComponentLayoutManager {
@@ -17,7 +18,7 @@ public interface IComponentLayoutManager {
     throws ComponentLayoutNotFoundException, ComponentLayoutInitializationException;
 
   // Read from config file
-  public abstract void init() throws ComponentLayoutInitializationException;
+  public abstract void init() throws ComponentLayoutInitializationException, XMLTransformerException;
 
   public void addConfigFiles(List<String> configFiles);
 

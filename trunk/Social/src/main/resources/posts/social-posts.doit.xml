@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DoItConfig xmlns="dc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+  dc http://www.toobsframework.org/schema/doItConfig-0.1.0.xsd">
+  <DoIt name="signUp">
+    <Actions>
+      <Action actionType="">
+      </Action>
+    </Actions>
+  </DoIt>
+</DoItConfig>

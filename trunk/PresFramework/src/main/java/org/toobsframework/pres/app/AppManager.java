@@ -315,7 +315,7 @@ public class AppManager implements AppReader {
               
               layout = new RuntimeLayout();
               
-              ComponentLayoutManager.configureLayout(compLayout, layout, layoutMap);
+              ComponentLayoutManager.configureLayout(compLayout, layout, defaultTransformer, htmlTransformer, xmlTransformer, layoutMap);
               layout.setXmlTransformer(xmlTransformer);
               layout.setDefaultTransformer(defaultTransformer);
               layout.setHtmlTransformer(htmlTransformer);

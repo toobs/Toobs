@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Components xmlns="cc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+  cc http://www.toobsframework.org/schema/componentConfig-0.1.0.xsd">
+
+  <Component id="header">
+    <Pipeline>
+      <ContentType contentType="xhtml">
+        <Transform name="common/html/header"/>
+      </ContentType>
+    </Pipeline>
+  </Component>
+
+  <Component id="headerLogin">
+    <Pipeline>
+      <ContentType contentType="xhtml">
+        <Transform name="common/html/headerLogin"/>
+      </ContentType>
+    </Pipeline>
+  </Component>
+
+  <Component id="footer">
+    <Pipeline>
+      <ContentType contentType="xhtml">
+        <Transform name="common/html/footer"/>
+      </ContentType>
+    </Pipeline>
+  </Component>
+  
+  <Component id="footerLogin">
+    <Pipeline>
+      <ContentType contentType="xhtml">
+        <Transform name="common/html/footer"/>
+      </ContentType>
+    </Pipeline>
+  </Component>
+  
+  <Component id="declarations">
+    <Pipeline>
+      <ContentType contentType="xhtml">
+        <Transform name="common/html/declarations"/>
+      </ContentType>
+    </Pipeline>
+  </Component>
+  
+  <Component id="signUp">
+    <Pipeline>
+      <ContentType contentType="xhtml">
+        <Transform name="components/html/signUp"/>
+      </ContentType>
+    </Pipeline>
+  </Component>
+  
+  <Component id="pageVisits">
+    <GetObject action="get" serviceProvider="pageVisits" property="all" guidParam="visitId" returnedValueObject="PageVisitsVO" />
+    <Pipeline>
+      <ContentType contentType="xhtml">
+        <Transform name="pageVisits"></Transform>
+      </ContentType>
+    </Pipeline>
+  </Component>
+</Components>
