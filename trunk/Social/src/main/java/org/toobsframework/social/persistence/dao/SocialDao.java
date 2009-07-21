@@ -68,7 +68,7 @@ public class SocialDao {
    * Add a user with id and name
    * @return the new user
    */
-  public User addUser(String userId, String name) {
+  public User addUser(String userId, String firstName, String lastName, String password) {
     User user = getUser(userId);
     if(user != null) {
       throw new RuntimeException("User " + userId + " already exists");
@@ -76,7 +76,9 @@ public class SocialDao {
     
     user = new User();
     user.setUserId(userId);
-    user.setName(name);
+    user.setFirstName(firstName);
+    user.setLastName(lastName);
+    user.setPassword(password);
     directory.addUser(user);
     save();
     return user;
