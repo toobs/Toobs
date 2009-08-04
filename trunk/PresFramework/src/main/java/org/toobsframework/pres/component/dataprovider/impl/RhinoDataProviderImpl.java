@@ -8,6 +8,9 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.toobsframework.biz.scriptmanager.IScriptManager;
@@ -88,7 +91,7 @@ public class RhinoDataProviderImpl implements IDataProvider {
     ArrayList retObjects = new ArrayList();
   
     // Get Object
-    params.put("dao", ParameterUtil.resolveParam(objectDao, params));
+    params.put("dao", ParameterUtil.resolveParam(objectDao, params, null, null));
     params.put("searchMethod", searchMethod);
     params.put("searchCriteria", searchCriteria);
     params.put("permissionAction", permissionAction);
@@ -324,40 +327,45 @@ public class RhinoDataProviderImpl implements IDataProvider {
   }
   
   public Object dispatchAction(String action, String dao, String objectType, 
-      String returnObjectType, String guidParam, String permissionContext, String indexParam, String namespace, Map params, Map outParams) throws Exception {
-    Object returnObj = null;
-    //Get the guid. If there is one.
-    String guid = null;
-    if(params.get(guidParam) != null && params.get(guidParam).getClass().isArray()) {
-      guid = ((String[]) params.get(guidParam))[0];
-    } else {
-      guid = (String) params.get(guidParam);
-    }        
-    //Run action.
-    if (action == null) {
-      // TODO Give a better message jackass
-    }
-    if (action.equalsIgnoreCase("update")) {
-      returnObj = this.updateObject(objectType, dao, returnObjectType, guid, permissionContext, namespace, params, outParams);
-    } else if (action.equalsIgnoreCase("updateCollection")) {
-      returnObj = this.updateObjectCollection(objectType, dao, returnObjectType, guid, permissionContext, indexParam, namespace, params, outParams);
-    } else if (action.equalsIgnoreCase("create")) {
-      returnObj = this.createObject(objectType, dao, returnObjectType, permissionContext, namespace, params, outParams);
-    } else if (action.equalsIgnoreCase("createCollection")) {
-      returnObj = this.createObjectCollection(objectType, dao, returnObjectType, permissionContext, indexParam, namespace, params, outParams);
-    } else if (action.equalsIgnoreCase("get")) {
-      returnObj = this.getObject(returnObjectType, dao, "", guid, params, outParams);
-    } else if (action.equalsIgnoreCase("delete")) {
-      returnObj = this.deleteObject(dao, guid, permissionContext, namespace, params, outParams);
-    } else if (action.equalsIgnoreCase("purge")) {
-      returnObj = this.purgeObject(dao, guid, permissionContext, namespace, params, outParams);
-    } else {
-      returnObj = this.callAction(objectType, action, dao, guid, permissionContext, namespace, params, outParams);
-    }
-  
-    return returnObj;
-  }
-  
+	      String returnObjectType, String guidParam, String permissionContext, String indexParam, String namespace, Map params, Map outParams) throws Exception {
+	    Object returnObj = null;
+	    //Get the guid. If there is one.
+	    String guid = null;
+	    if(params.get(guidParam) != null && params.get(guidParam).getClass().isArray()) {
+	      guid = ((String[]) params.get(guidParam))[0];
+	    } else {
+	      guid = (String) params.get(guidParam);
+	    }        
+	    //Run action.
+	    if (action == null) {
+	      // TODO Give a better message jackass
+	    }
+	    if (action.equalsIgnoreCase("update")) {
+	      returnObj = this.updateObject(objectType, dao, returnObjectType, guid, permissionContext, namespace, params, outParams);
+	    } else if (action.equalsIgnoreCase("updateCollection")) {
+	      returnObj = this.updateObjectCollection(objectType, dao, returnObjectType, guid, permissionContext, indexParam, namespace, params, outParams);
+	    } else if (action.equalsIgnoreCase("create")) {
+	      returnObj = this.createObject(objectType, dao, returnObjectType, permissionContext, namespace, params, outParams);
+	    } else if (action.equalsIgnoreCase("createCollection")) {
+	      returnObj = this.createObjectCollection(objectType, dao, returnObjectType, permissionContext, indexParam, namespace, params, outParams);
+	    } else if (action.equalsIgnoreCase("get")) {
+	      returnObj = this.getObject(returnObjectType, dao, "", guid, params, outParams);
+	    } else if (action.equalsIgnoreCase("delete")) {
+	      returnObj = this.deleteObject(dao, guid, permissionContext, namespace, params, outParams);
+	    } else if (action.equalsIgnoreCase("purge")) {
+	      returnObj = this.purgeObject(dao, guid, permissionContext, namespace, params, outParams);
+	    } else {
+	      returnObj = this.callAction(objectType, action, dao, guid, permissionContext, namespace, params, outParams);
+	    }
+	  
+	    return returnObj;
+	  }
+	  
+  public Object dispatchActionEx(HttpServletRequest request, HttpServletResponse response, String action, String dao, String objectType, 
+	      String returnObjectType, String guidParam, String permissionContext, String indexParam, String namespace, Map params, Map outParams) throws Exception {
+	  return dispatchAction(action, dao, objectType, returnObjectType, guidParam, permissionContext, indexParam, namespace, params, outParams);
+	}
+	  
   public IScriptManager getScriptManager() {
     return scriptManager;
   }

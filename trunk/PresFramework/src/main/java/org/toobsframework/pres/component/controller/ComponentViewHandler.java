@@ -88,7 +88,7 @@ public class ComponentViewHandler implements IComponentViewHandler {
         isTilesRequest = false;
       }
       try {
-        output = this.componentManager.renderComponent(component, contentType, componentRequestManager.get().getParams(), componentRequestManager.get().getParams(), transformerHelper, true);
+        output = this.componentManager.renderComponent(component, contentType, componentRequestManager.get().getParams(), componentRequestManager.get().getParams(), transformerHelper, request, response, true);
       } catch (Exception e) {
         throw e;
       } finally {

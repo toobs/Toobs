@@ -118,7 +118,7 @@ public class DataProviderReflectImpl implements  BeanFactoryAware { //IDataSourc
     ArrayList retObjects = new ArrayList();
 
     // Get Object
-    params.put("dao", ParameterUtil.resolveParam(objectDao, params));
+    params.put("dao", ParameterUtil.resolveParam(objectDao, params, null, null));
     params.put("searchMethod", searchMethod);
     params.put("searchCriteria", searchCriteria);
     params.put("permissionAction", permissionAction);

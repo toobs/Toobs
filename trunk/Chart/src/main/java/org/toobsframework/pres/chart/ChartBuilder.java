@@ -12,6 +12,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jfree.chart.ChartRenderingInfo;
@@ -102,12 +105,12 @@ public class ChartBuilder implements BeanFactoryAware {
     try {
       Map params = componentRequest.getParams();
       if(chartDef.getParameters() != null){
-        ParameterUtil.mapParameters("Chart:AreaChart:" + chartDef.getId(), chartDef.getParameters().getParameter(), params, params, chartDef.getId(), null);
+        ParameterUtil.mapParameters("Chart:AreaChart:" + chartDef.getId(), chartDef.getParameters().getParameter(), params, params, chartDef.getId(), null, componentRequest.getHttpRequest(), componentRequest.getHttpResponse());
       }
       
-      Plot plot = configurePlot(chartDef.getId(), chartDef.getPlot(), params);
+      Plot plot = configurePlot(chartDef.getId(), chartDef.getPlot(), params, componentRequest.getHttpRequest(), componentRequest.getHttpResponse());
 
-      chart = finishChart(chartDef, plot, params);
+      chart = finishChart(chartDef, plot, params, componentRequest.getHttpRequest(), componentRequest.getHttpResponse());
 
     } catch (ParameterException e) {
       log.error("Chart build exception " + e.getMessage(), e);
@@ -117,62 +120,62 @@ public class ChartBuilder implements BeanFactoryAware {
     return chart;
   }
 
-  private Plot configurePlot(String id, org.toobsframework.pres.chart.config.Plot plotDef, Map params) throws ChartException {
+  private Plot configurePlot(String id, org.toobsframework.pres.chart.config.Plot plotDef, Map params, HttpServletRequest request, HttpServletResponse response) throws ChartException {
     
     Plot plot = null;
     if (plotDef.getSubPlotCount() > 0) {
-      boolean is3D = (ParameterUtil.resolveParam(plotDef.getIs3D(), params, "false")[0].equals("false") ? false : true);
-      int plotType = ChartUtil.getSupportedPlots().get(ParameterUtil.resolveParam(plotDef.getType(), params, "multiCategory")[0]);
-      PlotOrientation orientation = (ParameterUtil.resolveParam(plotDef.getOrientation(), params, "vertical")[0].equals("horizontal") ? PlotOrientation.HORIZONTAL : PlotOrientation.VERTICAL);
+      boolean is3D = (ParameterUtil.resolveParam(plotDef.getIs3D(), params, "false", request, response)[0].equals("false") ? false : true);
+      int plotType = ChartUtil.getSupportedPlots().get(ParameterUtil.resolveParam(plotDef.getType(), params, "multiCategory", request, response)[0]);
+      PlotOrientation orientation = (ParameterUtil.resolveParam(plotDef.getOrientation(), params, "vertical", request, response)[0].equals("horizontal") ? PlotOrientation.HORIZONTAL : PlotOrientation.VERTICAL);
       switch (plotType) {
         case ChartUtil.PLOT_MULTICATEGORY_TYPE:
           plot = new MultiCategoryPlot();
           for (int p = 0; p<plotDef.getSubPlotCount(); p++) {
-            ((MultiCategoryPlot)plot).add((CategoryPlot)this.configurePlot(id, plotDef.getSubPlot(p), params, true, plotType, plotDef));
+            ((MultiCategoryPlot)plot).add((CategoryPlot)this.configurePlot(id, plotDef.getSubPlot(p), params, true, plotType, plotDef, request, response));
           }
           ((MultiCategoryPlot)plot).setOrientation(orientation);
           ((MultiCategoryPlot)plot).setGap(plotDef.getGap());
           if (plotDef.getInsets() != null) {
-            plot.setInsets(ChartUtil.getRectangle(plotDef.getInsets(), params));
+            plot.setInsets(ChartUtil.getRectangle(plotDef.getInsets(), params, request, response));
           }
           break;
         case ChartUtil.PLOT_COMBINEDDOMAINCATEGORY_TYPE:
-          CategoryAxis domainAxis = ChartUtil.createCategoryAxis(plotDef.getDomainAxisDef(), params, is3D);
+          CategoryAxis domainAxis = ChartUtil.createCategoryAxis(plotDef.getDomainAxisDef(), params, is3D, request, response);
           plot = new CombinedDomainCategoryPlotEx(domainAxis);
           for (int p = 0; p<plotDef.getSubPlotCount(); p++) {
-            ((CombinedDomainCategoryPlotEx)plot).add((CategoryPlot)this.configurePlot(id, plotDef.getSubPlot(p), params, true, plotType, plotDef));
+            ((CombinedDomainCategoryPlotEx)plot).add((CategoryPlot)this.configurePlot(id, plotDef.getSubPlot(p), params, true, plotType, plotDef, request, response));
           }
           ((CombinedDomainCategoryPlotEx)plot).setOrientation(orientation);
           ((CombinedDomainCategoryPlotEx)plot).setGap(plotDef.getGap());
           if (plotDef.getInsets() != null) {
-            plot.setInsets(ChartUtil.getRectangle(plotDef.getInsets(), params));
+            plot.setInsets(ChartUtil.getRectangle(plotDef.getInsets(), params, request, response));
           }
           break;
         case ChartUtil.PLOT_COMBINEDRANGECATEGORY_TYPE:
-          ValueAxis rangeAxis = createValueAxis(plotDef.getRangeAxisDef(), params, is3D);
+          ValueAxis rangeAxis = createValueAxis(plotDef.getRangeAxisDef(), params, is3D, request, response);
           plot = new CombinedRangeCategoryPlotEx(rangeAxis);          
           for (int p = 0; p<plotDef.getSubPlotCount(); p++) {
-            ((CombinedRangeCategoryPlotEx)plot).add((CategoryPlot)this.configurePlot(id, plotDef.getSubPlot(p), params, true, plotType, plotDef));
+            ((CombinedRangeCategoryPlotEx)plot).add((CategoryPlot)this.configurePlot(id, plotDef.getSubPlot(p), params, true, plotType, plotDef, request, response));
           }
           ((CombinedRangeCategoryPlotEx)plot).setOrientation(orientation);
           if (plotDef.getInsets() != null) {
-            plot.setInsets(ChartUtil.getRectangle(plotDef.getInsets(), params));
+            plot.setInsets(ChartUtil.getRectangle(plotDef.getInsets(), params, request, response));
           }
           break;
       }
     } else {
-      plot = this.configurePlot(id, plotDef, params, false, -1, null);
+      plot = this.configurePlot(id, plotDef, params, false, -1, null, request, response);
     }
 
     return plot;
   }
 
-  private Plot configurePlot(String id, BasePlot plotDef, Map params, boolean isSubPlot, int parentPlotType, BasePlot parentPlot) throws ChartException {
+  private Plot configurePlot(String id, BasePlot plotDef, Map params, boolean isSubPlot, int parentPlotType, BasePlot parentPlot, HttpServletRequest request, HttpServletResponse response) throws ChartException {
     
-    boolean is3D = (ParameterUtil.resolveParam(plotDef.getIs3D(), params, "false")[0].equals("false") ? false : true);
-    Integer plotType = ChartUtil.getSupportedPlots().get(ParameterUtil.resolveParam(plotDef.getType(), params, "multiCategory")[0]);
+    boolean is3D = (ParameterUtil.resolveParam(plotDef.getIs3D(), params, "false", request, response)[0].equals("false") ? false : true);
+    Integer plotType = ChartUtil.getSupportedPlots().get(ParameterUtil.resolveParam(plotDef.getType(), params, "multiCategory", request, response)[0]);
     if (plotType == null) {
-      throw new ChartException("Unsupported Plot type " + ParameterUtil.resolveParam(plotDef.getType(), params, "multiCategory")[0]);
+      throw new ChartException("Unsupported Plot type " + ParameterUtil.resolveParam(plotDef.getType(), params, "multiCategory", request, response)[0]);
     }
     
     Plot plot = null;
@@ -197,12 +200,12 @@ public class ChartBuilder implements BeanFactoryAware {
           domainAxis = plotDef.getDomainAxisDef();
           rangeAxis = plotDef.getRangeAxisDef();
         }
-        ((CategoryPlot)plot).setDomainAxis(ChartUtil.createCategoryAxis(domainAxis, params, is3D));
-        ((CategoryPlot)plot).setRangeAxis(createValueAxis(rangeAxis, params, is3D));
+        ((CategoryPlot)plot).setDomainAxis(ChartUtil.createCategoryAxis(domainAxis, params, is3D, request, response));
+        ((CategoryPlot)plot).setRangeAxis(createValueAxis(rangeAxis, params, is3D, request, response));
         
         for (int g = 0; g < plotDef.getDatasetGroupCount(); g++) {
           org.toobsframework.pres.chart.config.DatasetGroup group = plotDef.getDatasetGroup(g);
-          CategoryItemRenderer renderer = (CategoryItemRenderer)ChartUtil.getRenderer(plotDef, group, params);
+          CategoryItemRenderer renderer = (CategoryItemRenderer)ChartUtil.getRenderer(plotDef, group, params, request, response);
           if (group.getUrlBase() != null) {
             renderer.setBaseItemURLGenerator(new StandardCategoryURLGenerator(group.getUrlBase()));
           }
@@ -214,13 +217,13 @@ public class ChartBuilder implements BeanFactoryAware {
           }
           for (int i = 0; i < group.getDatasetCount(); i++) {
             Dataset dataset = group.getDataset(i);
-            generateCategoryDataset(id, categoryDataset, dataset, params);
-            this.setValueAxisBounds(((CategoryPlot)plot).getRangeAxis(), rangeAxis, params);
+            generateCategoryDataset(id, categoryDataset, dataset, params, request, response);
+            this.setValueAxisBounds(((CategoryPlot)plot).getRangeAxis(), rangeAxis, params, request, response);
           }
           ((CategoryPlot)plot).setDataset(g, categoryDataset);
         }
 
-        ChartUtil.configurePlot(plot, plotDef, domainAxis, rangeAxis, params);
+        ChartUtil.configurePlot(plot, plotDef, domainAxis, rangeAxis, params, request, response);
       break;
       case ChartUtil.PLOT_XY_TYPE:
         plot = new XYPlot();
@@ -240,7 +243,7 @@ public class ChartBuilder implements BeanFactoryAware {
           }
           for (int i = 0; i < group.getDatasetCount(); i++) {
             Dataset dataset = group.getDataset(i);
-            generateCategoryDataset(id, categoryDataset, dataset, params);
+            //generateCategoryDataset(id, categoryDataset, dataset, params);
             for (int s = 0; s < dataset.getDatasetSeriesCount(); s++) {
               DatasetSeries series = dataset.getDatasetSeries(s); 
               if (series.getColor() != null) {
@@ -250,24 +253,24 @@ public class ChartBuilder implements BeanFactoryAware {
           }
         }
         ((SpiderWebPlot)plot).setDataset(categoryDataset);
-        ChartUtil.configurePlot(plot, plotDef, null, null, params);
+        ChartUtil.configurePlot(plot, plotDef, null, null, params, request, response);
       break;
     }
 
     return plot;
   }
 
-  protected CategoryDataset generateCategoryDataset(String id, DefaultCategoryDataset categoryDataset, Dataset dataset, Map params) throws ChartException {
+  protected CategoryDataset generateCategoryDataset(String id, DefaultCategoryDataset categoryDataset, Dataset dataset, Map params, HttpServletRequest request, HttpServletResponse response) throws ChartException {
     Map outParams = new HashMap();
     Map curParams;
     curParams = new HashMap();
     curParams.putAll(params);
-    ArrayList dataList = (ArrayList)this.datasetSearch(id, dataset, curParams, outParams);
+    ArrayList dataList = (ArrayList)this.datasetSearch(id, dataset, curParams, outParams, request, response);
     for (int j = 0; j < dataList.size(); j++) {
       Object currentRow = dataList.get(j);
       for (int s = 0; s <dataset.getDatasetSeriesCount(); s++) {
         DatasetSeries series = dataset.getDatasetSeries(s);
-        String seriesName = ParameterUtil.resolveParam(series.getName(), params, "Series " + (j+s))[0];
+        String seriesName = ParameterUtil.resolveParam(series.getName(), params, "Series " + (j+s), request, response)[0];
         categoryDataset.addValue(
             Double.parseDouble(String.valueOf(ChartUtil.getDatasetValue(currentRow, series.getValueElement(), new Integer(0)))), 
             String.valueOf(ChartUtil.getDatasetValue(currentRow, series.getRowElement(), seriesName)), 
@@ -281,37 +284,20 @@ public class ChartBuilder implements BeanFactoryAware {
     return categoryDataset;
   }
 
-  protected Collection datasetSearch(String id, Dataset dataset, Map params, Map outParams) throws ChartException {
+  protected Collection datasetSearch(String id, Dataset dataset, Map params, Map outParams, HttpServletRequest request, HttpServletResponse response) throws ChartException {
     try {
       if(dataset.getParameters() != null){
-        ParameterUtil.mapParameters("Component:" + id + ":Dataset:" + dataset.getDaoObject(), dataset.getParameters().getParameter(), params, params, id, null);
+        ParameterUtil.mapParameters("Component:" + id + ":Dataset:" + dataset.getDaoObject(), dataset.getParameters().getParameter(), params, params, id, null, request, response);
       }
-      return this.datasource.search(
-          dataset.getReturnedValueObject(),
-          ParameterUtil.resolveParam(dataset.getDaoObject(), params)[0], 
-          dataset.getSearchCriteria(),
-          dataset.getSearchMethod(), 
-          "read", 
-          params, outParams);
-    } catch (ParameterException e) {
-      log.error("Chart data search exception " + e.getMessage(), e);
-      throw new ChartException(e);
-    } catch (ObjectCreationException e) {
-      log.error("Chart data search exception " + e.getMessage(), e);
-      throw new ChartException(e);
-    } catch (InvalidSearchContextException e) {
-      log.error("Chart data search exception " + e.getMessage(), e);
-      throw new ChartException(e);
-    } catch (InvalidSearchFilterException e) {
-      log.error("Chart data search exception " + e.getMessage(), e);
-      throw new ChartException(e);
-    } catch (DataProviderNotInitializedException e) {
-      log.error("Chart data search exception " + e.getMessage(), e);
-      throw new ChartException(e);
+      return (Collection) this.datasource.dispatchAction("search", dataset.getDaoObject(), "", 
+          dataset.getReturnedValueObject(), "", "read", dataset.getSearchCriteria(), "", params, outParams);
+    } catch (Exception e) {
+      log.error("Error in chart generation of search data: " + e.getMessage(), e);
+      throw new ChartException("Chart data search exception " + e.getMessage(), e);
     }
   }
 
-  public ValueAxis createValueAxis(RangeAxisDef valueAxisDef, Map params, boolean is3D) {
+  public ValueAxis createValueAxis(RangeAxisDef valueAxisDef, Map params, boolean is3D, HttpServletRequest request, HttpServletResponse response) {
     ValueAxis valueAxis;
     if (is3D) {
       valueAxis = new NumberAxis3D();
@@ -320,7 +306,7 @@ public class ChartBuilder implements BeanFactoryAware {
     }
     if (valueAxisDef != null) {
       if (valueAxisDef.getRangeLabel() != null) {
-        valueAxis.setLabel(ChartUtil.evaluateTextLabel(valueAxisDef.getRangeLabel(), params));
+        valueAxis.setLabel(ChartUtil.evaluateTextLabel(valueAxisDef.getRangeLabel(), params, request, response));
         if (valueAxisDef.getRangeLabel().getFont() != null) {
           valueAxis.setLabelFont(ChartUtil.getFont(valueAxisDef.getRangeLabel(), null));
         }
@@ -344,36 +330,36 @@ public class ChartBuilder implements BeanFactoryAware {
     return valueAxis;
   }
 
-  public void setValueAxisBounds(ValueAxis valueAxis, RangeAxisDef valueAxisDef, Map params) {
+  public void setValueAxisBounds(ValueAxis valueAxis, RangeAxisDef valueAxisDef, Map params, HttpServletRequest request, HttpServletResponse response) {
     if (valueAxisDef.getUpperBound() != null) {
-      Double upper = Double.parseDouble( ParameterUtil.resolveParam(valueAxisDef.getUpperBound(), params, "0.0")[0]);
+      Double upper = Double.parseDouble( ParameterUtil.resolveParam(valueAxisDef.getUpperBound(), params, "0.0", request, response)[0]);
       if (valueAxis == null || valueAxis.getUpperBound() < upper)
         valueAxis.setUpperBound(upper);
     }
     if (valueAxisDef.getLowerBound() != null) {
-      Double lower = Double.parseDouble( ParameterUtil.resolveParam(valueAxisDef.getLowerBound(), params, "0.0")[0]);
+      Double lower = Double.parseDouble( ParameterUtil.resolveParam(valueAxisDef.getLowerBound(), params, "0.0", request, response)[0]);
       if (valueAxis == null || valueAxis.getLowerBound() < lower)
         valueAxis.setLowerBound(lower);
     }
 
-    double lowerMargin = Double.parseDouble( ParameterUtil.resolveParam(valueAxisDef.getLowerMargin(), params, "0.0")[0] );
-    double upperMargin = Double.parseDouble( ParameterUtil.resolveParam(valueAxisDef.getUpperMargin(), params, "0.0")[0] );
+    double lowerMargin = Double.parseDouble( ParameterUtil.resolveParam(valueAxisDef.getLowerMargin(), params, "0.0", request, response)[0] );
+    double upperMargin = Double.parseDouble( ParameterUtil.resolveParam(valueAxisDef.getUpperMargin(), params, "0.0", request, response)[0] );
     valueAxis.setLowerMargin(lowerMargin);
     valueAxis.setUpperMargin(upperMargin);
   }
 
-  private JFreeChart finishChart(ChartDefinition chartDef, Plot plot, Map params) {
+  private JFreeChart finishChart(ChartDefinition chartDef, Plot plot, Map params, HttpServletRequest request, HttpServletResponse response) {
     
     JFreeChart chart = new JFreeChart(
-        ChartUtil.evaluateTextLabel(chartDef.getTitle(), params), ChartUtil.getFont(chartDef.getTitle(), JFreeChart.DEFAULT_TITLE_FONT), plot, chartDef.isShowLegend());
+        ChartUtil.evaluateTextLabel(chartDef.getTitle(), params, request, response), ChartUtil.getFont(chartDef.getTitle(), JFreeChart.DEFAULT_TITLE_FONT), plot, chartDef.isShowLegend());
     
     if (chartDef.getSubtitle() != null) {
-      TextTitle subtitle = new TextTitle(ChartUtil.evaluateTextLabel(chartDef.getSubtitle(), params));
+      TextTitle subtitle = new TextTitle(ChartUtil.evaluateTextLabel(chartDef.getSubtitle(), params, request, response));
       if (chartDef.getSubtitle().getFont() != null) {
         subtitle.setFont(ChartUtil.getFont(chartDef.getSubtitle(), null));
       }
       subtitle.setPosition(ChartUtil.getPosition(chartDef.getSubtitle().getPosition()));
-      subtitle.setPadding(ChartUtil.getRectangle(chartDef.getSubtitle().getPadding(), params));
+      subtitle.setPadding(ChartUtil.getRectangle(chartDef.getSubtitle().getPadding(), params, request, response));
       subtitle.setVerticalAlignment(ChartUtil.getVerticalAlignment(chartDef.getSubtitle().getVerticalAlignment()));
       subtitle.setPaint(ChartUtil.getColor(chartDef.getSubtitle().getColor()));
       chart.addSubtitle(subtitle);
@@ -385,7 +371,7 @@ public class ChartBuilder implements BeanFactoryAware {
     }
 
     if (chartDef.isShowLegend()) {
-      ChartUtil.configureLegend(chart, chartDef.getLegend(), params);
+      ChartUtil.configureLegend(chart, chartDef.getLegend(), params, request, response);
     }
     
     return chart;

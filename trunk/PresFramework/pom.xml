@@ -118,6 +118,16 @@
       <artifactId>castor</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-core</artifactId>
+      <version>${camel.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-spring</artifactId>
+      <version>${camel.version}</version>
+    </dependency>
+    <dependency>
       <groupId>commons-jxpath</groupId>
       <artifactId>commons-jxpath</artifactId>
       <exclusions>
@@ -136,4 +146,8 @@
       <artifactId>commons-fileupload</artifactId>
     </dependency>
   </dependencies>
+  
+  <properties>
+    <camel.version>2.0-M2</camel.version>
+  </properties>
 </project>

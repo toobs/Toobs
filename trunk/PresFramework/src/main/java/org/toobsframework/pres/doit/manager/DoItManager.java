@@ -30,6 +30,7 @@ public final class DoItManager extends ManagerBase implements IDoItManager {
 
   private static Log log = LogFactory.getLog(DoItManager.class);
 
+  private static long localDeployTime = 0L;
 
   private Map<String, DoIt> registry;
 
@@ -38,8 +39,8 @@ public final class DoItManager extends ManagerBase implements IDoItManager {
     registry = new HashMap<String, DoIt>();
   }
 
-  public DoIt getDoIt(String Id) throws DoItInitializationException {
-    if (isDoReload() || !isInitDone()) {
+  public DoIt getDoIt(String Id, long deployTime) throws DoItInitializationException {
+    if (isDoReload() || deployTime > localDeployTime) {
       //Date initStart = new Date();
       this.init();
       //Date initEnd = new Date();
@@ -48,6 +49,7 @@ public final class DoItManager extends ManagerBase implements IDoItManager {
     if (!registry.containsKey(Id)) {
       throw new DoItInitializationException("DoIt " + Id + " not found");
     }
+    localDeployTime = deployTime;
     return registry.get(Id);
   }
 

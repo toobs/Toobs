@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xs:schema targetNamespace="chc" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+<xs:schema targetNamespace="http://www.toobsframework.org/schema/chart" xmlns:xs="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
   attributeFormDefault="unqualified"
-  xmlns:chc="chc"
-  xmlns:cc="cc"
-  >
-  <xs:import namespace="cc" schemaLocation="../../../../PresFramework/src/main/castor/componentConfig.xsd"/>
+  xmlns:chc="http://www.toobsframework.org/schema/chart"
+  xmlns:cc="http://www.toobsframework.org/schema/component">
+  <xs:import namespace="http://www.toobsframework.org/schema/component" schemaLocation="http://www.toobsframework.org/schema/componentConfig-0.1.0.xsd"/>
   
   <xs:element name="ChartConfig">
     <xs:annotation>

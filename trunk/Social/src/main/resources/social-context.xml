@@ -1,11 +1,58 @@
 <?xml version="1.0" encoding="UTF-8"?> 
 <beans xmlns="http://www.springframework.org/schema/beans"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:camel="http://camel.apache.org/schema/spring"
   xsi:schemaLocation="
-    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+    http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring-2.0-M2.xsd">
 
   <bean name="socialDao" class="org.toobsframework.social.persistence.dao.SocialDao" init-method="init">
     <property name="dataFile" value="data/directory.xml"/>
   </bean>
+  
+  <bean name="createUserContext" class="org.toobsframework.social.session.common.CreateUserContext" />
+  <bean name="validateRegistration" class="org.toobsframework.social.session.registration.ValidateRegistration">
+    <property name="dao" ref="socialDao" />
+  </bean>
+  <bean name="createRegistration" class="org.toobsframework.social.session.registration.RegisterUser">
+    <property name="dao" ref="socialDao" />
+  </bean>
 
- </beans>
+  <bean name="getLoggedInUserInfo" class="org.toobsframework.social.session.user.GetLoggedInUser" />
+  <bean name="logInUser" class="org.toobsframework.social.session.login.LogIn">
+    <property name="dao" ref="socialDao" />
+  </bean>
+
+  <bean name="createBrowsingContext" class="org.toobsframework.social.session.common.CreateBrowsingContext" />
+
+  <camelContext id="userService" xmlns="http://camel.apache.org/schema/spring">
+
+    <route>
+      <from uri="direct:registerUser" />
+      <to uri="bean:createUserContext" />
+      <to uri="bean:validateRegistration" />
+      <to uri="bean:createRegistration" />
+      <to uri="bean:logInUser" />
+    </route>
+
+    <route>
+      <from uri="direct:logInUser" />
+      <to uri="bean:logInUser" />
+    </route>
+
+    <route>
+      <from uri="direct:getUserInfo" />
+      <to uri="bean:getLoggedInUserInfo" />
+    </route>
+
+  </camelContext>
+
+  <camelContext id="environmentService" xmlns="http://camel.apache.org/schema/spring">
+
+    <route>
+      <from uri="direct:getBrowserInfo" />
+      <to uri="bean:createBrowsingContext" />
+    </route>
+
+  </camelContext>
+</beans>

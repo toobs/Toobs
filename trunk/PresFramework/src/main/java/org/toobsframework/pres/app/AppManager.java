@@ -228,7 +228,7 @@ public class AppManager implements AppReader {
               
               comp = new Component();
               
-              ComponentManager.configureComponent(compDef, comp, fileName, compMap);
+              ComponentManager.configureComponent(compDef, comp, null, fileName, compMap);
               comp.setXmlTransformer(xmlTransformer);
               comp.setDefaultTransformer(defaultTransformer);
               comp.setHtmlTransformer(htmlTransformer);

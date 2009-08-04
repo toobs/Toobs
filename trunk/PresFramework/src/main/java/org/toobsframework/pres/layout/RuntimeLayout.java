@@ -102,7 +102,7 @@ public class RuntimeLayout {
           //Fix the params using the param mapping for 
           //this configuration.
           if(transform.getTransformParams() != null){
-            ParameterUtil.mapParameters("Transform:" + transform.getTransformName(), transform.getTransformParams().getParameter(), request.getParams(), layoutParams, this.id);
+            ParameterUtil.mapParameters("Transform:" + transform.getTransformName(), transform.getTransformParams().getParameter(), request.getParams(), layoutParams, this.id, request.getHttpRequest(), request.getHttpResponse());
           }
         }
       } else {
@@ -119,7 +119,7 @@ public class RuntimeLayout {
         xmlTransformer = this.defaultTransformer;
       }
 
-      ParameterUtil.mapParameters("Layout:" + this.id, config.getAllTransformParams(), request.getParams(), layoutParams, this.id);
+      ParameterUtil.mapParameters("Layout:" + this.id, config.getAllTransformParams(), request.getParams(), layoutParams, this.id, request.getHttpRequest(), request.getHttpResponse());
 
       inputXMLs.add(this.layoutXml);
       layoutParams.put("context", Configuration.getInstance().getMainContext() + "/");

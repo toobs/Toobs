@@ -33,6 +33,7 @@
   </bean>
 
   <bean id="componentManager" class="org.toobsframework.pres.component.manager.ComponentManager" init-method="init">
+    <property name="dataProvider" ref="toobsDataProvider" />
     <property name="configFiles">
       <list>
         <value>classpath:**/*.cc.xml</value>
@@ -49,6 +50,7 @@
   </bean>
 
   <bean id="doItRunner" class="org.toobsframework.pres.doit.DoItRunner">
+    <property name="dataProvider" ref="toobsDataProvider" />
     <property name="componentRequestManager" ref="componentRequestManager"/>
   </bean>
 
@@ -58,7 +60,8 @@
     <property name="componentManager" ref="componentManager"/>
     <property name="componentLayoutManager" ref="componentLayoutManager"/>
     <property name="componentRequestManager" ref="componentRequestManager"/>
+    <property name="dataProvider" ref="toobsDataProvider" />
   </bean>
   
-  <bean id="toobsDataProvider" class="org.toobsframework.pres.component.dataprovider.impl.DefaultDataProviderImpl" />
+  <bean id="toobsDataProvider" class="org.toobsframework.pres.component.dataprovider.impl.CamelDataProviderImpl" />
 </beans>

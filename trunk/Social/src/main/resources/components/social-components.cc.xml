@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Components xmlns="cc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<Components xmlns="http://www.toobsframework.org/schema/component" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="
-  cc http://www.toobsframework.org/schema/componentConfig-0.1.0.xsd">
+  http://www.toobsframework.org/schema/component http://www.toobsframework.org/schema/componentConfig-0.1.0.xsd">
 
   <Component id="header">
     <Pipeline>
@@ -51,11 +51,24 @@
     </Pipeline>
   </Component>
   
-  <Component id="pageVisits">
-    <GetObject action="get" serviceProvider="pageVisits" property="all" guidParam="visitId" returnedValueObject="PageVisitsVO" />
+  <Component id="userInfo">
+    <GetObject action="getUserInfo" serviceProvider="userService" />
     <Pipeline>
       <ContentType contentType="xhtml">
-        <Transform name="pageVisits"></Transform>
+        <Transform name="components/html/userInfo"></Transform>
+      </ContentType>
+    </Pipeline>
+  </Component>
+
+  <Component id="browserInfo">
+    <GetObject action="getBrowserInfo" serviceProvider="environmentService">
+      <Parameters>
+        <Parameter name="userAgent" path="!header:User-Agent" isStatic="true" />
+      </Parameters>
+    </GetObject>
+    <Pipeline>
+      <ContentType contentType="xhtml">
+        <Transform name="components/html/browserInfo"></Transform>
       </ContentType>
     </Pipeline>
   </Component>

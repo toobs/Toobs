@@ -1,5 +1,6 @@
 package org.toobsframework.pres.xsl;
 
+import org.toobsframework.pres.component.dataprovider.api.IDataProvider;
 import org.toobsframework.pres.component.manager.IComponentManager;
 import org.toobsframework.pres.layout.manager.IComponentLayoutManager;
 import org.toobsframework.pres.util.ComponentRequestManager;
@@ -9,8 +10,16 @@ public class ComponentTransformerHelper implements IXMLTransformerHelper {
   protected ComponentRequestManager componentRequestManager = null;
   protected IComponentManager componentManager = null;
   protected IComponentLayoutManager componentLayoutManager = null;
+  protected IDataProvider dataProvider;
+
   
-  /**
+  public IDataProvider getDataProvider() {
+	return dataProvider;
+}
+public void setDataProvider(IDataProvider dataProvider) {
+	this.dataProvider = dataProvider;
+}
+/**
    * @return the componentRequestManager
    */
   public ComponentRequestManager getComponentRequestManager() {

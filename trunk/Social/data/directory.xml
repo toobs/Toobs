@@ -1,2 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<directory/>
+<directory xmlns="http://www.toobsframework.org/social" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.toobsframework.org/social ../../src/main/castor/social.xsd">
+  <user>
+    <firstName>Peter</firstName>
+    <lastName>Freeman</lastName>
+    <password>password</password>
+    <userId>peterf@mail.com</userId>
+    <friend><userId>sroberts@mail.com</userId></friend>
+    <friend><userId>mariep@mail.com</userId></friend>
+  </user>
+  <user>
+    <firstName>Suzzane</firstName>
+    <lastName>Roberts</lastName>
+    <password>password</password>
+    <userId>sroberts@mail.com</userId>
+    <friend><userId>peterf@mail.com</userId></friend>
+    <friend><userId>arthur@mail.com</userId></friend>
+  </user>  
+  <user>
+    <firstName>Arthur</firstName>
+    <lastName>Merriman</lastName>
+    <password>password</password>
+    <userId>arthur@mail.com</userId>
+    <friend><userId>sroberts@mail.com</userId></friend>
+  </user>
+  <user>
+    <firstName>Marie</firstName>
+    <lastName>Perez</lastName>
+    <password>password</password>
+    <userId>mariep@mail.com</userId>
+    <friend><userId>peterf@mail.com</userId></friend>
+  </user>
+  
+  <post>
+    <from>peterf@mail.com</from>
+    <to>sroberts@mail.com</to>
+    <on>2009-07-20T18:00:23</on>
+    <comment>Long time no seeing!</comment>
+  </post>
+  <post>
+    <from>sroberts@mail.com</from>
+    <to>peterf@mail.com</to>
+    <on>2009-07-21T06:31:20></on>
+    <comment>Yeah, I know, really a long time</comment>
+  </post>
+</directory>

@@ -69,20 +69,20 @@ public class XsdRelease extends AbstractMojo {
     return line;
   }
   
-  private String fixupNamespace(String line, String from, String to) {
-    line = replace(line, "targetNamespace=\""+ from + "\"", "targetNameSpace=\"" + to + "\"");
-    line = replace(line, "xmlns:" + from + "=\""+ from + "\"", "xmlns:" + from + "\"=" + to + "\""); // keep the namespace prefix
+  /*private String fixupNamespace(String line, String from, String to) {
+    line = replace(line, "targetNamespace=\""+ from + "\"", "targetNamespace=\"" + to + "\"");
+    line = replace(line, "xmlns:" + from + "=\""+ from + "\"", "xmlns:" + from + "=\"" + to + "\""); // keep the namespace prefix
     line = replace(line, "xmlns=\""+ from + "\"", "xmlns=\"" + to + "\""); 
-    line = replace(line, "import namespace=\"" + from + "\"", "import namespace\"" + to + "\"");
+    line = replace(line, "import namespace=\"" + from + "\"", "import namespace=\"" + to + "\"");
     return line;
-  }
+  }*/
   
   private String fixupLine(String line) {
     line = fixupSchemaFilename(line);
     line = fixupSchemaLocation(line);
-    line = fixupNamespace(line, "cc", "http://www.toobsframework.org/schema/component");
-    line = fixupNamespace(line, "clc", "http://www.toobsframework.org/schema/componentLayout");
-    line = fixupNamespace(line, "dc", "http://www.toobsframework.org/schema/doIt");
+    /*line = fixupNamespace(line, "cc", "http://www.toobsframework.org/schema/component");
+    line = fixupNamespace(line, "clc", "http://www.toobsframework.org/schema/layout");
+    line = fixupNamespace(line, "dc", "http://www.toobsframework.org/schema/doIt");*/
     return line;
   }
 

@@ -15,7 +15,9 @@
       
       <body>
         <xsl:apply-templates select="./Section[@id='header']"/>
-        <xsl:apply-templates select="./Section[@id='signUp']"/>
+        <xsl:apply-templates select="./Section[@id='userInfo']"/>
+        <xsl:apply-templates select="./Section[@id='browserInfo']"/>
+        <xsl:apply-templates select="./Section[@id='postsByFriends']"/>
         <xsl:apply-templates select="./Section[@id='footer']"/>
       </body>
     </html>

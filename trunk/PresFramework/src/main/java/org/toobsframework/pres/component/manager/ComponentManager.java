@@ -27,6 +27,7 @@ import org.toobsframework.pres.component.config.ContentType;
 import org.toobsframework.data.beanutil.converter.DateToStringConverter;
 import org.toobsframework.exception.ParameterException;
 import org.toobsframework.pres.component.dataprovider.api.DataProviderInitializationException;
+import org.toobsframework.pres.component.dataprovider.api.IDataProvider;
 import org.toobsframework.pres.component.dataprovider.manager.DataProviderNotFoundException;
 import org.toobsframework.pres.resources.IResourceCacheLoader;
 import org.toobsframework.pres.resources.ResourceCacheDescriptor;
@@ -40,6 +41,8 @@ import org.toobsframework.transformpipeline.domain.XSLUriResolverImpl;
 import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.URIResolver;
 
 
@@ -50,7 +53,9 @@ public final class ComponentManager extends ManagerBase implements IComponentMan
 
   private static Log log = LogFactory.getLog(ComponentManager.class);
 
-  private static long localDeployTime = 0L;
+  private long localDeployTime = 0L;
+
+  private IDataProvider dataProvider;
 
   private URIResolver uriResolver;
 
@@ -97,9 +102,9 @@ public final class ComponentManager extends ManagerBase implements IComponentMan
   public String renderComponent(
       org.toobsframework.pres.component.Component component,
       String contentType, Map<String, Object> params, Map<String, Object> paramsOut, 
-      IXMLTransformerHelper transformerHelper, boolean appendUrlScanner)
+      IXMLTransformerHelper transformerHelper, HttpServletRequest request, HttpServletResponse response, boolean appendUrlScanner)
       throws ComponentNotInitializedException, ComponentException, ParameterException {
-    return component.render(contentType, params, transformerHelper, paramsOut, null);
+    return component.render(contentType, params, transformerHelper, request, response, paramsOut, null);
   }
   
   @Override
@@ -113,7 +118,7 @@ public final class ComponentManager extends ManagerBase implements IComponentMan
         try {
           comp = components[j];
           uic = new org.toobsframework.pres.component.Component();
-          configureComponent(comp, uic, fileName, registry);
+          configureComponent(comp, uic, dataProvider, fileName, registry);
           
           uic.setXmlTransformer(xmlTransformer);
           uic.setDefaultTransformer(defaultTransformer);
@@ -131,13 +136,14 @@ public final class ComponentManager extends ManagerBase implements IComponentMan
 
   // Read from config file
   public static void configureComponent(Component comp,
-      org.toobsframework.pres.component.Component uic, String fileName,
+      org.toobsframework.pres.component.Component uic, IDataProvider dataProvider, String fileName,
       Map<String, org.toobsframework.pres.component.Component> registry) throws DataProviderInitializationException, DataProviderNotFoundException, ComponentInitializationException {
 
 
     uic.setId(comp.getId());
     uic.setFileName(fileName);
     uic.setRenderErrorObject(comp.getRenderErrorObject());
+    uic.setDataProvider(dataProvider);
     //Set object config property.
     uic.setObjectsConfig(comp.getGetObject());
     //Set component pipeline properties.
@@ -204,6 +210,20 @@ public final class ComponentManager extends ManagerBase implements IComponentMan
 
   public TraceListener getParamListener() {
     return paramListener;
+  }
+
+  /**
+   * @return the dataProvider
+   */
+  public IDataProvider getDataProvider() {
+    return dataProvider;
+  }
+
+  /**
+   * @param dataProvider the dataProvider to set
+   */
+  public void setDataProvider(IDataProvider dataProvider) {
+    this.dataProvider = dataProvider;
   }
 
 }

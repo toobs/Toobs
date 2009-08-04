@@ -117,7 +117,7 @@ public class ComponentLayoutHandler implements IComponentLayoutHandler {
           Map actionParams = new HashMap();
           if (layout.getDoItRef().getParameters() != null) {
             Parameter[] parameters = layout.getDoItRef().getParameters().getParameter();
-            ParameterUtil.mapDoItParameters(parameters, params, actionParams, true);
+            ParameterUtil.mapDoItParameters(parameters, params, actionParams, true, request, response);
           }
           doItRefQueue.put(layout.getDoItRef().getDoItId(), actionParams);
         }

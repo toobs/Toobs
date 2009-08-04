@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            xmlns="dc"
-            targetNamespace="dc"
+            xmlns="http://www.toobsframework.org/schema/doIt"
+            targetNamespace="http://www.toobsframework.org/schema/doIt"
             elementFormDefault="qualified"
             xmlns:xml="http://www.w3.org/XML/1998/namespace"
-            xmlns:dc="dc"  
-            xmlns:cc="cc">
-  <xsd:import namespace="cc" schemaLocation="componentConfig.xsd"/>
+            xmlns:dc="http://www.toobsframework.org/schema/doIt"  
+            xmlns:cc="http://www.toobsframework.org/schema/component">
+  <xsd:import namespace="http://www.toobsframework.org/schema/component" schemaLocation="componentConfig.xsd"/>
   
   <xsd:element name="DoItConfig">
     <xsd:complexType>
@@ -38,18 +38,19 @@
         <xsd:element ref="cc:Parameters" minOccurs="0"/>
         <xsd:element ref="cc:OutputParameters" minOccurs="0"/>
       </xsd:sequence>
-      <xsd:attribute name="actionType" use="required" type="xsd:string"/>
+      <xsd:attribute name="actionType" use="optional" default="objectAction" type="xsd:string"/>
       <xsd:attribute name="guidParam" type="xsd:string"/>
-      <xsd:attribute name="objectDao" type="xsd:string"/>
+      <xsd:attribute name="serviceProvider" type="xsd:string"/>
       <xsd:attribute name="inputObjectType" type="xsd:string"/>
-      <xsd:attribute name="objectAction" type="xsd:string"/>
+      <xsd:attribute name="action" use="required" type="xsd:string"/>
       <xsd:attribute name="returnObjectType" type="xsd:string"/>
       <xsd:attribute name="script" type="xsd:string"/>
       <xsd:attribute name="returnAttributeName" type="xsd:string"/>
       <xsd:attribute name="permissionContext" type="xsd:string"/>
       <xsd:attribute name="indexParam" type="xsd:string"/>
       <xsd:attribute name="namespace" type="xsd:string" default=""/>
-      <xsd:attribute name="validationErrorMode" type="xsd:boolean" default="true"/>
+      <xsd:attribute name="validationErrorMode" type="xsd:boolean" default="true"/> 
+      <xsd:attribute name="extended" type="xsd:boolean" default="true"/>
     </xsd:complexType>
   </xsd:element>
   <xsd:element name="Forwards">

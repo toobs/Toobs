@@ -16,6 +16,9 @@ import org.apache.commons.logging.LogFactory;
 import java.util.Map;
 import java.util.Collection;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 public class RequestDataProviderImpl implements IDataProvider {
   private Log log = LogFactory.getLog(RequestDataProviderImpl.class);
   
@@ -87,6 +90,10 @@ public class RequestDataProviderImpl implements IDataProvider {
   public Object dispatchAction(String action, String dao, String objectType, String returnObjectType, String guidParam, String permissionContext, String indexParam, String namespace, Map params, Map outParams) throws Exception {
     throw new ObjectNotFoundException("This Datasource does not support this action at this time.");
   }
+
+  public Object dispatchActionEx(HttpServletRequest request, HttpServletResponse response, String action, String dao, String objectType, String returnObjectType, String guidParam, String permissionContext, String indexParam, String namespace, Map params, Map outParams) throws Exception {
+	    throw new ObjectNotFoundException("This Datasource does not support this action at this time.");
+	  }
 
   public ComponentRequestManager getComponentRequestManager() {
     return componentRequestManager;

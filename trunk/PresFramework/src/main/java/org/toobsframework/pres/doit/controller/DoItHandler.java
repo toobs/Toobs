@@ -29,6 +29,7 @@ import org.toobsframework.pres.doit.IDoItRunner;
 import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.pres.util.PresConstants;
+import org.toobsframework.util.Configuration;
 
 
 /**
@@ -98,19 +99,29 @@ public class DoItHandler extends AbstractController implements IDoItHandler {
     Map params = null;
     try {
       // Get DoIt
-      doIt = doItManager.getDoIt(doItId);
+      long deployTime;
+      if (request.getAttribute(PresConstants.DEPLOY_TIME) == null) {
+        deployTime = Configuration.getInstance().getDeployTime();
+      } else {
+        deployTime = Long.parseLong((String)request.getAttribute(PresConstants.DEPLOY_TIME));
+      }
+      doIt = doItManager.getDoIt(doItId, deployTime);
       if(doIt == null) {
         throw new BaseException("Can not find config for doit: " + doItId);
       }
       params = ParameterUtil.buildParameterMap(request);
       componentRequestManager.set(request, response, params);
 
-      doItRunner.runDoIt(doIt, params, responseParams);
+      doItRunner.runDoIt(request, response, doIt, params, responseParams);
 
       Iterator iter = responseParams.keySet().iterator();
       while (iter.hasNext()) {
         Object key = iter.next();
-        request.setAttribute((String)key, responseParams.get(key));      
+        request.setAttribute((String)key, responseParams.get(key));
+        if ( ((String)key).startsWith("->session:")) {
+          String key2 = ((String)key).substring(10);
+          request.getSession().setAttribute(key2, responseParams.get(key));
+        }
       }
       
       // Everything ran successfully. Forward to forward, if there
@@ -121,7 +132,7 @@ public class DoItHandler extends AbstractController implements IDoItHandler {
       }
       forwardDef = getForward(doIt, forwardName);
       if (forwardDef != null) {
-        forwardTo = ParameterUtil.resoveForwardPath(forwardDef, request.getParameterMap(), urlPath);
+        forwardTo = ParameterUtil.resoveForwardPath(forwardDef, request.getParameterMap(), urlPath, request, response);
         
         forwardView = new RedirectView(forwardTo, true);
       }
@@ -133,7 +144,7 @@ public class DoItHandler extends AbstractController implements IDoItHandler {
         validationError = true;
         forwardParams.put(PresConstants.VALIDATION_ERROR_MESSAGES, responseParams.get(PresConstants.VALIDATION_ERROR_MESSAGES));
         forwardParams.put(PresConstants.VALIDATION_ERROR_OBJECTS, responseParams.get(PresConstants.VALIDATION_ERROR_OBJECTS));
-        addErrorForwardParams(thisAction, forwardParams, forwardParams);
+        addErrorForwardParams(thisAction, forwardParams, forwardParams, request, response);
         response.setHeader("toobs.error.validation", "true");
       } else if (e.getCause() instanceof PermissionException) {
         PermissionException pe = (PermissionException)e.getCause();
@@ -155,7 +166,7 @@ public class DoItHandler extends AbstractController implements IDoItHandler {
       forwardDef = getForward(doIt, forwardName);
       boolean forward = false;
       if (forwardDef != null) {
-        forwardTo = ParameterUtil.resoveForwardPath(forwardDef, request.getParameterMap(), urlPath);
+        forwardTo = ParameterUtil.resoveForwardPath(forwardDef, request.getParameterMap(), urlPath, request, response);
         forward = forwardDef.getForward();
       } else if (validationError) {
         forwardTo = (String)request.getSession().getAttribute(PresConstants.SESSION_LAST_VIEW);
@@ -176,7 +187,7 @@ public class DoItHandler extends AbstractController implements IDoItHandler {
     params = ParameterUtil.buildParameterMap(request);
     if (forwardDef != null && forwardDef.getParameters() != null) {
       try {
-        ParameterUtil.mapParameters("Forward:" + forwardDef.getUri(),forwardDef.getParameters().getParameter(), params, forwardParams, doIt.getName());
+        ParameterUtil.mapParameters("Forward:" + forwardDef.getUri(),forwardDef.getParameters().getParameter(), params, forwardParams, doIt.getName(), request, response);
       } catch (ParameterException e) {
         log.error("Forward Parameter Mapping error " + e.getMessage(), e);
         forwardView = new RedirectView(PresConstants.ERROR_FORWARD, true);
@@ -199,13 +210,13 @@ public class DoItHandler extends AbstractController implements IDoItHandler {
 
   }
   
-  private void addErrorForwardParams(Action actionDef, Map params, Map forwardParams) {
+  private void addErrorForwardParams(Action actionDef, Map params, Map forwardParams, HttpServletRequest request, HttpServletResponse response) {
     Map errorParams = (Map)params.get("ErrorForwardParams");
     if (errorParams != null) {
       String guid = (String)errorParams.get("guid");
       if (guid != null && actionDef != null) {
         forwardParams.put(
-            ((String[])ParameterUtil.resolveParam(actionDef.getGuidParam(), params))[0], 
+            ((String[])ParameterUtil.resolveParam(actionDef.getGuidParam(), params, request, response))[0], 
             guid);
       }
       Iterator iter = errorParams.keySet().iterator();

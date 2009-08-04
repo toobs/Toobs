@@ -20,6 +20,8 @@ import org.toobsframework.servlet.ContextHelper;
 import org.toobsframework.exception.ParameterException;
 import org.springframework.beans.factory.BeanFactory;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.tagext.BodyTagSupport;
 import java.io.IOException;
@@ -108,7 +110,7 @@ public class ComponentRef extends BodyTagSupport {
     try {
       output = transformerHelper.getComponentManager().renderComponent(component, contentType, 
           transformerHelper.getComponentRequestManager().get().getParams(), 
-          transformerHelper.getComponentRequestManager().get().getParams(), transformerHelper, true);
+          transformerHelper.getComponentRequestManager().get().getParams(), transformerHelper, (HttpServletRequest)pageContext.getRequest(), (HttpServletResponse)pageContext.getResponse(), true);
     } catch (ComponentNotInitializedException e) {
       throw new JspException("Component with Id:" + componentId +": is not intitialized.", e);
     } catch (ComponentException e) {

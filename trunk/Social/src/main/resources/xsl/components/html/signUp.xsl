@@ -13,7 +13,7 @@
     <table>
       <tr><td class="sign-up-label"><label for="firstName">First Name</label></td><td class="sign-up-input"><input class="inputtext" type="text" name="firstName" vaule="" /></td></tr>
       <tr><td class="sign-up-label"><label for="lastName">Last Name</label></td><td class="sign-up-input"><input class="inputtext" type="text" name="lastName" vaule="" /></td></tr>
-      <tr><td class="sign-up-label"><label for="emailName">Email</label></td><td class="sign-up-input"><input class="inputtext" type="text" name="email" vaule="" /></td></tr>
+      <tr><td class="sign-up-label"><label for="email">Email</label></td><td class="sign-up-input"><input class="inputtext" type="text" name="email" vaule="" /></td></tr>
       <tr><td class="sign-up-label"><label for="password">Password</label></td><td class="sign-up-input"><input class="inputtext" type="password" name="password" vaule="" /></td></tr>
       <tr><td class="sign-up-label"></td><td class="sign-up-input"><input type="submit" class="inputbutton buttoncall" value="Sign Up" /></td></tr>
     </table>

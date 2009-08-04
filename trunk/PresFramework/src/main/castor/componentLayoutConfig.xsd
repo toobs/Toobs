@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xs:schema targetNamespace="clc" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+<xs:schema targetNamespace="http://www.toobsframework.org/schema/layout" xmlns:xs="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
   attributeFormDefault="unqualified"
-  xmlns:clc="clc"
-  xmlns:cc="cc"
+  xmlns:clc="http://www.toobsframework.org/schema/layout"
+  xmlns:cc="http://www.toobsframework.org/schema/component"
   >
-  <xs:import namespace="cc" schemaLocation="componentConfig.xsd"/>
+  <xs:import namespace="http://www.toobsframework.org/schema/component" schemaLocation="componentConfig.xsd"/>
 
   <xs:element name="Layouts">
     <xs:annotation>

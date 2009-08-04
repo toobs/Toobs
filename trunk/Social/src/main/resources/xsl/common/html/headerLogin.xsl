@@ -8,7 +8,7 @@
   <span id="social-image-bottom-left-login"></span>
   <span id="social-image-med"></span>
   <span id="social-login-form">
-    <form method="post" action="#">
+    <form method="post" action="logIn.xpost">
       <table cellspacing="0" cellpadding="0">
         <tr>
           <td><label for="email">Email</label></td>

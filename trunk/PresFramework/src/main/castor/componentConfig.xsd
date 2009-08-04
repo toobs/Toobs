@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- edited with XMLSPY v2004 rel. 3 U (http://www.xmlspy.com) by spudney (private) -->
-<xs:schema targetNamespace="cc" xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:cc="cc" elementFormDefault="qualified"
+<xs:schema targetNamespace="http://www.toobsframework.org/schema/component" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:cc="http://www.toobsframework.org/schema/component" elementFormDefault="qualified"
            attributeFormDefault="unqualified">
  <xs:element name="Components">
   <xs:annotation>
@@ -97,8 +97,8 @@
    <xs:attribute name="searchCriteria" type="xs:string"/>
    <xs:attribute name="searchMethod" type="xs:string"/>
    <xs:attribute name="permissionAction" type="xs:string"/>
-   <xs:attribute name="dataProvider" type="xs:string" default="toobsDataProvider"/>
    <xs:attribute name="noCache" type="xs:boolean" default="false"/>
+   <xs:attribute name="extended" type="xs:boolean" default="false"/>
   </xs:complexType>
  </xs:element>
  <xs:element name="Parameters">

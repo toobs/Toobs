@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.jxpath.JXPathContext;
@@ -29,6 +30,7 @@ public class ParameterUtil {
   private static Log log = LogFactory.getLog(ParameterUtil.class);
   private static List excludedParameters;
   private static Map envParameters;
+  private static List<INamespaceParameterHelper> namespaceHelpers;
   static {
     excludedParameters = new ArrayList();
     
@@ -45,6 +47,10 @@ public class ParameterUtil {
     envParameters = new HashMap();
     envParameters.put("host", Configuration.getInstance().getMainHost() );
     envParameters.put("toobs.debug", Configuration.getInstance().getProperty("toobs.debug", "false") );
+    
+    namespaceHelpers = new ArrayList();
+    namespaceHelpers.add(new CookieUtil());
+    namespaceHelpers.add(new HeaderUtil());
   }
   
   /**
@@ -74,9 +80,9 @@ public class ParameterUtil {
     return "";
   }
 
-  public static String resoveForwardPath(Forward forwardDef, Map parameters, String urlPath) {
+  public static String resoveForwardPath(Forward forwardDef, Map parameters, String urlPath, HttpServletRequest request, HttpServletResponse response) {
     String forwardPath = null;
-    forwardPath = ((String[])ParameterUtil.resolveParam(forwardDef.getUri(), parameters))[0];
+    forwardPath = ((String[])ParameterUtil.resolveParam(forwardDef.getUri(), parameters, request, response))[0];
     if (forwardPath != null && forwardDef.getUseContext()) {
       String contextPath = ParameterUtil.extractContextPathFromUrlPath(urlPath);
       forwardPath = (contextPath.length()>0 ? "/" + contextPath + "/" : "") + forwardPath; 
@@ -137,8 +143,8 @@ public class ParameterUtil {
       Parameter[] paramMap, 
       Map inParams, 
       Map outParams, 
-      String scopeId) throws ParameterException {
-    mapParameters(callingContext, paramMap, inParams, outParams, scopeId, null);
+      String scopeId, HttpServletRequest request, HttpServletResponse response) throws ParameterException {
+    mapParameters(callingContext, paramMap, inParams, outParams, scopeId, null, request, response);
   }
   
   public static void mapParameters(String callingContext, 
@@ -146,7 +152,7 @@ public class ParameterUtil {
       Map inParams, 
       Map outParams, 
       String scopeId, 
-      List<IDataProviderObject> objects) throws ParameterException {
+      List<IDataProviderObject> objects, HttpServletRequest request, HttpServletResponse response) throws ParameterException {
     JXPathContext context = JXPathContext.newContext(inParams);
     for(int j = 0; j < paramMap.length; j++){
       Parameter thisParam = paramMap[j];
@@ -162,8 +168,8 @@ public class ParameterUtil {
         if(!thisParam.getOverwriteExisting() && inParams.get(thisParam.getName()) != null) {
           continue;
         }
-        thisName = resolveParam(thisParam.getName(), inParams)[0];
-        thisPath = resolveParam(thisParam.getPath(), inParams)[0];
+        thisName = resolveParam(thisParam.getName(), inParams, request, response)[0];
+        thisPath = resolveParam(thisParam.getPath(), inParams, request, response)[0];
         boolean condition = true;
         if (thisParam.getCondition() != null) {
           Object condObj = context.getValue(thisParam.getCondition());
@@ -244,7 +250,7 @@ public class ParameterUtil {
           } else if (value != null && !(value instanceof ArrayList) && String.valueOf(value).length() > 0) {
             outParams.put(thisName, String.valueOf(value));
           } else if (thisParam.getDefault() != null) {
-            String [] defVal = resolveParam(thisParam.getDefault(), inParams);
+            String [] defVal = resolveParam(thisParam.getDefault(), inParams, request, response);
             if (defVal != null) {
               outParams.put(thisName, defVal[0]);
             }
@@ -261,7 +267,7 @@ public class ParameterUtil {
     }
   }
 
-  public static void mapOutputParameters(Parameter[] paramMap, Map paramsIn, String scopeId, List<IDataProviderObject> objects) {
+  public static void mapOutputParameters(Parameter[] paramMap, Map paramsIn, String scopeId, List<IDataProviderObject> objects, HttpServletRequest request, HttpServletResponse response) {
     for(int j = 0; j < paramMap.length; j++){
       Parameter thisParam = paramMap[j];
       if (thisParam.getScope() != null && 
@@ -277,9 +283,9 @@ public class ParameterUtil {
       }
       JXPathContext context = null;
       Object value = null;
-      String paramName = resolveParam(thisParam.getName(), paramsIn)[0];
+      String paramName = resolveParam(thisParam.getName(), paramsIn, request, response)[0];
       try {
-        String thisPath = resolveParam(thisParam.getPath(), paramsIn)[0];
+        String thisPath = resolveParam(thisParam.getPath(), paramsIn, request, response)[0];
         if(thisParam.getIsStatic()){
           value = thisPath;
         } else {
@@ -322,7 +328,7 @@ public class ParameterUtil {
         paramsIn.put(paramName, value);
       } catch (JXPathException e) {
         if (thisParam.getDefault() != null) {
-          String[] def = resolveParam(thisParam.getDefault(), paramsIn);
+          String[] def = resolveParam(thisParam.getDefault(), paramsIn, request, response);
           if (def != null && def.length > 0) {
             paramsIn.put(paramName, def[0]);
           }
@@ -335,7 +341,7 @@ public class ParameterUtil {
     }
   }
   
-  public static void mapDoItParameters(Parameter[] paramMap, Map paramsIn, Map paramsOut, boolean useJXPathContext) 
+  public static void mapDoItParameters(Parameter[] paramMap, Map paramsIn, Map paramsOut, boolean useJXPathContext, HttpServletRequest request, HttpServletResponse response) 
   {
     JXPathContext context = null;
     if(useJXPathContext)
@@ -346,25 +352,25 @@ public class ParameterUtil {
       Object value = null;
       if(thisParam.getIsStatic()) {
         String [] valueAry = new String[1];
-        valueAry[0] = resolveParam(thisParam.getPath(), paramsIn)[0];
+        valueAry[0] = resolveParam(thisParam.getPath(), paramsIn, request, response)[0];
         value = valueAry;
       } else {
-        value = context.getValue(resolveParam(thisParam.getPath(), paramsIn)[0]);
+        value = context.getValue(resolveParam(thisParam.getPath(), paramsIn, request, response)[0]);
         if (value != null && value.getClass().isArray() && ((Object[])value).length == 1) {
           value = ((Object[])value)[0];
         } else if (value == null && thisParam.getDefault() != null) {
           value = thisParam.getDefault();
         }
       }
-      paramsOut.put(resolveParam(thisParam.getName(), paramsIn)[0], value);
+      paramsOut.put(resolveParam(thisParam.getName(), paramsIn, request, response)[0], value);
     }
   }
   
-  public static String[] resolveParam(Object input, Map params) {
-    return resolveParam(input, params, null);
+  public static String[] resolveParam(Object input, Map params, HttpServletRequest request, HttpServletResponse response) {
+    return resolveParam(input, params, null, request, response);
   }
   
-  public static String[] resolveParam(Object input, Map params, Object defaultValue) {
+  public static String[] resolveParam(Object input, Map params, Object defaultValue, HttpServletRequest request, HttpServletResponse response) {
     String[] output;
     if (input != null && input.getClass().isArray()) {
       output = (String[])input;
@@ -374,6 +380,7 @@ public class ParameterUtil {
     if (input != null && input instanceof String && !"".equals(input)) {
       char ind = ((String)input).charAt(0);
       Object value;
+      boolean resolved = false;
       switch (ind) {
       case '$':
         value = params.get(((String)input).substring(1));
@@ -394,6 +401,7 @@ public class ParameterUtil {
         if (log.isDebugEnabled()) {
           log.debug("Input variable with name " + input + " resolved to " + output[0]);
         }
+        resolved = true;
         break;
       case '#':
         value = envParameters.get(((String)input).substring(1));
@@ -405,18 +413,38 @@ public class ParameterUtil {
             output[0] = (String)value;
           }
         }
+        resolved = true;
         break;
       case '%':
         if (((String)input).equalsIgnoreCase("%now")) {
           output = new String[1];
           output[0] = String.valueOf(new Date().getTime());
         }
+        resolved = true;
+        break;
+      case '!':
+        String in = ((String)input).substring(1);
+        String[] out = resolveNamespacedParam(in, params, request, response);
+        if (out != null) {
+          output = out;
+        }
+        break;
       }
+      
     } else if (defaultValue != null) {
       output = new String[1];
       output[0] = (String)defaultValue;
     }
     return output;
+  }
+  
+  public static String[] resolveNamespacedParam(String input, Map params, HttpServletRequest request, HttpServletResponse response) {
+    for (INamespaceParameterHelper helper : namespaceHelpers) {
+      if (helper.supports(input)) {
+        return helper.getValue(input, request, response);
+      }
+    }
+   return null; 
   }
 
   public static void mapScriptParams(Map params, Map paramsIn) {

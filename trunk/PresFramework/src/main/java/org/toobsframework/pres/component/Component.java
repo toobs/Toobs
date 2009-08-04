@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.URIResolver;
 
 import org.apache.commons.logging.Log;
@@ -30,12 +32,14 @@ import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.pres.util.CookieVO;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.pres.util.PresConstants;
+import org.toobsframework.pres.xsl.ComponentTransformerHelper;
 import org.toobsframework.servlet.ContextHelper;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
 import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 import org.toobsframework.transformpipeline.domain.XMLTransformerException;
 import org.toobsframework.util.BetwixtUtil;
 import org.toobsframework.util.Configuration;
+import org.toobsframework.util.IRequest;
 
 
 /**
@@ -76,6 +80,8 @@ public class Component {
   private IXMLTransformer defaultTransformer;
   private IXMLTransformer htmlTransformer;
   private IXMLTransformer xmlTransformer;
+  
+  private IDataProvider dataProvider;
 
   public Component() {
     this.Id = null;
@@ -93,7 +99,7 @@ public class Component {
    * @param paramsOut
    * @return an array of all the objects implementing IDataSourceObject
    */
-  public IDataProviderObject[] getObjects(Map<String,Object> paramsIn, Map<String,Object> paramsOut) throws ComponentException,
+  public IDataProviderObject[] getObjects(Map<String,Object> paramsIn, Map<String,Object> paramsOut, IXMLTransformerHelper transformerHelper, HttpServletRequest request, HttpServletResponse response) throws ComponentException,
       ComponentNotInitializedException, ParameterException {
     List<IDataProviderObject> allObjects = new ArrayList<IDataProviderObject>();
     if (!this.initDone) {
@@ -106,47 +112,20 @@ public class Component {
     for (int i = 0; i < len; i++) {
       Map<String,Object> params = new HashMap<String,Object>(paramsIn);
       GetObject thisObjDef = objectsConfig[i];
-      //Fetch Datasource for this get.
-      IDataProvider datasource = (IDataProvider)ContextHelper.getWebApplicationContext().getBean(thisObjDef.getDataProvider());
-
       //Fix the params using the param mapping for 
       //this configuration.
       if(thisObjDef.getParameters() != null){
-        ParameterUtil.mapParameters("Component:" + this.Id + ":GetObject:" + thisObjDef.getServiceProvider(), thisObjDef.getParameters().getParameter(), params, params, this.Id, allObjects);
+        ParameterUtil.mapParameters("Component:" + this.Id + ":GetObject:" + thisObjDef.getServiceProvider(), thisObjDef.getParameters().getParameter(), params, params, this.Id, allObjects, request, response);
       }
 
       List<IDataProviderObject> theseObjects = new ArrayList<IDataProviderObject>();
 
       //Call the appropriate action.
       Map<String,Object> outParams = new HashMap<String,Object>();
-      if (thisObjDef.getAction().equals("get")) {
-        Object guidObj = null;
-        String thisGuidParam = ParameterUtil.resolveParam(thisObjDef.getGuidParam(), params)[0];
-        if (thisGuidParam != null && params.containsKey(thisGuidParam)) {
-          guidObj = params.get(thisGuidParam);
-        }
-        if (guidObj != null && guidObj.getClass().isArray()) {
-          guidObj = ((String[]) params.get(thisGuidParam))[0];
-        } else {
-          guidObj = (String) params.get(thisGuidParam);
-        }
-        IDataProviderObject obj = null;
-        obj = checkForValidation(paramsIn, thisObjDef, (String)guidObj);
-        if (obj == null) {
-          obj = this.getObject(
-              datasource,
-              thisObjDef.getReturnedValueObject(),
-              ParameterUtil.resolveParam(thisObjDef.getServiceProvider(), params)[0], 
-              thisObjDef.getProperty(),
-              thisObjDef.getNoCache(), 
-              (String)guidObj, 
-              params, 
-              outParams);
-        }
-        theseObjects.add(obj);
-      } else if (thisObjDef.getAction().equals("getCookie")) {
-        String searchCriteria = ParameterUtil.resolveParam(thisObjDef.getSearchCriteria(), params)[0];
-        String thisGuidParam = ParameterUtil.resolveParam(thisObjDef.getGuidParam(), params)[0];
+      // TODO: JG I need to put the cookies: notations into into parameters
+      if (thisObjDef.getAction().equals("getCookie")) {
+        String searchCriteria = ParameterUtil.resolveParam(thisObjDef.getSearchCriteria(), params, request, response)[0];
+        String thisGuidParam = ParameterUtil.resolveParam(thisObjDef.getGuidParam(), params, request, response)[0];
         String cookieName = (searchCriteria != null ? searchCriteria : "");
         Object guidValue = params.get(thisGuidParam);
         if (guidValue != null && guidValue.getClass().isArray()) {
@@ -169,49 +148,15 @@ public class Component {
         if (cookieName != null && cookieValue != null) {
           theseObjects.add(this.createObject(new CookieVO(cookieName, cookieValue)));
         }
-      } else if (thisObjDef.getAction().equals("search")) {
-        try {
-          theseObjects.addAll(datasource.search(
-              ParameterUtil.resolveParam(thisObjDef.getReturnedValueObject(), params)[0], 
-              ParameterUtil.resolveParam(thisObjDef.getServiceProvider(), params)[0], 
-              thisObjDef.getSearchCriteria(),
-              thisObjDef.getSearchMethod(), 
-              thisObjDef.getPermissionAction(), 
-              params, outParams));
-        } catch (ObjectCreationException e) {
-          throw new ComponentException("Problem fetching object:" + this.Id + ":" + thisObjDef.getServiceProvider() + ":" + thisObjDef.getReturnedValueObject(), e);
-        } catch (InvalidSearchContextException e) {
-          throw new ComponentException("Invalid Search Context", e);
-        } catch (InvalidSearchFilterException e) {
-          throw new ComponentException("Ivalid Search Filter", e);
-        } catch (DataProviderNotInitializedException e) {
-          throw new ComponentException("Datasource Not Initialized", e);
-        }
-      } else if (thisObjDef.getAction().equals("searchIndex")) {
-        try {
-          theseObjects.addAll(datasource.searchIndex(
-              thisObjDef.getReturnedValueObject(),
-              ParameterUtil.resolveParam(thisObjDef.getServiceProvider(), params)[0], 
-              ParameterUtil.resolveParam(thisObjDef.getSearchCriteria(), params)[0], 
-              thisObjDef.getSearchMethod(), 
-              thisObjDef.getPermissionAction(), 
-              params, outParams));
-        } catch (ObjectCreationException e) {
-          throw new ComponentException("Problem fetching object:" + thisObjDef.getServiceProvider(), e);
-        } catch (InvalidSearchContextException e) {
-          throw new ComponentException("Invalid Search Context", e);
-        } catch (InvalidSearchFilterException e) {
-          throw new ComponentException("Ivalid Search Filter", e);
-        } catch (DataProviderNotInitializedException e) {
-          throw new ComponentException("Datasource Not Initialized", e);
-        }
+      } else {
+        theseObjects.add(getDispatchedObject(thisObjDef, params, outParams, request, response));
       }
       // TODO SNIP!!!
       ParameterUtil.mapScriptParams(outParams, paramsIn);
       if(thisObjDef.getOutputParameters() != null){
-        ParameterUtil.mapOutputParameters(thisObjDef.getOutputParameters().getParameter(), paramsIn, this.Id, theseObjects);
+        ParameterUtil.mapOutputParameters(thisObjDef.getOutputParameters().getParameter(), paramsIn, this.Id, theseObjects, request, response);
         if (paramsOut != null) {
-          ParameterUtil.mapOutputParameters(thisObjDef.getOutputParameters().getParameter(), paramsOut, this.Id, theseObjects);
+          ParameterUtil.mapOutputParameters(thisObjDef.getOutputParameters().getParameter(), paramsOut, this.Id, theseObjects, request, response);
         }
       }
       allObjects.addAll(theseObjects);
@@ -232,7 +177,7 @@ public class Component {
     return dsObj;
   }
 
-  public IDataProviderObject getObject(IDataProvider datasource, String returnedValueObject,
+/*  public IDataProviderObject getObject(String actionName, String returnedValueObject,
       String daoObject, String property, boolean noCache, String guid, Map<String, Object> params, Map<String, Object> outParams) throws ComponentException,
       ComponentNotInitializedException {
     IDataProviderObject object = null;
@@ -243,12 +188,12 @@ public class Component {
     }
     try {
       if (!noCache) {
-        object = componentRequestManager.checkRequestCache("get", returnedValueObject, guid);
+        object = componentRequestManager.checkRequestCache(actionName, returnedValueObject, guid);
       }
       if (object == null) {
-        object = datasource.getObject(returnedValueObject, daoObject, property, guid, params, outParams);
+        object = dataProvider.getObject(returnedValueObject, daoObject, property, guid, params, outParams);
         if (!noCache) {
-          componentRequestManager.cacheObject("get", returnedValueObject, guid, object);
+          componentRequestManager.cacheObject(actionName, returnedValueObject, guid, object);
         }
       }
     } catch (DataProviderNotInitializedException ex) {
@@ -258,6 +203,46 @@ public class Component {
       ComponentException ce = new ComponentException("Error getting object " +
           returnedValueObject + " for component " + this.Id, ex);
       throw ce;
+    }
+    return object;
+  }
+*/
+  
+  public IDataProviderObject getDispatchedObject(GetObject thisObjDef,  Map<String, Object> params, Map<String, Object> outParams, HttpServletRequest request, HttpServletResponse response) throws ComponentException,
+      ComponentNotInitializedException {
+    IDataProviderObject object = null;
+    if (!this.initDone) {
+      ComponentNotInitializedException ex = new ComponentNotInitializedException();
+      ex.setComponentId(this.Id);
+      throw ex;
+    }
+    try {
+      if (!thisObjDef.getNoCache()) {
+        object = componentRequestManager.checkRequestCache(thisObjDef.getServiceProvider(), thisObjDef.getAction(), "");
+      }
+      if (object == null) {
+        Object obj;
+        if (thisObjDef.isExtended()) {
+          obj = dataProvider.dispatchActionEx(request, response, thisObjDef.getAction(), thisObjDef.getServiceProvider(), 
+              "", "", thisObjDef.getGuidParam(), thisObjDef.getPermissionAction(), "", 
+              "", params, outParams);
+        } else {
+          obj = dataProvider.dispatchAction(thisObjDef.getAction(), thisObjDef.getServiceProvider(), 
+            "", "", thisObjDef.getGuidParam(), thisObjDef.getPermissionAction(), "", 
+            "", params, outParams);
+        }
+        if (obj != null && !(obj instanceof IDataProviderObject)) {
+          object = new DataProviderObjectImpl();
+          ((DataProviderObjectImpl)object).setValueObject(obj);
+        } else if (obj != null){
+          object = (IDataProviderObject) obj;
+        }
+        if (!thisObjDef.getNoCache() && object != null) {
+          componentRequestManager.cacheObject(thisObjDef.getServiceProvider(), thisObjDef.getAction(), "", object);
+        }
+      }
+    } catch (Exception ex) {
+      throw new ComponentException("Component " + getId() + " cannot get object with action " + thisObjDef.getAction(), ex);
     }
     return object;
   }
@@ -275,15 +260,15 @@ public class Component {
    * @throws ComponentNotInitializedException
    * @throws ComponentException
    */
-  public String render(String contentType, Map<String, Object> params, IXMLTransformerHelper transformerHelper, Map<String, Object> outParams, URIResolver uriResolver)
+  public String render(String contentType, Map<String, Object> params, IXMLTransformerHelper transformerHelper, HttpServletRequest request, HttpServletResponse response, Map<String, Object> outParams, URIResolver uriResolver)
       throws ComponentNotInitializedException, ComponentException, ParameterException {
     StringBuffer renderedOutput = new StringBuffer();
     Date start = new Date();
-    String componentXML = this.getObjectsAsXML(params, outParams);
+    String componentXML = this.getObjectsAsXML(params, outParams, transformerHelper, request, response);
     Date endGet = new Date();
 
     if (!contentType.equals("bizXML")) {
-      renderedOutput.append(this.callXMLPipeline(contentType, componentXML, params, transformerHelper, uriResolver));
+      renderedOutput.append(this.callXMLPipeline(contentType, componentXML, params, transformerHelper, uriResolver, request, response));
     } else {
       renderedOutput.append(componentXML);
     }
@@ -311,10 +296,10 @@ public class Component {
    * @throws ComponentException
    */
   @SuppressWarnings("unchecked")
-  private String getObjectsAsXML(Map<String, Object> params, Map<String, Object> outParams)
+  private String getObjectsAsXML(Map<String, Object> params, Map<String, Object> outParams, IXMLTransformerHelper transformerHelper, HttpServletRequest request, HttpServletResponse response)
       throws ComponentNotInitializedException, ComponentException, ParameterException {
     StringBuffer xml = new StringBuffer();
-    IDataProviderObject[] objects = this.getObjects(params, outParams);
+    IDataProviderObject[] objects = this.getObjects(params, outParams, transformerHelper, request, response);
     try {
       xml.append(XML_HEADER);
       xml.append(XML_START_COMPONENTS).append(" id=\"").append(this.Id).append("\">");
@@ -368,7 +353,7 @@ public class Component {
    * @throws ComponentNotInitializedException
    * @throws ComponentException
    */
-  private String callXMLPipeline(String contentType, String inputXMLString, Map<String, Object> inParams, IXMLTransformerHelper transformerHelper, URIResolver uriResolver)
+  private String callXMLPipeline(String contentType, String inputXMLString, Map<String, Object> inParams, IXMLTransformerHelper transformerHelper, URIResolver uriResolver, HttpServletRequest request, HttpServletResponse response)
       throws ComponentException, ParameterException {
     StringBuffer outputString = new StringBuffer();
     List<String> outputXML = new ArrayList<String>();
@@ -393,7 +378,7 @@ public class Component {
           //Fix the params using the param mapping for 
           //this configuration.
           if(transform.getTransformParams() != null){
-            ParameterUtil.mapParameters("Transform:" + transform.getTransformName(), transform.getTransformParams().getParameter(), inParams, params, this.Id);
+            ParameterUtil.mapParameters("Transform:" + transform.getTransformName(), transform.getTransformParams().getParameter(), inParams, params, this.Id, request, response);
           }
         }
       } else {
@@ -572,6 +557,14 @@ public class Component {
 
   public void setXmlTransformer(IXMLTransformer xmlTransformer) {
     this.xmlTransformer = xmlTransformer;
+  }
+
+  public IDataProvider getDataProvider() {
+    return dataProvider;
+  }
+
+  public void setDataProvider(IDataProvider dataProvider) {
+    this.dataProvider = dataProvider;
   }
 
 }

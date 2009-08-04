@@ -4,35 +4,43 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.camel.CamelContext;
+import org.apache.camel.ExchangePattern;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.toobsframework.data.beanutil.BeanMonkey;
 import org.toobsframework.pres.component.dataprovider.api.DataProviderNotInitializedException;
+import org.toobsframework.pres.component.dataprovider.api.DispatchContext;
+import org.toobsframework.pres.component.dataprovider.api.DispatchContextEx;
+import org.toobsframework.pres.component.dataprovider.api.DispatchContextFactory;
 import org.toobsframework.pres.component.dataprovider.api.IDataProvider;
 import org.toobsframework.pres.component.dataprovider.api.IDataProviderObject;
-import org.toobsframework.pres.component.dataprovider.api.InvalidContextException;
 import org.toobsframework.pres.component.dataprovider.api.InvalidSearchContextException;
 import org.toobsframework.pres.component.dataprovider.api.InvalidSearchFilterException;
 import org.toobsframework.pres.component.dataprovider.api.ObjectCreationException;
 import org.toobsframework.pres.component.dataprovider.api.ObjectNotFoundException;
-import org.toobsframework.pres.component.dataprovider.api.PropertyNotFoundException;
-import org.toobsframework.pres.component.dataprovider.api.TypeMismatchException;
-import org.toobsframework.servlet.ContextHelper;
 
-public class CamelDataProviderImpl implements IDataProvider {
-  protected static BeanFactory beanFactory;
+public class CamelDataProviderImpl implements IDataProvider, ApplicationContextAware {
+  private ApplicationContext applicationContext;
 
-  static {
-    beanFactory = ContextHelper.getWebApplicationContext();
+  public void setApplicationContext(ApplicationContext context) throws BeansException {
+    this.applicationContext = context;
   }
   
-  private Object getServiceProvider(String serviceProviderName) {
-    return beanFactory.getBean(serviceProviderName);
+  private Object getBean(String serviceProviderName) {
+    return applicationContext.getBean(serviceProviderName);
   }
 
-  public Object dispatchAction(String action, String dao, String objectType,
-      String returnObjectType, String guidParam, String permissionContext,
-      String indexParam, String namespace, Map<String, Object> params,
+  public Object dispatchAction(String action, String camelContextName, String objectType_unused,
+      String returnObjectType_unused, String guidParam, String permissionContext,
+      String indexParam_unused, String namespace, Map<String, Object> params,
       Map<String, Object> outParams) throws Exception {
+    
     Object returnObj = null;
     //Get the guid. If there is one.
     String guid = null;
@@ -45,58 +53,45 @@ public class CamelDataProviderImpl implements IDataProvider {
     if (action == null) {
       throw new ObjectNotFoundException("action was not provided for the dispatch");
     }
-    /*if (action.equalsIgnoreCase("update")) {
-      returnObj = this.updateObject(objectType, dao, returnObjectType, guid, permissionContext, namespace, params, outParams);
-    } else if (action.equalsIgnoreCase("updateCollection")) {
-      returnObj = this.updateObjectCollection(objectType, dao, returnObjectType, guid, permissionContext, indexParam, namespace, params, outParams);
-    } else if (action.equalsIgnoreCase("create")) {
-      returnObj = this.createObject(objectType, dao, returnObjectType, permissionContext, namespace, params, outParams);
-    } else if (action.equalsIgnoreCase("createCollection")) {
-      returnObj = this.createObjectCollection(objectType, dao, returnObjectType, permissionContext, indexParam, namespace, params, outParams);
-    } else if (action.equalsIgnoreCase("get")) {
-      returnObj = this.getObject(returnObjectType, dao, "", guid, params, outParams);
-    } else if (action.equalsIgnoreCase("delete")) {
-      returnObj = this.deleteObject(dao, guid, permissionContext, namespace, params, outParams);
-    } else {
-      returnObj = null; //this.callAction(objectType, action, dao, guid, permissionContext, namespace, params, outParams);
-    }*/
-  
+
+    CamelContext camelContext = (CamelContext) getBean(camelContextName);
+    DispatchContext dispatchContext = DispatchContextFactory.createDispatchContext(action, guid, permissionContext, namespace, params, outParams);
+    returnObj = camelContext.createProducerTemplate().sendBody("direct:" + action, ExchangePattern.InOut, dispatchContext);
+    
+    if (returnObj != null && returnObj instanceof DispatchContext) {
+      returnObj = ((DispatchContext) returnObj).getContextObject();
+    }
+    
     return returnObj;
   }
 
-  public IDataProviderObject getObject(String returnObjectType, String serviceProviderName, String propertyName,
-      String objectId, Map<String, Object> params, Map<String, Object> outParams)
-      throws ObjectNotFoundException, DataProviderNotInitializedException {
+  public Object dispatchActionEx(HttpServletRequest request, HttpServletResponse response, String action, String camelContextName, String objectType_unused,
+      String returnObjectType_unused, String guidParam, String permissionContext,
+      String indexParam_unused, String namespace, Map<String, Object> params,
+      Map<String, Object> outParams) throws Exception {
     
-    try {
-      Object bean = getServiceProvider(serviceProviderName);
-      Object value = BeanMonkey.getPropertyValue(bean, propertyName);
-      DataProviderObjectImpl valueObjectReturn = new DataProviderObjectImpl();
-      valueObjectReturn.setValueObject(value);
-      return valueObjectReturn;
-    } catch (Exception e) {
-      throw new ObjectNotFoundException("Cannot load object: " + e.getMessage(), e);
+    Object returnObj = null;
+    //Get the guid. If there is one.
+    String guid = null;
+    if(params.get(guidParam) != null && params.get(guidParam).getClass().isArray()) {
+      guid = ((String[]) params.get(guidParam))[0];
+    } else {
+      guid = (String) params.get(guidParam);
+    }        
+    //Run action.
+    if (action == null) {
+      throw new ObjectNotFoundException("action was not provided for the dispatch");
     }
-  }
 
-  public Collection<IDataProviderObject> search(String returnValueObject,
-      String dao, String searchCriteria, String searchMethod,
-      String permissionAction, Map<String, Object> params,
-      Map<String, Object> outParams) throws ObjectCreationException,
-      InvalidSearchContextException, InvalidSearchFilterException,
-      DataProviderNotInitializedException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  public Collection<IDataProviderObject> searchIndex(String returnValueObject,
-      String dao, String searchCriteria, String searchMethod,
-      String permissionAction, Map<String, Object> params,
-      Map<String, Object> outParams) throws ObjectCreationException,
-      InvalidSearchContextException, InvalidSearchFilterException,
-      DataProviderNotInitializedException {
-    // TODO Auto-generated method stub
-    return null;
+    CamelContext camelContext = (CamelContext) getBean(camelContextName);
+    DispatchContextEx dispatchContext = DispatchContextFactory.createDispatchContextEx(request, response, action, guid, permissionContext, namespace, params, outParams);
+    returnObj = camelContext.createProducerTemplate().sendBody("direct:" + action, ExchangePattern.InOut, dispatchContext);
+    
+    if (returnObj != null && returnObj instanceof DispatchContextEx) {
+      returnObj = ((DispatchContext) returnObj).getContextObject();
+    }
+    
+    return returnObj;
   }
 
 }

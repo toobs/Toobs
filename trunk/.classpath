@@ -8,8 +8,8 @@
 	<classpathentry kind="src" output="BusinessLogic/target/classes" path="BusinessLogic/src/main/java"/>
 	<classpathentry kind="src" output="BusinessLogic/target/test-classes" path="BusinessLogic/src/test/java"/>
 	<classpathentry kind="src" output="PresFramework/target/classes" path="PresFramework/src/main/java"/>
-	<classpathentry kind="src" path="PresFramework/src/main/castor"/>
 	<classpathentry kind="src" output="PresFramework/target/classes" path="PresFramework/target/generated-sources/castor"/>
+	<classpathentry kind="src" path="PresFramework/src/main/castor"/>
 	<classpathentry excluding="**" kind="src" output="PresFramework/target/classes" path="PresFramework/src/main/resources"/>
 	<classpathentry kind="src" output="PresFramework/target/test-classes" path="PresFramework/src/test/java"/>
 	<classpathentry kind="src" output="TagLib/target/classes" path="TagLib/src/main/java"/>
@@ -24,13 +24,12 @@
 	<classpathentry excluding="**" kind="src" output="Ext/target/classes" path="Ext/src/main/resources"/>
 	<classpathentry kind="src" output="Ext/target/test-classes" path="Ext/src/test/java"/>
 	<classpathentry excluding="**" kind="src" output="Ext/target/test-classes" path="Ext/src/test/resources"/>
+	<classpathentry kind="src" output="Social/target/classes" path="Social/src/main/java"/>
+	<classpathentry kind="src" output="Social/target/classes" path="Social/target/generated-sources/castor"/>
+	<classpathentry excluding="**" kind="src" output="Social/target/classes" path="Social/src/main/resources"/>
+	<classpathentry kind="src" output="Social/target/test-classes" path="Social/src/test/java"/>
+	<classpathentry excluding="**" kind="src" output="Social/target/test-classes" path="Social/src/test/resources"/>
 	<classpathentry kind="src" path="Social/src/main/castor"/>
-	<classpathentry kind="src" path="Social/src/main/java"/>
-	<classpathentry kind="src" path="Social/target/generated-sources/castor"/>
-	<classpathentry kind="src" path="Social/src/main/resources"/>
-	<classpathentry kind="src" path="Social/src/main/webapp"/>
-	<classpathentry kind="src" path="Social/src/test/java"/>
-	<classpathentry kind="src" path="Social/src/test/resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
 	<classpathentry kind="con" path="org.maven.ide.eclipse.MAVEN2_CLASSPATH_CONTAINER"/>

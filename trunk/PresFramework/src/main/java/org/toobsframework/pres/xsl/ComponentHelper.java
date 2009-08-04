@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
 
 import org.apache.commons.logging.Log;
@@ -98,19 +100,12 @@ public class ComponentHelper {
     ComponentTransformerHelper transformerHelper = (ComponentTransformerHelper) th;
     
     // Get tag attributes
-    String componentId = extensionElement.getAttribute("componentId", processorContext.getContextNode(), processorContext.getTransformer());
-    String contentType = extensionElement.getAttribute("contentType", processorContext.getContextNode(), processorContext.getTransformer());
-    String loader = extensionElement.getAttribute("loader", processorContext.getContextNode(), processorContext.getTransformer());
-    
-    if (contentType == null || contentType.length() == 0) {
-      contentType = "xhtml";
-    }
-    if (loader == null) {
-      loader = "direct";
-    }
+    String componentId = getRequiredStringProperty("componentId", "component tag requires a componentId attribute", processorContext, extensionElement);
+    String contentType = getStringProperty("contentType", "xhtml", processorContext, extensionElement);
+    String loader = getStringProperty("loader", "direct", processorContext, extensionElement);
     
     // Obtain parameters
-    List<Node> parameterList = new ArrayList<Node>();
+    List parameterList = new ArrayList();
     transformer.setParameter(COMPONENT_HELPER_PARAMETERS, parameterList);
     transformer.executeChildTemplates(extensionElement, true);
     transformer.setParameter(COMPONENT_HELPER_PARAMETERS, new Boolean(false));
@@ -126,21 +121,21 @@ public class ComponentHelper {
     try {
   
       if(loader.equalsIgnoreCase("direct")) {
-        Map<String, Object> inParams = getRequestParameters("Component:", componentId, request.getParams(), parameterList);
-        Component component = transformerHelper.getComponentManager().getComponent(ParameterUtil.resolveParam(componentId, inParams)[0], getDeployTime(request));
+        Map<String, Object> inParams = getRequestParameters("Component:", componentId, request.getParams(), parameterList, request.getHttpRequest(), request.getHttpResponse());
+        Component component = transformerHelper.getComponentManager().getComponent(ParameterUtil.resolveParam(componentId, inParams, request.getHttpRequest(), request.getHttpResponse())[0], getDeployTime(request));
         appendStyle(sb, component);
         String randId = componentId + "_"+ randomGenerator.nextInt();
         if(debugComponents && !component.getId().equalsIgnoreCase("componentFrame")) {
           prependDebug(sb, component, randId, contentType);
         }
-        sb.append(transformerHelper.getComponentManager().renderComponent(component, contentType, inParams, request.getParams(), transformerHelper, false));
+        sb.append(transformerHelper.getComponentManager().renderComponent(component, contentType, inParams, request.getParams(), transformerHelper, request.getHttpRequest(), request.getHttpResponse(), false));
         if(debugComponents && !component.getId().equalsIgnoreCase("componentFrame")) {
           appendDebug(sb, component, randId, contentType);
         }
         appendControllers(sb, component);
         
       } else if (loader.equalsIgnoreCase("lazy")) {
-        Map inParams = getRequestParameters("Component:", componentId, new HashMap(), parameterList);
+        Map inParams = getRequestParameters("Component:", componentId, new HashMap(), parameterList, request.getHttpRequest(), request.getHttpResponse());
         appendLazyAJAXCall(sb, componentId, inParams);
       }
       SerializationHandler handler = transformer.getResultTreeHandler();
@@ -182,15 +177,44 @@ public class ComponentHelper {
     if (p == null || !(p instanceof List)) {
       throw new TransformerException("toobs parameter declarartion needs to be nested inside of a toobs component");
     }
-    List<Node> parameterList = (List<Node>) p;
+    List parameterList = (List) p;
 
-    String useContext = extensionElement.getAttribute("use-context", processorContext.getContextNode(), processorContext.getTransformer());
+    String useContext = getStringProperty("use-context", processorContext, extensionElement);
     if (useContext != null && (useContext.equalsIgnoreCase("true") || useContext.equalsIgnoreCase("yes") || useContext.equalsIgnoreCase("1"))) {
       // in this case, use the context node to copy the parameter to the component call
       parameterList.add(processorContext.getContextNode());
     } else {
-      // in this case, use the parameters supplied in the tag
-      // TODO: P2- Implement direct parameter passing in xslt
+      String name = getRequiredStringProperty("name", "the property name needs to be provided for the property tag", processorContext, extensionElement);
+      String path = getRequiredStringProperty("path", "the property path needs to be provided for the property tag", processorContext, extensionElement);
+      String condition = getStringProperty("condition", "", processorContext, extensionElement);
+      String _default = getStringProperty("default", "", processorContext, extensionElement);
+      String jexlExpression = getStringProperty("jexlExpression", "", processorContext, extensionElement);
+      String jexlScript = getStringProperty("jexlScript", "", processorContext, extensionElement);
+      String scope = getStringProperty("scope", "", processorContext, extensionElement);
+      String sessionPath = getStringProperty("sessionPath", "", processorContext, extensionElement);
+      boolean isStatic = getBooleanProperty("isStatic", false, processorContext, extensionElement);
+      boolean ignoreNull = getBooleanProperty("ignoreNull", false, processorContext, extensionElement);
+      boolean isList = getBooleanProperty("isList", false, processorContext, extensionElement);
+      boolean isObject = getBooleanProperty("isObject", false, processorContext, extensionElement);
+      boolean overwriteExisting = getBooleanProperty("overwriteExisting", false, processorContext, extensionElement);
+      int objectIndex = getIntegerProperty("objectIndex", 0, processorContext, extensionElement);
+      
+      Parameter param = new Parameter();
+      param.setName(name);
+      param.setPath(path);
+      param.setIsStatic(isStatic);
+      param.setCondition(condition);
+      param.setDefault(_default);
+      param.setIgnoreNull(ignoreNull);
+      param.setIsList(isList);
+      param.setIsObject(isObject);
+      param.setJexlExpression(jexlExpression);
+      param.setJexlScript(jexlScript);
+      param.setObjectIndex(objectIndex);
+      param.setOverwriteExisting(overwriteExisting);
+      param.setScope(scope);
+      param.setSessionPath(sessionPath);
+      parameterList.add(param);
     }
     
     // this method does not execute any child templates.  No xslt instructions can be nested under it
@@ -230,10 +254,10 @@ public class ComponentHelper {
     ComponentTransformerHelper transformerHelper = (ComponentTransformerHelper) th;
     
     // Obtain Tag Attributes
-    String layoutId = extensionElement.getAttribute("layoutId", processorContext.getContextNode(), processorContext.getTransformer());
+    String layoutId = getRequiredStringProperty("layoutId", "the tag layout needs the attribute layoutId", processorContext, extensionElement);
   
     // Obtain parameters
-    List<Node> parameterList = new ArrayList<Node>();
+    List parameterList = new ArrayList<Node>();
     transformer.setParameter(COMPONENT_HELPER_PARAMETERS, parameterList);
     transformer.executeChildTemplates(extensionElement, true);
     transformer.setParameter(COMPONENT_HELPER_PARAMETERS, new Boolean(false));
@@ -245,8 +269,8 @@ public class ComponentHelper {
     }
 
     try {
-      request.setParams(getRequestParameters("Layout:", layoutId, request.getParams(), parameterList));      
-      String s = transformerHelper.getComponentLayoutManager().getLayout(ParameterUtil.resolveParam(layoutId, request.getParams())[0], getDeployTime(request)).render(request, transformerHelper);
+      request.setParams(getRequestParameters("Layout:", layoutId, request.getParams(), parameterList, request.getHttpRequest(), request.getHttpResponse()));      
+      String s = transformerHelper.getComponentLayoutManager().getLayout(ParameterUtil.resolveParam(layoutId, request.getParams(), request.getHttpRequest(), request.getHttpResponse())[0], getDeployTime(request)).render(request, transformerHelper);
       SerializationHandler handler = transformer.getResultTreeHandler();
 
       boolean previousEscaping = handler.setEscaping(false);
@@ -262,7 +286,7 @@ public class ComponentHelper {
    * Public Tag - ComponentUrl - insert a component or sub-layout by URL the result stream
    * <p>
    * <pre><code>
-   *   &lt;toobs:componentUrl url="<i>url</i>" contentType="<i>type</i>"</i>" /&gt;
+   *   &lt;toobs:componentUrl url="<i>url</i>" contentType="<i>type</i>" /&gt;
    * </code></pre>
    * 
    * implicit DTD for componentUrl
@@ -293,13 +317,9 @@ public class ComponentHelper {
     ComponentTransformerHelper transformerHelper = (ComponentTransformerHelper) th;
     
     // Get attributes
-    String componentUrl = extensionElement.getAttribute("url", processorContext.getContextNode(), processorContext.getTransformer());
-    String contentType = extensionElement.getAttribute("contentType", processorContext.getContextNode(), processorContext.getTransformer());
+    String componentUrl = getRequiredStringProperty("url", "componentUrl tag requires a url attribute", processorContext, extensionElement);
+    String contentType = getStringProperty("contentType", "xhtml", processorContext, extensionElement);
     
-    if (contentType == null || contentType.length() == 0) {
-      contentType = "xhtml";
-    }
-
     // Compute Results
     IRequest request = transformerHelper.getComponentRequestManager().get();
     if (request == null) {
@@ -310,10 +330,10 @@ public class ComponentHelper {
       Map inParams = new HashMap(request.getParams());
       String componentId = parseUrl("Component:", componentUrl, request, inParams);
       if (componentId.indexOf(layoutExtension) != -1) {
-        sb.append(transformerHelper.getComponentLayoutManager().getLayout(ParameterUtil.resolveParam(componentId.replace(layoutExtension, ""), request.getParams())[0], getDeployTime(request)).render(request, transformerHelper));
+        sb.append(transformerHelper.getComponentLayoutManager().getLayout(ParameterUtil.resolveParam(componentId.replace(layoutExtension, ""), request.getParams(), request.getHttpRequest(), request.getHttpResponse())[0], getDeployTime(request)).render(request, transformerHelper));
       } else {
-        Component component = transformerHelper.getComponentManager().getComponent(ParameterUtil.resolveParam(componentId, inParams)[0], getDeployTime(request));
-        sb.append(transformerHelper.getComponentManager().renderComponent(component, contentType, inParams, request.getParams(), transformerHelper, false));
+        Component component = transformerHelper.getComponentManager().getComponent(ParameterUtil.resolveParam(componentId, inParams, request.getHttpRequest(), request.getHttpResponse())[0], getDeployTime(request));
+        sb.append(transformerHelper.getComponentManager().renderComponent(component, contentType, inParams, request.getParams(), transformerHelper, request.getHttpRequest(), request.getHttpResponse(), false));
         appendControllers(sb, component);
       }
 
@@ -327,6 +347,91 @@ public class ComponentHelper {
   }
    
  
+
+  /**
+   * Public Tag - insert - insert a component or sub-layout by URL the result stream
+   * <p>
+   * <pre><code>
+   *   &lt;toobs:insert serviceProvider="<i>provider</i>" action="<i>action</i>" guidParam="<i>param-name</i>" permissionContext="<i>context</i>" namespace="<i>namespace</i>" /&gt;
+   * </code></pre>
+   * 
+   * implicit DTD for insert
+   * 
+   * <pre><code>
+   * &lt;!ELEMENT toobs:insert (toobs:parameter*)?&gt
+   * &lt;!ATTLIST toobs:insert
+   * serviceProvider CDATA #REQUIRED
+   * action CDATA #REQUIRED
+   * guidParam CDATA #IMPLIED&gt;
+   * permissionContext CDATA #IMPLIED&gt;
+   * namespace CDATA #IMPLIED&gt;
+   * extended CDATA #IMPLIED&gt;
+   * </code></pre>
+   * 
+   * Where
+   * <p>
+   * <ul>
+   * <li>serviceProvider is the dataProvider for the information - for camel (the default) it is the camel bean name
+   * <li>action is the action being taken - for camel (the default) is the camel starting route marker (direct: name)
+   * <li>guidParam is the name of the param that contains the guid if there is such
+   * <li>permissionCntext is the context setting for the permssioning.  The meaning of this string is left to the business bean implementation
+   * <li>namespace is the context of the application, usually left to the business implementation for deambiguation.
+   * </ul>
+   */
+  public void insert(org.apache.xalan.extensions.XSLProcessorContext processorContext, 
+      org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+
+    // Initialize
+    TransformerImpl transformer = processorContext.getTransformer();
+    Object th = transformer.getParameter(IXMLTransformer.TRANSFORMER_HELPER);
+    if (th == null || !(th instanceof ComponentTransformerHelper)) {
+      throw new TransformerException("Internal error: the property " + IXMLTransformer.TRANSFORMER_HELPER + " needs to be properly initialized prior to calling the transformation.");
+    }
+    ComponentTransformerHelper transformerHelper = (ComponentTransformerHelper) th;
+    
+    // Get attributes
+    String serviceProvider = getRequiredStringProperty("serviceProvider", "the property servicePorovider needs to be provided for the insert tag", processorContext, extensionElement);
+    String action = getRequiredStringProperty("action", "the property action needs to be provided for the insert tag", processorContext, extensionElement);
+    String guidParam = getStringProperty("guidParam", "", processorContext, extensionElement);
+    String permissionContext = getStringProperty("permissionContext", "", processorContext, extensionElement);
+    String namespace = getStringProperty("namespace", "", processorContext, extensionElement);
+    boolean isExtended = getBooleanProperty("extended", false, processorContext, extensionElement);
+    
+
+    // Obtain parameters
+    List parameterList = new ArrayList();
+    transformer.setParameter(COMPONENT_HELPER_PARAMETERS, parameterList);
+    transformer.executeChildTemplates(extensionElement, true);
+    transformer.setParameter(COMPONENT_HELPER_PARAMETERS, new Boolean(false));
+
+    // Compute Results
+    IRequest request = transformerHelper.getComponentRequestManager().get();
+    if (request == null) {
+      throw new TransformerException("Internal error: Invalid request passed to the layout throught the " + IXMLTransformer.TRANSFORMER_HELPER);
+    }
+    try {
+      
+
+      StringBuffer sb = new StringBuffer(); 
+      Map<String, Object> inParams = getRequestParameters("Insert:", action, request.getParams(), parameterList, request.getHttpRequest(), request.getHttpResponse());
+      Map outParams = new HashMap();
+      Object result;
+      if (isExtended) {
+        result = transformerHelper.getDataProvider().dispatchActionEx(request.getHttpRequest(), request.getHttpResponse(), action, serviceProvider, "", "", guidParam, permissionContext, "", namespace, inParams, outParams);
+      } else {
+        result = transformerHelper.getDataProvider().dispatchAction(action, serviceProvider, "", "", guidParam, permissionContext, "", namespace, inParams, outParams);
+      }
+      sb.append(result);
+
+      SerializationHandler handler = transformer.getResultTreeHandler();
+      boolean previousEscaping = handler.setEscaping(false);
+      processorContext.outputToResultTree(extensionElement.getStylesheet(), sb.toString());
+      handler.setEscaping(previousEscaping);
+    } catch (Exception ex) {
+      throw new TransformerException("Error inserting action=" + action + ": " + ex.getMessage(), ex);
+    }
+  }
+   
   /*
   public String getUserAgent(ComponentTransformerHelper transformerHelper) throws XMLTransformerException {
     try {
@@ -725,7 +830,7 @@ public class ComponentHelper {
     return componentId.replace(componentExtension, "");
   }
   
-  protected Map getRequestParameters(String context, String scopeId, Map requestParams, Object parameters) throws Exception {
+  protected Map getRequestParameters(String context, String scopeId, Map requestParams, Object parameters, HttpServletRequest request, HttpServletResponse response) throws Exception {
     Map outParams = new HashMap(requestParams);
     if (parameters != null) {
       ArrayList paramList = new ArrayList();
@@ -747,14 +852,18 @@ public class ComponentHelper {
       } else //...
       // this is the nested toobs tags case
       if (parameters instanceof List) {
-        List<Node> nodes = (List<Node>) parameters;
-        for (Node node : nodes) {
-          processNode(node, paramList);
+        List ps = (List) parameters;
+        for (Object o : ps) {
+          if (o instanceof Node) {
+            processNode((Node) o, paramList);
+          } else if (o instanceof Parameter) {
+            paramList.add(o);
+          }
         }
       }
       Parameter[] paramMap = new Parameter[paramList.size()];
       paramMap = (Parameter[])paramList.toArray(paramMap);
-      ParameterUtil.mapParameters(context + scopeId, paramMap, requestParams, outParams, scopeId);
+      ParameterUtil.mapParameters(context + scopeId, paramMap, requestParams, outParams, scopeId, request, response);
     }
     return outParams;
   }
@@ -808,5 +917,153 @@ public class ComponentHelper {
     }
     
     return sb.toString();
+  
   }*/
+  /**
+   * Get a property for a tag from the context passed
+   * @param name is the name of the attribute
+   * @param processorContext passed to the tag
+   * @param extensionElement passed to the tag
+   * @return the value or null if the tag is not there
+   * @throws TransformerException on error
+   */
+  private String getStringProperty(String name, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+    return extensionElement.getAttribute("name", processorContext.getContextNode(), processorContext.getTransformer());    
+  }
+  
+  /**
+   * Get a property for a tag from the context passed, or the default if it does not exist
+   * @param name is the name of the attribute
+   * @param defaultValue is the value to be used in case it is not there
+   * @param processorContext passed to the tag
+   * @param extensionElement passed to the tag
+   * @return the value or the default if the tag is not there
+   * @throws TransformerException on error
+   */
+  private String getStringProperty(String name, String defaultValue, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+    String value = extensionElement.getAttribute("name", processorContext.getContextNode(), processorContext.getTransformer());
+    if (value == null) {
+      value = defaultValue;
+    }
+    return value;
+  }
+  
+  /**
+   * Get a property for a tag from the context passed, and err if it is not there
+   * @param name is the name of the attribute
+   * @param processorContext passed to the tag
+   * @param extensionElement passed to the tag
+   * @return the value 
+   * @throws TransformerException on error or the tag missing
+   */
+  private String getRequiredStringProperty(String name, String message, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+    String value = extensionElement.getAttribute(name, processorContext.getContextNode(), processorContext.getTransformer());
+    if (value == null || value.length() == 0) {
+      throw new TransformerException(message);
+    }
+    return value;
+  }
+  
+  /**
+   * Get a property for a tag from the context passed
+   * @param name is the name of the attribute
+   * @param processorContext passed to the tag
+   * @param extensionElement passed to the tag
+   * @return the value or null if the tag is not there
+   * @throws TransformerException on error
+   */
+  @SuppressWarnings("unused")
+  private boolean getBooleanProperty(String name, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+    String value = getStringProperty(name, processorContext, extensionElement).trim();
+    if (value == null) {
+      return false;
+    }
+    return value.equals("true") || value.equals("yes") || value.equals("1");
+  }
+  
+  /**
+   * Get a property for a tag from the context passed, or the default if it does not exist
+   * @param name is the name of the attribute
+   * @param defaultValue is the value to be used in case it is not there
+   * @param processorContext passed to the tag
+   * @param extensionElement passed to the tag
+   * @return the value or the default if the tag is not there
+   * @throws TransformerException on error
+   */
+  private boolean getBooleanProperty(String name, boolean defaultValue, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+    String value = getStringProperty(name, processorContext, extensionElement).trim();
+    if (value == null) {
+      return defaultValue;
+    }
+    return value.equals("true") || value.equals("yes") || value.equals("1");
+  }
+  
+  /**
+   * Get a property for a tag from the context passed, and err if it is not there
+   * @param name is the name of the attribute
+   * @param processorContext passed to the tag
+   * @param extensionElement passed to the tag
+   * @return the value 
+   * @throws TransformerException on error or the tag missing
+   */
+  @SuppressWarnings("unused")
+  private boolean getRequiredBooleanProperty(String name, String message, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+    String value = getStringProperty(name, processorContext, extensionElement).trim();
+    if (value == null || value.length() == 0) {
+      throw new TransformerException(message);
+    }
+    return value.equals("true") || value.equals("yes") || value.equals("1");
+  }
+
+  /**
+   * Get a property for a tag from the context passed
+   * @param name is the name of the attribute
+   * @param processorContext passed to the tag
+   * @param extensionElement passed to the tag
+   * @return the value or null if the tag is not there
+   * @throws TransformerException on error
+   */
+  @SuppressWarnings("unused")
+  private int getIntegerProperty(String name, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+    String value = getStringProperty(name, processorContext, extensionElement).trim();
+    if (value == null) {
+      return 0;
+    }
+    return Integer.parseInt(value);
+  }
+  
+  /**
+   * Get a property for a tag from the context passed, or the default if it does not exist
+   * @param name is the name of the attribute
+   * @param defaultValue is the value to be used in case it is not there
+   * @param processorContext passed to the tag
+   * @param extensionElement passed to the tag
+   * @return the value or the default if the tag is not there
+   * @throws TransformerException on error
+   */
+  private int getIntegerProperty(String name, int defaultValue, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+    String value = getStringProperty(name, processorContext, extensionElement).trim();
+    if (value == null) {
+      return defaultValue;
+    }
+    return Integer.parseInt(value);
+  }
+  
+  /**
+   * Get a property for a tag from the context passed, and err if it is not there
+   * @param name is the name of the attribute
+   * @param processorContext passed to the tag
+   * @param extensionElement passed to the tag
+   * @return the value 
+   * @throws TransformerException on error or the tag missing
+   */
+  @SuppressWarnings("unused")
+  private int getRequiredIntegerProperty(String name, String message, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+    String value = getStringProperty(name, processorContext, extensionElement).trim();
+    if (value == null || value.length() == 0) {
+      throw new TransformerException(message);
+    }
+    return Integer.parseInt(value);
+  }
+  
 }
