@@ -247,6 +247,8 @@ public class ParameterUtil {
             outParams.put(thisName, ((String[])value)[0]);
           } else if (value != null && value instanceof ArrayList && ((ArrayList)value).size()>0) {
             outParams.put(thisName, value);
+          } else if (value != null && value instanceof String) {
+            outParams.put(thisName, (String) value);
           } else if (value != null && !(value instanceof ArrayList) && String.valueOf(value).length() > 0) {
             outParams.put(thisName, String.valueOf(value));
           } else if (thisParam.getDefault() != null) {

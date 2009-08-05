@@ -185,18 +185,18 @@ public class ComponentHelper {
       parameterList.add(processorContext.getContextNode());
     } else {
       String name = getRequiredStringProperty("name", "the property name needs to be provided for the property tag", processorContext, extensionElement);
-      String path = getRequiredStringProperty("path", "the property path needs to be provided for the property tag", processorContext, extensionElement);
-      String condition = getStringProperty("condition", "", processorContext, extensionElement);
-      String _default = getStringProperty("default", "", processorContext, extensionElement);
-      String jexlExpression = getStringProperty("jexlExpression", "", processorContext, extensionElement);
-      String jexlScript = getStringProperty("jexlScript", "", processorContext, extensionElement);
-      String scope = getStringProperty("scope", "", processorContext, extensionElement);
-      String sessionPath = getStringProperty("sessionPath", "", processorContext, extensionElement);
+      String path = getRequiredStringProperty("path", "the property path needs to be provided for the property tag '" + name + "'", processorContext, extensionElement);
+      String condition = getStringProperty("condition", processorContext, extensionElement);
+      String _default = getStringProperty("default", processorContext, extensionElement);
+      String jexlExpression = getStringProperty("jexlExpression", processorContext, extensionElement);
+      String jexlScript = getStringProperty("jexlScript", processorContext, extensionElement);
+      String scope = getStringProperty("scope", processorContext, extensionElement);
+      String sessionPath = getStringProperty("sessionPath", processorContext, extensionElement);
       boolean isStatic = getBooleanProperty("isStatic", false, processorContext, extensionElement);
       boolean ignoreNull = getBooleanProperty("ignoreNull", false, processorContext, extensionElement);
       boolean isList = getBooleanProperty("isList", false, processorContext, extensionElement);
       boolean isObject = getBooleanProperty("isObject", false, processorContext, extensionElement);
-      boolean overwriteExisting = getBooleanProperty("overwriteExisting", false, processorContext, extensionElement);
+      boolean overwriteExisting = getBooleanProperty("overwriteExisting", true, processorContext, extensionElement);
       int objectIndex = getIntegerProperty("objectIndex", 0, processorContext, extensionElement);
       
       Parameter param = new Parameter();
@@ -928,7 +928,7 @@ public class ComponentHelper {
    * @throws TransformerException on error
    */
   private String getStringProperty(String name, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
-    return extensionElement.getAttribute("name", processorContext.getContextNode(), processorContext.getTransformer());    
+    return extensionElement.getAttribute(name, processorContext.getContextNode(), processorContext.getTransformer());    
   }
   
   /**
@@ -941,7 +941,7 @@ public class ComponentHelper {
    * @throws TransformerException on error
    */
   private String getStringProperty(String name, String defaultValue, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
-    String value = extensionElement.getAttribute("name", processorContext.getContextNode(), processorContext.getTransformer());
+    String value = extensionElement.getAttribute(name, processorContext.getContextNode(), processorContext.getTransformer());
     if (value == null) {
       value = defaultValue;
     }
@@ -974,10 +974,11 @@ public class ComponentHelper {
    */
   @SuppressWarnings("unused")
   private boolean getBooleanProperty(String name, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
-    String value = getStringProperty(name, processorContext, extensionElement).trim();
+    String value = getStringProperty(name, processorContext, extensionElement);
     if (value == null) {
       return false;
     }
+    value = value.trim();
     return value.equals("true") || value.equals("yes") || value.equals("1");
   }
   
@@ -991,10 +992,11 @@ public class ComponentHelper {
    * @throws TransformerException on error
    */
   private boolean getBooleanProperty(String name, boolean defaultValue, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
-    String value = getStringProperty(name, processorContext, extensionElement).trim();
+    String value = getStringProperty(name, processorContext, extensionElement);
     if (value == null) {
       return defaultValue;
     }
+    value = value.trim();
     return value.equals("true") || value.equals("yes") || value.equals("1");
   }
   
@@ -1008,10 +1010,11 @@ public class ComponentHelper {
    */
   @SuppressWarnings("unused")
   private boolean getRequiredBooleanProperty(String name, String message, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
-    String value = getStringProperty(name, processorContext, extensionElement).trim();
+    String value = getStringProperty(name, processorContext, extensionElement);
     if (value == null || value.length() == 0) {
       throw new TransformerException(message);
     }
+    value = value.trim();
     return value.equals("true") || value.equals("yes") || value.equals("1");
   }
 
@@ -1025,10 +1028,11 @@ public class ComponentHelper {
    */
   @SuppressWarnings("unused")
   private int getIntegerProperty(String name, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
-    String value = getStringProperty(name, processorContext, extensionElement).trim();
+    String value = getStringProperty(name, processorContext, extensionElement);
     if (value == null) {
       return 0;
     }
+    value = value.trim();
     return Integer.parseInt(value);
   }
   
@@ -1042,10 +1046,11 @@ public class ComponentHelper {
    * @throws TransformerException on error
    */
   private int getIntegerProperty(String name, int defaultValue, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
-    String value = getStringProperty(name, processorContext, extensionElement).trim();
+    String value = getStringProperty(name, processorContext, extensionElement);
     if (value == null) {
       return defaultValue;
     }
+    value = value.trim();
     return Integer.parseInt(value);
   }
   
@@ -1059,10 +1064,11 @@ public class ComponentHelper {
    */
   @SuppressWarnings("unused")
   private int getRequiredIntegerProperty(String name, String message, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
-    String value = getStringProperty(name, processorContext, extensionElement).trim();
+    String value = getStringProperty(name, processorContext, extensionElement);
     if (value == null || value.length() == 0) {
       throw new TransformerException(message);
     }
+    value = value.trim();
     return Integer.parseInt(value);
   }
   
