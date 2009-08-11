@@ -14,6 +14,8 @@ import javax.xml.transform.TransformerException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.xalan.extensions.XSLProcessorContext;
+import org.apache.xalan.templates.ElemExtensionCall;
 import org.apache.xalan.transformer.TransformerImpl;
 import org.apache.xml.serializer.SerializationHandler;
 import org.toobsframework.data.beanutil.BeanMonkey;
@@ -22,6 +24,7 @@ import org.toobsframework.pres.component.Transform;
 import org.toobsframework.pres.component.config.Parameter;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.pres.util.PresConstants;
+import org.toobsframework.tags.TagBase;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
 import org.toobsframework.transformpipeline.domain.XMLTransformerException;
 import org.toobsframework.util.Configuration;
@@ -30,7 +33,7 @@ import org.w3c.dom.Node;
 
 
 @SuppressWarnings("unchecked")
-public class ComponentHelper {
+public class ComponentHelper extends TagBase {
 
   private static final String COMPONENT_HELPER_PARAMETERS = "componentHelperParameters";
 
@@ -88,16 +91,11 @@ public class ComponentHelper {
    * <li>loader - is the type of component loading desired,either "direct" or "lazy" (lazy is used for ajax) - default="direct")
    * </ul>
    */
-  public void component(org.apache.xalan.extensions.XSLProcessorContext processorContext, 
-      org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+  public void component(XSLProcessorContext processorContext, ElemExtensionCall extensionElement) throws TransformerException {
     
     // initialize
     TransformerImpl transformer = processorContext.getTransformer();
-    Object th = transformer.getParameter(IXMLTransformer.TRANSFORMER_HELPER);
-    if (th == null || !(th instanceof ComponentTransformerHelper)) {
-      throw new TransformerException("Internal error: the property " + IXMLTransformer.TRANSFORMER_HELPER + " needs to be properly initialized prior to calling the transformation.");
-    }
-    ComponentTransformerHelper transformerHelper = (ComponentTransformerHelper) th;
+    ComponentTransformerHelper transformerHelper = getTransformerHelper(processorContext);
     
     // Get tag attributes
     String componentId = getRequiredStringProperty("componentId", "component tag requires a componentId attribute", processorContext, extensionElement);
@@ -138,10 +136,7 @@ public class ComponentHelper {
         Map inParams = getRequestParameters("Component:", componentId, new HashMap(), parameterList, request.getHttpRequest(), request.getHttpResponse());
         appendLazyAJAXCall(sb, componentId, inParams);
       }
-      SerializationHandler handler = transformer.getResultTreeHandler();
-      boolean previousEscaping = handler.setEscaping(false);
-      processorContext.outputToResultTree(extensionElement.getStylesheet(), sb.toString());
-      handler.setEscaping(previousEscaping);
+      serialize(processorContext, extensionElement, sb.toString(), false);
     } catch (Exception e) {
       throw new TransformerException("Error executing toobs component insertion: " + e.getMessage(), e);
     }
@@ -169,8 +164,7 @@ public class ComponentHelper {
    *   the current path in the xslt.  If true, the node is obtained and passed to the surrounding component or layour tags
    * </ul>
    */
-  public void parameter(org.apache.xalan.extensions.XSLProcessorContext processorContext, 
-      org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+  public void parameter(XSLProcessorContext processorContext, ElemExtensionCall extensionElement) throws TransformerException {
     TransformerImpl transformer = processorContext.getTransformer();
     Object p = transformer.getParameter(COMPONENT_HELPER_PARAMETERS);
     
@@ -242,16 +236,11 @@ public class ComponentHelper {
    * <li>layoutId - is the Id of the layout, as specified in the .clc.xml file
    * </ul>
    */
-  public void layout(org.apache.xalan.extensions.XSLProcessorContext processorContext, 
-      org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+  public void layout(XSLProcessorContext processorContext, ElemExtensionCall extensionElement) throws TransformerException {
     
     // Initialize
     TransformerImpl transformer = processorContext.getTransformer();
-    Object th = transformer.getParameter(IXMLTransformer.TRANSFORMER_HELPER);
-    if (th == null || !(th instanceof ComponentTransformerHelper)) {
-      throw new TransformerException("Internal error: the property " + IXMLTransformer.TRANSFORMER_HELPER + " needs to be properly initialized prior to calling the transformation.");
-    }
-    ComponentTransformerHelper transformerHelper = (ComponentTransformerHelper) th;
+    ComponentTransformerHelper transformerHelper = getTransformerHelper(processorContext);
     
     // Obtain Tag Attributes
     String layoutId = getRequiredStringProperty("layoutId", "the tag layout needs the attribute layoutId", processorContext, extensionElement);
@@ -271,12 +260,7 @@ public class ComponentHelper {
     try {
       request.setParams(getRequestParameters("Layout:", layoutId, request.getParams(), parameterList, request.getHttpRequest(), request.getHttpResponse()));      
       String s = transformerHelper.getComponentLayoutManager().getLayout(ParameterUtil.resolveParam(layoutId, request.getParams(), request.getHttpRequest(), request.getHttpResponse())[0], getDeployTime(request)).render(request, transformerHelper);
-      SerializationHandler handler = transformer.getResultTreeHandler();
-
-      boolean previousEscaping = handler.setEscaping(false);
-      processorContext.outputToResultTree(extensionElement.getStylesheet(), s);
-      handler.setEscaping(previousEscaping);
-     
+      serialize(processorContext, extensionElement, s, false);
     } catch (Exception ex) {
       throw new TransformerException("Error obtaining layout with id=" + layoutId + ": " + ex.getMessage(), ex);
     }
@@ -305,16 +289,11 @@ public class ComponentHelper {
    * <li>contentType - is the type of content to be rendered - default="xhtml")
    * </ul>
    */
-  public void componentUrl(org.apache.xalan.extensions.XSLProcessorContext processorContext, 
-      org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+  public void componentUrl(XSLProcessorContext processorContext, ElemExtensionCall extensionElement) throws TransformerException {
 
     // Initialize
     TransformerImpl transformer = processorContext.getTransformer();
-    Object th = transformer.getParameter(IXMLTransformer.TRANSFORMER_HELPER);
-    if (th == null || !(th instanceof ComponentTransformerHelper)) {
-      throw new TransformerException("Internal error: the property " + IXMLTransformer.TRANSFORMER_HELPER + " needs to be properly initialized prior to calling the transformation.");
-    }
-    ComponentTransformerHelper transformerHelper = (ComponentTransformerHelper) th;
+    ComponentTransformerHelper transformerHelper = getTransformerHelper(processorContext);
     
     // Get attributes
     String componentUrl = getRequiredStringProperty("url", "componentUrl tag requires a url attribute", processorContext, extensionElement);
@@ -378,16 +357,11 @@ public class ComponentHelper {
    * <li>namespace is the context of the application, usually left to the business implementation for deambiguation.
    * </ul>
    */
-  public void insert(org.apache.xalan.extensions.XSLProcessorContext processorContext, 
-      org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
+  public void insert(XSLProcessorContext processorContext, ElemExtensionCall extensionElement) throws TransformerException {
 
     // Initialize
     TransformerImpl transformer = processorContext.getTransformer();
-    Object th = transformer.getParameter(IXMLTransformer.TRANSFORMER_HELPER);
-    if (th == null || !(th instanceof ComponentTransformerHelper)) {
-      throw new TransformerException("Internal error: the property " + IXMLTransformer.TRANSFORMER_HELPER + " needs to be properly initialized prior to calling the transformation.");
-    }
-    ComponentTransformerHelper transformerHelper = (ComponentTransformerHelper) th;
+    ComponentTransformerHelper transformerHelper = getTransformerHelper(processorContext);
     
     // Get attributes
     String serviceProvider = getRequiredStringProperty("serviceProvider", "the property servicePorovider needs to be provided for the insert tag", processorContext, extensionElement);
@@ -422,11 +396,7 @@ public class ComponentHelper {
         result = transformerHelper.getDataProvider().dispatchAction(action, serviceProvider, "", "", guidParam, permissionContext, "", namespace, inParams, outParams);
       }
       sb.append(result);
-
-      SerializationHandler handler = transformer.getResultTreeHandler();
-      boolean previousEscaping = handler.setEscaping(false);
-      processorContext.outputToResultTree(extensionElement.getStylesheet(), sb.toString());
-      handler.setEscaping(previousEscaping);
+      serialize(processorContext, extensionElement, sb.toString(), false);
     } catch (Exception ex) {
       throw new TransformerException("Error inserting action=" + action + ": " + ex.getMessage(), ex);
     }
@@ -834,10 +804,10 @@ public class ComponentHelper {
     Map outParams = new HashMap(requestParams);
     if (parameters != null) {
       ArrayList paramList = new ArrayList();
+      org.w3c.dom.Node currentNode = null;
       // This is the static XSL case
       if (parameters instanceof org.w3c.dom.traversal.NodeIterator) {
         org.w3c.dom.traversal.NodeIterator nodeIter = (org.w3c.dom.traversal.NodeIterator)parameters;
-        org.w3c.dom.Node currentNode = null;
         while ((currentNode = nodeIter.nextNode()) != null) {
           processNode(currentNode, paramList);
         }
@@ -919,157 +889,5 @@ public class ComponentHelper {
     return sb.toString();
   
   }*/
-  /**
-   * Get a property for a tag from the context passed
-   * @param name is the name of the attribute
-   * @param processorContext passed to the tag
-   * @param extensionElement passed to the tag
-   * @return the value or null if the tag is not there
-   * @throws TransformerException on error
-   */
-  private String getStringProperty(String name, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
-    return extensionElement.getAttribute(name, processorContext.getContextNode(), processorContext.getTransformer());    
-  }
-  
-  /**
-   * Get a property for a tag from the context passed, or the default if it does not exist
-   * @param name is the name of the attribute
-   * @param defaultValue is the value to be used in case it is not there
-   * @param processorContext passed to the tag
-   * @param extensionElement passed to the tag
-   * @return the value or the default if the tag is not there
-   * @throws TransformerException on error
-   */
-  private String getStringProperty(String name, String defaultValue, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
-    String value = extensionElement.getAttribute(name, processorContext.getContextNode(), processorContext.getTransformer());
-    if (value == null) {
-      value = defaultValue;
-    }
-    return value;
-  }
-  
-  /**
-   * Get a property for a tag from the context passed, and err if it is not there
-   * @param name is the name of the attribute
-   * @param processorContext passed to the tag
-   * @param extensionElement passed to the tag
-   * @return the value 
-   * @throws TransformerException on error or the tag missing
-   */
-  private String getRequiredStringProperty(String name, String message, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
-    String value = extensionElement.getAttribute(name, processorContext.getContextNode(), processorContext.getTransformer());
-    if (value == null || value.length() == 0) {
-      throw new TransformerException(message);
-    }
-    return value;
-  }
-  
-  /**
-   * Get a property for a tag from the context passed
-   * @param name is the name of the attribute
-   * @param processorContext passed to the tag
-   * @param extensionElement passed to the tag
-   * @return the value or null if the tag is not there
-   * @throws TransformerException on error
-   */
-  @SuppressWarnings("unused")
-  private boolean getBooleanProperty(String name, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
-    String value = getStringProperty(name, processorContext, extensionElement);
-    if (value == null) {
-      return false;
-    }
-    value = value.trim();
-    return value.equals("true") || value.equals("yes") || value.equals("1");
-  }
-  
-  /**
-   * Get a property for a tag from the context passed, or the default if it does not exist
-   * @param name is the name of the attribute
-   * @param defaultValue is the value to be used in case it is not there
-   * @param processorContext passed to the tag
-   * @param extensionElement passed to the tag
-   * @return the value or the default if the tag is not there
-   * @throws TransformerException on error
-   */
-  private boolean getBooleanProperty(String name, boolean defaultValue, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
-    String value = getStringProperty(name, processorContext, extensionElement);
-    if (value == null) {
-      return defaultValue;
-    }
-    value = value.trim();
-    return value.equals("true") || value.equals("yes") || value.equals("1");
-  }
-  
-  /**
-   * Get a property for a tag from the context passed, and err if it is not there
-   * @param name is the name of the attribute
-   * @param processorContext passed to the tag
-   * @param extensionElement passed to the tag
-   * @return the value 
-   * @throws TransformerException on error or the tag missing
-   */
-  @SuppressWarnings("unused")
-  private boolean getRequiredBooleanProperty(String name, String message, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
-    String value = getStringProperty(name, processorContext, extensionElement);
-    if (value == null || value.length() == 0) {
-      throw new TransformerException(message);
-    }
-    value = value.trim();
-    return value.equals("true") || value.equals("yes") || value.equals("1");
-  }
 
-  /**
-   * Get a property for a tag from the context passed
-   * @param name is the name of the attribute
-   * @param processorContext passed to the tag
-   * @param extensionElement passed to the tag
-   * @return the value or null if the tag is not there
-   * @throws TransformerException on error
-   */
-  @SuppressWarnings("unused")
-  private int getIntegerProperty(String name, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
-    String value = getStringProperty(name, processorContext, extensionElement);
-    if (value == null) {
-      return 0;
-    }
-    value = value.trim();
-    return Integer.parseInt(value);
-  }
-  
-  /**
-   * Get a property for a tag from the context passed, or the default if it does not exist
-   * @param name is the name of the attribute
-   * @param defaultValue is the value to be used in case it is not there
-   * @param processorContext passed to the tag
-   * @param extensionElement passed to the tag
-   * @return the value or the default if the tag is not there
-   * @throws TransformerException on error
-   */
-  private int getIntegerProperty(String name, int defaultValue, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
-    String value = getStringProperty(name, processorContext, extensionElement);
-    if (value == null) {
-      return defaultValue;
-    }
-    value = value.trim();
-    return Integer.parseInt(value);
-  }
-  
-  /**
-   * Get a property for a tag from the context passed, and err if it is not there
-   * @param name is the name of the attribute
-   * @param processorContext passed to the tag
-   * @param extensionElement passed to the tag
-   * @return the value 
-   * @throws TransformerException on error or the tag missing
-   */
-  @SuppressWarnings("unused")
-  private int getRequiredIntegerProperty(String name, String message, org.apache.xalan.extensions.XSLProcessorContext processorContext, org.apache.xalan.templates.ElemExtensionCall extensionElement) throws TransformerException {
-    String value = getStringProperty(name, processorContext, extensionElement);
-    if (value == null || value.length() == 0) {
-      throw new TransformerException(message);
-    }
-    value = value.trim();
-    return Integer.parseInt(value);
-  }
-  
 }

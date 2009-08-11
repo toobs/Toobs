@@ -14,17 +14,20 @@ public class ComponentTransformerHelper implements IXMLTransformerHelper {
 
   
   public IDataProvider getDataProvider() {
-	return dataProvider;
-}
-public void setDataProvider(IDataProvider dataProvider) {
-	this.dataProvider = dataProvider;
-}
-/**
+    return dataProvider;
+  }
+
+  public void setDataProvider(IDataProvider dataProvider) {
+    this.dataProvider = dataProvider;
+  }
+  
+  /**
    * @return the componentRequestManager
    */
   public ComponentRequestManager getComponentRequestManager() {
     return componentRequestManager;
   }
+  
   /**
    * @param componentRequestManager the componentRequestManager to set
    */
@@ -32,24 +35,28 @@ public void setDataProvider(IDataProvider dataProvider) {
       ComponentRequestManager componentRequestManager) {
     this.componentRequestManager = componentRequestManager;
   }
+  
   /**
    * @return the componentManager
    */
   public IComponentManager getComponentManager() {
     return componentManager;
   }
+  
   /**
    * @param componentManager the componentManager to set
    */
   public void setComponentManager(IComponentManager componentManager) {
     this.componentManager = componentManager;
   }
+  
   /**
    * @return the componentLayoutManager
    */
   public IComponentLayoutManager getComponentLayoutManager() {
     return componentLayoutManager;
   }
+  
   /**
    * @param componentLayoutManager the componentLayoutManager to set
    */
