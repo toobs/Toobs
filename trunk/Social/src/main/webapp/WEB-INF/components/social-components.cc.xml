@@ -80,5 +80,14 @@
       </ContentType>
     </Pipeline>
   </Component>
-  
+
+  <Component id="myPosts">
+    <Pipeline>
+      <ContentType contentType="xhtml">
+        <Transform name="components/html/myPosts"/>
+      </ContentType>
+    </Pipeline>
+  </Component>
+
+
 </Components>

@@ -25,8 +25,9 @@
     <Section id="browserInfo" order="1">
       <ComponentRef componentId="browserInfo" />
     </Section>
-    <Section id="postsByFriends" order="1">
-      <ComponentRef componentId="postsByFriends" />
+    <Section order="1" type="wide">
+      <ComponentRef componentId="postsByFriends" order="2" />
+      <ComponentRef componentId="myPosts" order="1" />
     </Section>
     <cc:Pipeline>
      <cc:ContentType contentType="xhtml">

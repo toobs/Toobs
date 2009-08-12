@@ -1,6 +1,8 @@
 package org.toobsframework.pres.layout;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import org.toobsframework.pres.component.config.Parameter;
 import org.toobsframework.pres.layout.config.Section;
@@ -48,9 +50,10 @@ public class RuntimeLayoutConfig {
   public LinkedHashMap getSections() {
     return sections;
   }
-  public Section[] getAllSections() {
-    Section[] allSections = new Section[sections.size()];
-    return (Section[])sections.values().toArray(allSections);
+  public Collection<? extends Section> getAllSections() {
+    //Section[] allSections = new Section[sections.size()];
+    //return (Section[])sections.values().toArray(allSections);
+    return sections.values();
   }
   public void addSection(Section section) {
     addSection(new Section[] {section});
@@ -65,6 +68,11 @@ public class RuntimeLayoutConfig {
   }
   public void setNoAccessLayout(String noAccessLayout) {
     this.noAccessLayout = noAccessLayout;
+  }
+  public void addSection(List<Section> sectionList) {
+    for (int i = 0; i < sectionList.size(); i++) {
+      sections.put(sectionList.get(i).getId(), sectionList.get(i));
+    }
   }
 
 }

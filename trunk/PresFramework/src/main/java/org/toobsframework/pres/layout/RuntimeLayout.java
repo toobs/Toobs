@@ -2,6 +2,7 @@ package org.toobsframework.pres.layout;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -58,9 +59,9 @@ public class RuntimeLayout {
       sb.append(XML_CP_FOOTER);
     }
     //sb.append(BetwixtUtil.toXml(config.getAllParams()));
-    Section[] sections = config.getAllSections();
-    for (int s = 0; s < sections.length; s++) {
-      sb.append(BetwixtUtil.toXml(sections[s], true, false, false, null, null));
+    Collection<? extends Section> sections = config.getAllSections();
+    for (Section sec : sections) {
+      sb.append(BetwixtUtil.toXml(sec, true, false, false, null, null));
     }
     sb.append(XML_FOOTER);
     this.setLayoutXml(sb.toString());

@@ -162,7 +162,7 @@ public class AppManager extends ManagerBase implements AppReader {
       configureRoot(toobsApp,toobsAppDef.getRoot());
       configureXSL(toobsApp,toobsAppDef.getXSLConfig());
 
-      URIResolver uriResolver = new XSLUriResolverImpl(toobsApp.getXslLocations());
+      URIResolver uriResolver = new XSLUriResolverImpl(null, toobsApp.getXslLocations());
 
       IXMLTransformer xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_XML, uriResolver, paramListener);
       IXMLTransformer htmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_HTML, uriResolver, paramListener);

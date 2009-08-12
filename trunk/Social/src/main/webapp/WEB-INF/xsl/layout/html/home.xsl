@@ -6,18 +6,18 @@
   <xsl:output omit-xml-declaration="yes"/>
 
   <xsl:include href="component-manager.xsl"/>
-  
-  <xsl:template match="RuntimeLayout">
+
+  <xsl:template match="layout">
     <html>
       <head>
         <xsl:apply-templates select="./Section[@id='declarations']"/>
       </head>
-      
+
       <body>
         <xsl:apply-templates select="./Section[@id='header']"/>
         <xsl:apply-templates select="./Section[@id='userInfo']"/>
         <xsl:apply-templates select="./Section[@id='browserInfo']"/>
-        <xsl:apply-templates select="./Section[@id='postsByFriends']"/>
+        <xsl:apply-templates select="./Section[@type='wide']"/>
         <xsl:apply-templates select="./Section[@id='footer']"/>
       </body>
     </html>

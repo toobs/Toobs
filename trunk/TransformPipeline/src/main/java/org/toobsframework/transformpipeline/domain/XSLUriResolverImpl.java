@@ -28,19 +28,25 @@ public class XSLUriResolverImpl implements URIResolver, ApplicationContextAware,
   protected ApplicationContext applicationContext;
   protected Map<String, URL> sourceMap;
   private boolean doReload;
-  private List<String> base;
+  private List<String> contextBase;
+  private List<String> classpathBase;
 
   public XSLUriResolverImpl() {
   }
 
-  public XSLUriResolverImpl(List<String> base) {
-    this.base = base;
+  public XSLUriResolverImpl(List<String> contextBase, List<String> classpathBase) {
+    this.contextBase = contextBase;
+    this.classpathBase = classpathBase;
   }
 
   public void afterPropertiesSet() throws Exception {
-    if (this.base == null) {
-      this.base = new ArrayList<String>();
-      this.base.add("xsl/");
+    if (this.classpathBase == null) {
+      this.classpathBase = new ArrayList<String>();
+      this.classpathBase.add("xsl/");
+    }
+    if (this.contextBase == null) {
+      this.contextBase = new ArrayList<String>();
+      this.contextBase.add("/WEB-INF/xsl/");
     }
     sourceMap = new ConcurrentHashMap<String,URL>();
     sourceMap.put(COMPONENT_MANAGER_XSL, resolveClasspathResource(COMPONENT_MANAGER_XSL, ""));
@@ -83,8 +89,8 @@ public class XSLUriResolverImpl implements URIResolver, ApplicationContextAware,
   protected URL resolveContextResource(String xslFile, String string) throws IOException {
     Resource configFileURL = null;
     String systemId = null;
-    for (int i = 0; i < this.base.size(); i++) {
-      systemId = this.base.get(i) + xslFile;
+    for (int i = 0; i < this.contextBase.size(); i++) {
+      systemId = this.contextBase.get(i) + xslFile;
 
       if (log.isDebugEnabled()) {
         log.debug("Checking for: " + systemId);
@@ -95,8 +101,10 @@ public class XSLUriResolverImpl implements URIResolver, ApplicationContextAware,
         break;
       }
     }
-
-    return configFileURL.getURL();
+    if (configFileURL.exists()) {
+      return configFileURL.getURL();
+    }
+    return null;
   }
 
   protected URL resolveClasspathResource(String xslFile, String base) throws TransformerException {
@@ -104,8 +112,8 @@ public class XSLUriResolverImpl implements URIResolver, ApplicationContextAware,
 
     URL configFileURL = null;
     String systemId = null;
-    for (int i = 0; i < this.base.size(); i++) {
-      systemId = this.base.get(i) + xslFile;
+    for (int i = 0; i < this.classpathBase.size(); i++) {
+      systemId = this.classpathBase.get(i) + xslFile;
 
       if (log.isDebugEnabled()) {
         log.debug("Checking for: " + systemId);
@@ -128,8 +136,12 @@ public class XSLUriResolverImpl implements URIResolver, ApplicationContextAware,
     this.doReload = doReload;
   }
 
-  public void setBase(List<String> base) {
-    this.base = base;
+  public void setContextBase(List<String> contextBase) {
+    this.contextBase = contextBase;
+  }
+
+  public void setClasspathBase(List<String> classpathBase) {
+    this.classpathBase = classpathBase;
   }
 
 }

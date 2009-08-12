@@ -1,6 +1,9 @@
 package org.toobsframework.pres.layout.manager;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -20,8 +23,10 @@ import org.toobsframework.pres.base.ManagerBase;
 import org.toobsframework.pres.component.config.ContentType;
 import org.toobsframework.pres.layout.RuntimeLayout;
 import org.toobsframework.pres.layout.RuntimeLayoutConfig;
+import org.toobsframework.pres.layout.config.ComponentRef;
 import org.toobsframework.pres.layout.config.Layout;
 import org.toobsframework.pres.layout.config.Layouts;
+import org.toobsframework.pres.layout.config.Section;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
 import org.toobsframework.transformpipeline.domain.XMLTransformerException;
 import org.toobsframework.transformpipeline.domain.XMLTransformerFactory;
@@ -119,6 +124,7 @@ public final class ComponentLayoutManager extends ManagerBase implements ICompon
       IXMLTransformer defaultTransformer, IXMLTransformer htmlTransformer, IXMLTransformer xmlTransformer, 
       Map<String, RuntimeLayout> registry) throws ComponentLayoutInitializationException, IOException {
     RuntimeLayoutConfig layoutConfig = new RuntimeLayoutConfig();
+    List<Section> tempSections = new ArrayList<Section>();
 
     // Inherited from extended definition
     String extendStr = compLayout.getExtend();
@@ -141,7 +147,10 @@ public final class ComponentLayoutManager extends ManagerBase implements ICompon
         }
         layoutConfig.addParam(extendConfig.getAllParams());
         layoutConfig.addTransformParam(extendConfig.getAllTransformParams());
-        layoutConfig.addSection(extendConfig.getAllSections());
+
+        tempSections.addAll(extendConfig.getAllSections());
+        
+        //layoutConfig.addSection(extendConfig.getAllSections());
         layoutConfig.setNoAccessLayout(extendConfig.getNoAccessLayout());
         //layout.addTransform(extend.getAllTransforms());
         layout.getTransforms().putAll(extend.getTransforms());
@@ -156,7 +165,14 @@ public final class ComponentLayoutManager extends ManagerBase implements ICompon
     if (compLayout.getTransformParameters() != null) {
       layoutConfig.addTransformParam(compLayout.getTransformParameters().getParameter());
     }
-    layoutConfig.addSection(compLayout.getSection());
+    for (Section sec : compLayout.getSection()) {
+      tempSections.add(sortComponents(sec));
+    }
+
+    sortSections(tempSections);
+    layoutConfig.addSection(tempSections);
+    //layoutConfig.addSection(compLayout.getSection());
+
     if (compLayout.getNoAccessLayout() != null) {
       layoutConfig.setNoAccessLayout(compLayout.getNoAccessLayout());
     }
@@ -205,6 +221,28 @@ public final class ComponentLayoutManager extends ManagerBase implements ICompon
       log.debug("Layout " + compLayout.getId() + " xml " + layout.getLayoutXml());
     }
     
+  }
+
+  private static Section sortComponents(Section sec) {
+    List<ComponentRef> compRefs = Arrays.asList( sec.getComponentRef() );
+
+    Collections.sort(compRefs, new Comparator<ComponentRef>() {
+      public int compare(ComponentRef o1, ComponentRef o2) {
+        return o1.getOrder() - o2.getOrder();
+      }
+    });
+
+    ComponentRef[] sortedRefs = new ComponentRef[compRefs.size()];
+    sec.setComponentRef(compRefs.toArray(sortedRefs));
+    return sec;
+  }
+
+  private static void sortSections(List<Section> tempSections) {
+    Collections.sort(tempSections, new Comparator<Section>() {
+      public int compare(Section o1, Section o2) {
+        return o1.getOrder() - o2.getOrder();
+      }
+    });
   }
 
   public void setParamListener(TraceListener paramListener) {
