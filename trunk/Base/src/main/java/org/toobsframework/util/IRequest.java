@@ -7,9 +7,9 @@ import javax.servlet.http.HttpServletResponse;
 
 public interface IRequest {
 
-  public abstract Map getParams();
+  public abstract Map<String, Object> getParams();
 
-  public abstract void setParams(Map params);
+  public abstract void setParams(Map<String, Object> params);
 
   public abstract HttpServletRequest getHttpRequest();
 

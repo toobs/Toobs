@@ -12,8 +12,6 @@ import org.toobsframework.pres.component.ComponentInitializationException;
 import org.toobsframework.pres.component.ComponentNotFoundException;
 import org.toobsframework.pres.component.ComponentNotInitializedException;
 import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
-import org.toobsframework.transformpipeline.domain.XMLTransformerException;
-
 
 public interface IComponentManager {
 
@@ -24,8 +22,6 @@ public interface IComponentManager {
       org.toobsframework.pres.component.Component component,
       String contentType, Map<String, Object> params, Map<String, Object> paramsOut, IXMLTransformerHelper transformerHelper, HttpServletRequest request, HttpServletResponse response, boolean appendUrlScanner)
       throws ComponentNotInitializedException, ComponentException, ParameterException;
-      
-  public void init() throws ComponentInitializationException, XMLTransformerException;
 
   public void addConfigFiles(List<String> configFiles);
 }

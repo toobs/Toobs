@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Layouts xmlns="clc" xmlns:cc="http://www.toobsframework.org/schema/component" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<Layouts xmlns="clc" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:cc="http://www.toobsframework.org/schema/component"
+  xmlns:clc="http://www.toobsframework.org/schema/layout"
   xsi:schemaLocation="
   http://www.toobsframework.org/schema/layout http://www.toobsframework.org/schema/componentLayoutConfig-0.1.0.xsd
   http://www.toobsframework.org/schema/component http://www.toobsframework.org/schema/componentConfig-0.1.0.xsd">
@@ -22,9 +25,9 @@
     <Section id="browserInfo" order="1">
       <ComponentRef componentId="browserInfo" />
     </Section>
-    <!-- <Section id="postsByFriends" order="1">
+    <Section id="postsByFriends" order="1">
       <ComponentRef componentId="postsByFriends" />
-    </Section>-->
+    </Section>
     <cc:Pipeline>
      <cc:ContentType contentType="xhtml">
        <cc:Transform name="layout/html/home">

@@ -28,10 +28,10 @@ import org.toobsframework.util.IRequest;
 public class RuntimeLayout {
   private static final Log log = LogFactory.getLog(RuntimeLayout.class);
 
-  private static final String XML_HEADER = "<RuntimeLayout>";
-  private static final String XML_FOOTER = "</RuntimeLayout>";
-  private static final String XML_CP_HEADER = "<TransformParams>";
-  private static final String XML_CP_FOOTER = "</TransformParams>";
+  private static final String XML_HEADER = "<layout>";
+  private static final String XML_FOOTER = "</layout>";
+  private static final String XML_CP_HEADER = "<transform-params>";
+  private static final String XML_CP_FOOTER = "</transform-params>";
   private String id;
   private Map<String, List> transforms = new HashMap<String, List>();
   private RuntimeLayoutConfig config;

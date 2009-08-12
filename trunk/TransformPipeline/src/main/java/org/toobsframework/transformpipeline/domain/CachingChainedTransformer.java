@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.TooManyListenersException;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.xml.transform.ErrorListener;
 import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
@@ -32,7 +31,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xalan.trace.TraceListener;
 import org.apache.xalan.trace.TraceManager;
-import org.apache.xalan.transformer.TransformerHandlerImpl;
 import org.apache.xalan.transformer.TransformerImpl;
 import org.apache.xerces.impl.Version;
 import org.apache.xml.serializer.OutputPropertiesFactory;
@@ -43,7 +41,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
-public class CachingChainedTransformer extends BaseXMLTransformer implements ErrorListener {
+public class CachingChainedTransformer extends BaseXMLTransformer {
 
   private static Log log = LogFactory.getLog(CachingChainedTransformer.class);
 
@@ -198,6 +196,16 @@ public class CachingChainedTransformer extends BaseXMLTransformer implements Err
       throw new XMLTransformerException(ex);
     } finally {
       try {
+        if (tHandlers != null) {
+          int i = 0;
+          for (TransformerHandler tHandler : tHandlers) {
+            Thread t = ((TransformerImpl)tHandler.getTransformer()).getTransformThread();
+            if (t != null) {
+              log.info("TThread-" + (i++) + " " + t + ((TransformerImpl)tHandler.getTransformer()).hasTransformThreadErrorCatcher());
+              t.interrupt();
+            }
+          }
+        }
         if (reader != null) {
           XMLReaderManager.getInstance().releaseXMLReader(reader);
         }
@@ -247,21 +255,6 @@ public class CachingChainedTransformer extends BaseXMLTransformer implements Err
 
   public void setOutputProperties(Properties outputProperties) {
     this.outputProperties = outputProperties;
-  }
-
-  public void error(TransformerException exception) throws TransformerException {
-    // TODO Auto-generated method stub
-    
-  }
-
-  public void fatalError(TransformerException exception) throws TransformerException {
-    // TODO Auto-generated method stub
-    
-  }
-
-  public void warning(TransformerException exception) throws TransformerException {
-    // TODO Auto-generated method stub
-    
   }
 
 }

@@ -26,7 +26,9 @@ import org.toobsframework.pres.app.config.ConfigLocation;
 import org.toobsframework.pres.app.config.LayoutConfig;
 import org.toobsframework.pres.app.config.ToobsApp;
 import org.toobsframework.pres.app.config.XSLConfig;
-import org.toobsframework.pres.app.controller.IAppView;
+import org.toobsframework.pres.app.controller.AppRequest;
+import org.toobsframework.pres.app.controller.AppRequestTypeEnum;
+import org.toobsframework.pres.base.ManagerBase;
 import org.toobsframework.pres.component.Component;
 import org.toobsframework.pres.component.ComponentException;
 import org.toobsframework.pres.component.ComponentInitializationException;
@@ -41,13 +43,14 @@ import org.toobsframework.pres.layout.config.Layout;
 import org.toobsframework.pres.layout.config.Layouts;
 import org.toobsframework.pres.layout.manager.ComponentLayoutManager;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
+import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 import org.toobsframework.transformpipeline.domain.XMLTransformerException;
 import org.toobsframework.transformpipeline.domain.XMLTransformerFactory;
 import org.toobsframework.transformpipeline.domain.XSLUriResolverImpl;
 import org.toobsframework.util.FilesystemFilter;
 import org.toobsframework.util.IRequest;
 
-public class AppManager implements AppReader {
+public class AppManager extends ManagerBase implements AppReader {
 
   private static final Log log = LogFactory.getLog(AppManager.class);
 
@@ -61,9 +64,17 @@ public class AppManager implements AppReader {
 
   private TraceListener paramListener;
 
-
   public AppManager() throws ComponentLayoutInitializationException {
     log.info("Constructing new AppLoader");
+  }
+
+  public void afterPropertiesSet() throws XMLTransformerException, ComponentLayoutInitializationException {
+    appRegistry = new Hashtable<String,ToobsApplication>();
+
+    XMLTransformerFactory.getInstance().setUseChain(useChain);
+    XMLTransformerFactory.getInstance().setUseTranslets(useTranslets);
+
+    loadConfig();
   }
 
   public boolean containsApp(String appRoot) {
@@ -82,15 +93,6 @@ public class AppManager implements AppReader {
     toobsApp = appRegistry.get(appRoot);
 
     return toobsApp;
-  }
-
-  public void init() throws XMLTransformerException, ComponentLayoutInitializationException {
-    appRegistry = new Hashtable<String,ToobsApplication>();
-
-    XMLTransformerFactory.getInstance().setUseChain(useChain);
-    XMLTransformerFactory.getInstance().setUseTranslets(useTranslets);
-
-    loadConfig();
   }
 
   public void loadConfig() throws ComponentLayoutInitializationException, XMLTransformerException {
@@ -135,7 +137,13 @@ public class AppManager implements AppReader {
     }
     
   }
-  
+
+  @Override
+  protected void registerConfiguration(Object object, String fileName) {
+    // TODO Auto-generated method stub
+    
+  }
+
   private void configureApplication(ToobsApplication toobsApp, File appDir, File appFile) throws ComponentLayoutInitializationException, XMLTransformerException {
     InputStreamReader reader = null;
 
@@ -358,16 +366,14 @@ public class AppManager implements AppReader {
   }
 
   private void configureXSL(ToobsApplication toobsApp, XSLConfig config) {
-    String[] locations = new String[ config.getXSLLocationCount() ];
     String appPrefix = appsDirName + "/" + toobsApp.getName() + "/";
 
-    for (int i = 0; i < locations.length; i++) {
-      locations[i] = (config.getXSLLocation(i).isInApplication() ? appPrefix : "") + config.getXSLLocation(i).getDir();
+    for (int i = 0; i < config.getXSLLocationCount(); i++) {
+      toobsApp.addXslLocation( (config.getXSLLocation(i).isInApplication() ? appPrefix : "") + config.getXSLLocation(i).getDir() );
       if (log.isDebugEnabled()) {
-        log.debug("App [" + toobsApp.getName() + "] - adding xsl location: " + locations[i]);
+        log.debug("App [" + toobsApp.getName() + "] - adding xsl location: " + toobsApp.getXslLocations().get(i));
       }
     }
-    toobsApp.setXslLocations(locations);
   }
 
   private void configureRoot(ToobsApplication toobsApp, String root) {
@@ -387,14 +393,15 @@ public class AppManager implements AppReader {
     }
   }
 
-  public String renderView(IAppView appView, IRequest request) throws AppNotFoundException, ComponentException, ParameterException {
+  public String renderView(AppRequest appRequest, IRequest request, IXMLTransformerHelper transformerHelper) throws AppNotFoundException, ComponentException, ParameterException, ComponentNotInitializedException {
     try {
-      if (appView.isComponentView()) {
-        Component component = getApp(appView.getAppName()).getComponents().get(appView.getViewName());
-        // TODO: component.render(appView.getContentType(), request.getParams(), null, request.getParams());
+      if (appRequest.getRequestType() == AppRequestTypeEnum.COMPONENT) {
+        Component component = getApp(appRequest.getAppName()).getComponents().get(appRequest.getViewName());
+        component.render(appRequest.getContentType(), request.getParams(), transformerHelper, request.getHttpRequest(), request.getHttpResponse(), request.getParams(), null);
+
         return null;
       } else {
-        RuntimeLayout layout = getApp(appView.getAppName()).getLayouts().get(appView.getViewName());
+        RuntimeLayout layout = getApp(appRequest.getAppName()).getLayouts().get(appRequest.getViewName());
         return layout.render(request, null);
       }
     //} catch (ComponentNotInitializedException e) {
@@ -421,4 +428,5 @@ public class AppManager implements AppReader {
   public TraceListener getParamListener() {
     return paramListener;
   }
+
 }

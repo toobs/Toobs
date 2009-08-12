@@ -410,7 +410,6 @@ public class Component {
       }
 
     } catch (XMLTransformerException xte) {
-      log.error(xte);
       throw new ComponentException("Error running transform", xte);
     }
 

@@ -1,5 +1,7 @@
 package org.toobsframework.pres.app;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.toobsframework.pres.component.Component;
@@ -10,7 +12,7 @@ public class ToobsApplication {
 
   private String root;
   private String name;
-  private String[] xslLocations;
+  private List<String> xslLocations;
   private Map<String,Component> components;
   private Map<String,RuntimeLayout> layouts;
   private Map<String,DoIt> doits;
@@ -27,11 +29,17 @@ public class ToobsApplication {
   public void setName(String name) {
     this.name = name;
   }
-  public String[] getXslLocations() {
+  public List<String> getXslLocations() {
     return xslLocations;
   }
-  public void setXslLocations(String[] xslLocations) {
+  public void setXslLocations(List<String> xslLocations) {
     this.xslLocations = xslLocations;
+  }
+  public void addXslLocation(String xslLocation) {
+    if (this.xslLocations == null) {
+      this.xslLocations = new ArrayList<String>();
+    }
+    this.xslLocations.add(xslLocation);
   }
   public Map<String, Component> getComponents() {
     return components;

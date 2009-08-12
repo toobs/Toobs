@@ -31,9 +31,14 @@
     <module>TagLib</module>
     <module>Chart</module>
     <module>Ext</module>
-    <module>Social</module>
   </modules>
   <profiles>
+    <profile>
+      <id>social</id>
+      <modules>
+        <module>Social</module>
+      </modules>
+    </profile>
     <profile>
       <id>sample-web</id>
       <modules>

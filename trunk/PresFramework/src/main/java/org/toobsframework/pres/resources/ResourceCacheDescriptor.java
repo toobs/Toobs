@@ -7,10 +7,9 @@ import java.util.Date;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.exolab.castor.xml.MarshalException;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.toobsframework.pres.component.manager.ComponentManager;
+//import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 /**
  * Organize and keep all the resources associated to a pattern.  
@@ -40,10 +39,11 @@ import org.toobsframework.pres.component.manager.ComponentManager;
  */
 public class ResourceCacheDescriptor {
 
-  private static PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+  //private static PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
   private static Log log = LogFactory.getLog(ResourceCacheDescriptor.class);
 
   String pattern;
+  ApplicationContext applicationContext;
   
   /** How many elements are counted in this descriptor */
   int count = 0;
@@ -53,7 +53,8 @@ public class ResourceCacheDescriptor {
   
   private Resource[] resources = new Resource[0];
 
-  public ResourceCacheDescriptor(String pattern) {
+  public ResourceCacheDescriptor(ApplicationContext applicationContext, String pattern) {
+    this.applicationContext = applicationContext;
     this.pattern = pattern;
   }
   
@@ -78,7 +79,7 @@ public class ResourceCacheDescriptor {
    * @throws IOException 
    */
   public Resource[] checkIfModified() throws IOException {
-    Resource[] resources = resolver.getResources(pattern);
+    Resource[] resources = applicationContext.getResources(pattern);
     if (resources == null || resources.length == 0) {
       log.warn("Configuration file spec " + pattern + "did not resolve to any resource");
       if (resources == null) {
@@ -110,7 +111,7 @@ public class ResourceCacheDescriptor {
   public void load(Resource[] inResources, boolean checkModificationDates, IResourceCacheLoader loader) throws IOException {
     // performance optimization that lets me pass the resources from the outside (perhaps from a changed check)§
     if (inResources == null) {
-      resources = resolver.getResources(pattern);
+      resources = applicationContext.getResources(pattern);
     } else {
       resources = inResources;
     }
@@ -131,7 +132,7 @@ public class ResourceCacheDescriptor {
         if (log.isDebugEnabled()) {
           log.debug("Config: " + resources[i].getFilename() + " File Mod: " + new Date(configFile.lastModified()) + " Last Mod: " + new Date(lastModified[i]));
         }
-        if (configFile.lastModified() != lastModified[i]) {
+        if (configFile.lastModified() == lastModified[i]) {
           continue;
         }
       }

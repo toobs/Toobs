@@ -6,19 +6,14 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.net.URL;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 import javax.xml.transform.URIResolver;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xalan.trace.TraceListener;
-import org.exolab.castor.xml.Unmarshaller;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.beans.factory.InitializingBean;
 import org.toobsframework.pres.layout.ComponentLayoutInitializationException;
 import org.toobsframework.pres.layout.ComponentLayoutNotFoundException;
 import org.toobsframework.pres.base.ManagerBase;
@@ -27,25 +22,23 @@ import org.toobsframework.pres.layout.RuntimeLayout;
 import org.toobsframework.pres.layout.RuntimeLayoutConfig;
 import org.toobsframework.pres.layout.config.Layout;
 import org.toobsframework.pres.layout.config.Layouts;
-import org.toobsframework.pres.resources.IResourceCacheLoader;
-import org.toobsframework.pres.resources.ResourceCacheDescriptor;
-import org.toobsframework.pres.resources.ResourceUnmarshaller;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
 import org.toobsframework.transformpipeline.domain.XMLTransformerException;
 import org.toobsframework.transformpipeline.domain.XMLTransformerFactory;
 import org.toobsframework.transformpipeline.domain.XSLUriResolverImpl;
 import org.toobsframework.exception.PermissionException;
 
-public final class ComponentLayoutManager extends ManagerBase implements IComponentLayoutManager {
+public final class ComponentLayoutManager extends ManagerBase implements IComponentLayoutManager, InitializingBean {
 
   private static Log log = LogFactory.getLog(ComponentLayoutManager.class);
-
-  private static PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
   private Map<String, RuntimeLayout> registry;
   private long localDeployTime = 0L;
 
-  private URIResolver uriResolver;
+  private boolean useTranslets = false;
+  private boolean useChain = false;
+
+  private URIResolver xslResolver;
   private IXMLTransformer defaultTransformer;
   private IXMLTransformer htmlTransformer;
   private IXMLTransformer xmlTransformer;
@@ -53,20 +46,30 @@ public final class ComponentLayoutManager extends ManagerBase implements ICompon
 
   private ComponentLayoutManager() throws ComponentLayoutInitializationException {
     log.info("Constructing new ComponentLayoutManager");
-    setUriResolver(new XSLUriResolverImpl());
-    registry = new HashMap<String, RuntimeLayout>();
   }
-  
+
+  // Read from config file
+  public void afterPropertiesSet() throws ComponentLayoutInitializationException, XMLTransformerException {
+    XMLTransformerFactory.getInstance().setUseChain(useChain);
+    XMLTransformerFactory.getInstance().setUseTranslets(useTranslets);
+
+    xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_XML, xslResolver, paramListener);
+    htmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_HTML, xslResolver, paramListener);
+    defaultTransformer = XMLTransformerFactory.getInstance().getDefaultTransformer(xslResolver);
+
+    registry = new HashMap<String, RuntimeLayout>();
+    if (this.xslResolver == null) {
+      this.xslResolver = new XSLUriResolverImpl();
+    }
+
+    loadConfig(Layouts.class);
+  }
+
   public RuntimeLayout getLayout(String Id, long deployTime)
       throws ComponentLayoutNotFoundException, ComponentLayoutInitializationException {
-    //if (doReload || !initDone) {
     if (isDoReload() || deployTime > localDeployTime) {
       Date initStart = new Date();
-      try {
-        this.init();
-      } catch (XMLTransformerException e) {
-        throw new ComponentLayoutInitializationException("initialization failed:" +e.getMessage(), e);
-      }
+      this.loadConfig(Layouts.class);
       Date initEnd = new Date();
       log.info("Init Time: " + (initEnd.getTime() - initStart.getTime()));
     }
@@ -87,15 +90,6 @@ public final class ComponentLayoutManager extends ManagerBase implements ICompon
       return null;
     }
     return (RuntimeLayout) registry.get(objectErrorPage);
-  }
-
-  // Read from config file
-  public void init() throws ComponentLayoutInitializationException, XMLTransformerException {
-    xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_XML, uriResolver, paramListener);
-    htmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_HTML, uriResolver, paramListener);
-    defaultTransformer = XMLTransformerFactory.getInstance().getDefaultTransformer(uriResolver);
-
-    loadConfig(Layouts.class);
   }
 
   @Override
@@ -213,19 +207,20 @@ public final class ComponentLayoutManager extends ManagerBase implements ICompon
     
   }
 
-  public void setUriResolver(URIResolver uriResolver) {
-    this.uriResolver = uriResolver;
-  }
-
-  public URIResolver getUriResolver() {
-    return uriResolver;
-  }
-
   public void setParamListener(TraceListener paramListener) {
     this.paramListener = paramListener;
   }
 
-  public TraceListener getParamListener() {
-    return paramListener;
+  public void setXslResolver(URIResolver xslResolver) {
+    this.xslResolver = xslResolver;
   }
+
+  public void setUseTranslets(boolean useTranslets) {
+    this.useTranslets = useTranslets;
+  }
+
+  public void setUseChain(boolean useChain) {
+    this.useChain = useChain;
+  }
+
 }

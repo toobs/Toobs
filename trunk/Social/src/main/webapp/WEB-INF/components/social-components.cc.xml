@@ -72,4 +72,13 @@
       </ContentType>
     </Pipeline>
   </Component>
+
+  <Component id="postsByFriends">
+    <Pipeline>
+      <ContentType contentType="xhtml">
+        <Transform name="components/html/postsByFriends"/>
+      </ContentType>
+    </Pipeline>
+  </Component>
+  
 </Components>

@@ -12,25 +12,25 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UrlPathHelper;
 import org.toobsframework.pres.app.AppManager;
-import org.toobsframework.pres.app.AppReader;
 import org.toobsframework.doitref.IDoItRefQueue;
 import org.toobsframework.pres.security.IComponentSecurity;
 import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.pres.util.ParameterUtil;
+import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 
 @SuppressWarnings("unchecked")
 public class AppHandler implements IAppHandler {
-
   private static Log log = LogFactory.getLog(AppHandler.class);
-  
+
   private UrlPathHelper urlPathHelper = new UrlPathHelper();
-  
+
   private AppManager appManager = null;
   private ComponentRequestManager componentRequestManager = null;
   private IDoItRefQueue doItRefQueue = null;
+  private IXMLTransformerHelper transformerHelper = null;
   private IComponentSecurity layoutSecurity;
-  private IURLResolver urlResolver; 
-  
+  private URLResolver urlResolver; 
+
   /* (non-Javadoc)
    * @see org.toobsframework.pres.app.controller.IAppHandler#handleRequestInternal(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
    */
@@ -39,15 +39,15 @@ public class AppHandler implements IAppHandler {
     String output = "";
     String urlPath = this.urlPathHelper.getLookupPathForRequest(request);
 
-    IAppView appView = urlResolver.resolve( (AppReader)appManager, urlPath, request.getMethod() );
+    AppRequest appRequest = urlResolver.resolve( appManager, urlPath, request.getMethod() );
     if (log.isDebugEnabled()) {
 
       appManager.showApps();
 
-      log.debug("AppView App   : " + appView.getAppName());
-      log.debug("AppView isComp: " + appView.isComponentView());
-      log.debug("AppView View  : " + appView.getViewName());
-      appView.debugUrlParams();
+      log.debug("AppView App   : " + appRequest.getAppName());
+      log.debug("AppView isComp: " + appRequest.getRequestType());
+      log.debug("AppView View  : " + appRequest.getViewName());
+      appRequest.debugUrlParams();
     }
     
     Date startTime = null;
@@ -58,7 +58,7 @@ public class AppHandler implements IAppHandler {
     Map params = ParameterUtil.buildParameterMap(request);
     componentRequestManager.set(request, response, params);
 
-    output = appManager.renderView(appView, componentRequestManager.get());
+    output = appManager.renderView(appRequest, componentRequestManager.get(), transformerHelper);
 
     //Write out to the response.
     response.setContentType("text/html; charset=UTF-8");
@@ -70,66 +70,30 @@ public class AppHandler implements IAppHandler {
 
     if (log.isDebugEnabled()) {
       Date endTime = new Date();
-      log.debug("Time [" + appView.getAppName() + ":" + appView.getViewName() + "] - " + (endTime.getTime() - startTime.getTime()));
+      log.debug("Time [" + appRequest.getAppName() + ":" + appRequest.getViewName() + "] - " + (endTime.getTime() - startTime.getTime()));
     }
     return null;
 
   }
 
-  /* (non-Javadoc)
-   * @see org.toobsframework.pres.app.controller.IAppHandler#getAppManager()
-   */
-  public AppManager getAppManager() {
-    return appManager;
-  }
-
-  /* (non-Javadoc)
-   * @see org.toobsframework.pres.app.controller.IAppHandler#setAppManager(org.toobsframework.pres.app.AppManager)
-   */
   public void setAppManager(AppManager appManager) {
     this.appManager = appManager;
   }
 
-  /* (non-Javadoc)
-   * @see org.toobsframework.pres.app.controller.IAppHandler#getComponentRequestManager()
-   */
-  public ComponentRequestManager getComponentRequestManager() {
-    return componentRequestManager;
-  }
-
-  /* (non-Javadoc)
-   * @see org.toobsframework.pres.app.controller.IAppHandler#setComponentRequestManager(org.toobsframework.pres.util.ComponentRequestManager)
-   */
   public void setComponentRequestManager(ComponentRequestManager componentRequestManager) {
     this.componentRequestManager = componentRequestManager;
   }
 
-  /* (non-Javadoc)
-   * @see org.toobsframework.pres.app.controller.IAppHandler#getDoItRefQueue()
-   */
-  public IDoItRefQueue getDoItRefQueue() {
-    return doItRefQueue;
-  }
-
-  /* (non-Javadoc)
-   * @see org.toobsframework.pres.app.controller.IAppHandler#setDoItRefQueue(org.toobsframework.doitref.IDoItRefQueue)
-   */
   public void setDoItRefQueue(IDoItRefQueue doItRefQueue) {
     this.doItRefQueue = doItRefQueue;
   }
 
-  /* (non-Javadoc)
-   * @see org.toobsframework.pres.app.controller.IAppHandler#getLayoutSecurity()
-   */
-  public IComponentSecurity getLayoutSecurity() {
-    return layoutSecurity;
-  }
-
-  /* (non-Javadoc)
-   * @see org.toobsframework.pres.app.controller.IAppHandler#setLayoutSecurity(org.toobsframework.pres.security.IComponentSecurity)
-   */
   public void setLayoutSecurity(IComponentSecurity layoutSecurity) {
     this.layoutSecurity = layoutSecurity;
+  }
+
+  public void setTransformerHelper(IXMLTransformerHelper transformerHelper) {
+    this.transformerHelper = transformerHelper;
   }
 
 }

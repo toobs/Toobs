@@ -7,15 +7,10 @@
 
   <context-param>
     <param-name>contextConfigLocation</param-name>
-    <param-value>classpath:local-context.xml</param-value>
-  </context-param>
-  <context-param>
-    <param-name>locatorFactorySelector</param-name>
-    <param-value>classpath:beanRefFactory.xml</param-value>
-  </context-param>
-  <context-param>
-    <param-name>parentContextKey</param-name>
-    <param-value>beanRefFactory</param-value>
+    <param-value>
+      classpath:toobs-default-context.xml
+      classpath:social-context.xml
+    </param-value>
   </context-param>
     
   <listener>  

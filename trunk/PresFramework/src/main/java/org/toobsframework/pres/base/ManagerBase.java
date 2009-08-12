@@ -5,6 +5,10 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.io.Resource;
 import org.toobsframework.pres.resources.IResourceCacheLoader;
 import org.toobsframework.pres.resources.ResourceCacheDescriptor;
@@ -15,19 +19,16 @@ import org.toobsframework.pres.resources.ResourceUnmarshaller;
  * @author jaimeg@yahoo-inc.com
  *
  */
-public abstract class ManagerBase {
+public abstract class ManagerBase implements ApplicationContextAware, InitializingBean {
   private static Log log = LogFactory.getLog(ManagerBase.class);
-  
+
   private static boolean initDone = false;
   private List<String> configFiles = null;
   private ResourceCacheDescriptor[] resourceCache = null;
   private boolean doReload = false;
-  
-  public void loadConfig(final Class<?> clazz) {
-    final ResourceUnmarshaller unmarshaller = new ResourceUnmarshaller();
-    if(configFiles == null) {
-      return;
-    }
+  protected ApplicationContext applicationContext;
+
+  protected void initCache() {
     int l = configFiles.size();
     resourceCache = new ResourceCacheDescriptor[l];
     for(int fileCounter = 0; fileCounter < l; fileCounter++) {
@@ -36,7 +37,28 @@ public abstract class ManagerBase {
         if (log.isDebugEnabled()) {
           log.debug("Checking Configuration file spec: " + fileSpec);
         }
-        resourceCache[fileCounter] = new ResourceCacheDescriptor(fileSpec);
+        resourceCache[fileCounter] = new ResourceCacheDescriptor(applicationContext, fileSpec);
+      } catch (Exception ex) {
+        log.error("ComponentLayout initialization failed " + ex.getMessage(), ex);
+      }
+    }
+  }
+
+  public void loadConfig(final Class<?> clazz) {
+    final ResourceUnmarshaller unmarshaller = new ResourceUnmarshaller();
+    if(configFiles == null) {
+      return;
+    }
+    if (resourceCache == null) {
+      initCache();
+    }
+
+    for(int fileCounter = 0; fileCounter < resourceCache.length; fileCounter++) {
+      String fileSpec = configFiles.get(fileCounter);
+      try {
+        if (log.isDebugEnabled()) {
+          log.debug("Checking Configuration file spec: " + fileSpec);
+        }
         Resource[] resources = null;
         if (doReload) {
           resources = resourceCache[fileCounter].checkIfModified();
@@ -100,4 +122,7 @@ public abstract class ManagerBase {
     this.doReload = doReload;
   }
 
+  public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+    this.applicationContext = applicationContext;
+  }
 }

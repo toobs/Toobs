@@ -4,34 +4,31 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.toobsframework.pres.app.AppReader;
 
-public class DefaultURLResolver implements IURLResolver {
+public class URLResolverImpl implements URLResolver {
 
-  private static Log log = LogFactory.getLog(DefaultURLResolver.class);
+  private static Log log = LogFactory.getLog(URLResolverImpl.class);
 
-  private String compPrefix = "comp";
-  
-  public IAppView resolve(AppReader appReader, String url, String method) {
-
+  public AppRequest resolve(AppReader appReader, String url, String method) {
+    log.info(url);
     return null;
   }
 
-
-  private BaseAppView getBaseAppView(AppReader appReader, String urlPath) {
+  protected AppRequest getBaseAppView(AppReader appReader, String urlPath) {
     String[] splitUrl = urlPath.split("/");
     if (log.isDebugEnabled()) {
       for (int i = 0; i < splitUrl.length; i++) {
         log.debug("Url part " + i + ": " + splitUrl[i]);
       }
     }
-    BaseAppView view = null;
+    BaseAppRequest view = null;
     
     if (splitUrl.length <= 1) {
-      return new BaseAppView("/", DEFAULT_VIEW);
+      return new BaseAppRequest("/", DEFAULT_VIEW);
     }
     if (appReader.containsApp("/" + splitUrl[1])) {
       String appName = splitUrl[1];
       if (splitUrl.length == 2) {
-        return new BaseAppView(appName, DEFAULT_VIEW);
+        return new BaseAppRequest(appName, DEFAULT_VIEW);
       } else {
         
       }
@@ -78,14 +75,6 @@ public class DefaultURLResolver implements IURLResolver {
     }
     */ 
     return view;
-  }
-
-  public String getCompPrefix() {
-    return compPrefix;
-  }
-
-  public void setCompPrefix(String compPrefix) {
-    this.compPrefix = compPrefix;
   }
 
 }

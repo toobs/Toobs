@@ -25,7 +25,7 @@
               <goal>generate</goal>
             </goals>
             <configuration>
-              <schema>Social/src/main/castor/social.xsd</schema>
+              <schema>${basedir}/src/main/castor/social.xsd</schema>
               <packaging>org.toobsframework.social.persistence.model</packaging>
             </configuration>
           </execution>

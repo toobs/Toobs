@@ -4,18 +4,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.net.URL;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xalan.trace.TraceListener;
-import org.exolab.castor.xml.Unmarshaller;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.beans.factory.InitializingBean;
 import org.toobsframework.pres.base.ManagerBase;
 import org.toobsframework.pres.component.ComponentException;
 import org.toobsframework.pres.component.ComponentInitializationException;
@@ -29,9 +23,6 @@ import org.toobsframework.exception.ParameterException;
 import org.toobsframework.pres.component.dataprovider.api.DataProviderInitializationException;
 import org.toobsframework.pres.component.dataprovider.api.IDataProvider;
 import org.toobsframework.pres.component.dataprovider.manager.DataProviderNotFoundException;
-import org.toobsframework.pres.resources.IResourceCacheLoader;
-import org.toobsframework.pres.resources.ResourceCacheDescriptor;
-import org.toobsframework.pres.resources.ResourceUnmarshaller;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
 import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 import org.toobsframework.transformpipeline.domain.XMLTransformerException;
@@ -49,7 +40,7 @@ import javax.xml.transform.URIResolver;
 /**
  * @author pudney
  */
-public final class ComponentManager extends ManagerBase implements IComponentManager {
+public final class ComponentManager extends ManagerBase implements IComponentManager, InitializingBean {
 
   private static Log log = LogFactory.getLog(ComponentManager.class);
 
@@ -57,7 +48,7 @@ public final class ComponentManager extends ManagerBase implements IComponentMan
 
   private IDataProvider dataProvider;
 
-  private URIResolver uriResolver;
+  private URIResolver xslResolver;
 
   private boolean useTranslets = false;
   private boolean useChain = false;
@@ -70,18 +61,21 @@ public final class ComponentManager extends ManagerBase implements IComponentMan
 
   private ComponentManager() throws ComponentInitializationException {
     log.info("Constructing new ComponentManager");
-    registry = new ConcurrentHashMap<String, org.toobsframework.pres.component.Component>();
-    setUriResolver(new XSLUriResolverImpl());
-    ConvertUtils.register(new DateToStringConverter(), String.class);
   }
 
-  public void init() throws ComponentInitializationException, XMLTransformerException {
+  public void afterPropertiesSet() throws ComponentInitializationException, XMLTransformerException {
     XMLTransformerFactory.getInstance().setUseChain(useChain);
     XMLTransformerFactory.getInstance().setUseTranslets(useTranslets);
 
-    xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_XML, uriResolver, paramListener);
-    htmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_HTML, uriResolver, paramListener);
-    defaultTransformer = XMLTransformerFactory.getInstance().getDefaultTransformer(uriResolver);
+    xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_XML, xslResolver, paramListener);
+    htmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_HTML, xslResolver, paramListener);
+    defaultTransformer = XMLTransformerFactory.getInstance().getDefaultTransformer(xslResolver);
+
+    registry = new ConcurrentHashMap<String, org.toobsframework.pres.component.Component>();
+    if (this.xslResolver == null) {
+      this.xslResolver = new XSLUriResolverImpl();
+    }
+    ConvertUtils.register(new DateToStringConverter(), String.class);
 
     loadConfig(Components.class);
   }
@@ -196,27 +190,8 @@ public final class ComponentManager extends ManagerBase implements IComponentMan
     return useChain;
   }
 
-  public void setUriResolver(URIResolver uriResolver) {
-    this.uriResolver = uriResolver;
-  }
-
-  public URIResolver getUriResolver() {
-    return uriResolver;
-  }
-
   public void setParamListener(TraceListener paramListener) {
     this.paramListener = paramListener;
-  }
-
-  public TraceListener getParamListener() {
-    return paramListener;
-  }
-
-  /**
-   * @return the dataProvider
-   */
-  public IDataProvider getDataProvider() {
-    return dataProvider;
   }
 
   /**
@@ -224,6 +199,10 @@ public final class ComponentManager extends ManagerBase implements IComponentMan
    */
   public void setDataProvider(IDataProvider dataProvider) {
     this.dataProvider = dataProvider;
+  }
+
+  public void setXslResolver(URIResolver xslResolver) {
+    this.xslResolver = xslResolver;
   }
 
 }

@@ -10,7 +10,7 @@
   
   <xsl:template match="componentRef[loader/@type='0']">
     <toobs:component componentId="{@componentId}" contentType="xhtml">
-      <xsl:for-each select="/RuntimeLayout/Parameters/Parameter | ./parameters/parameter">
+      <xsl:for-each select="/layout/Parameters/Parameter | ./parameters/parameter">
         <toobs:parameter use-context="true"/>
       </xsl:for-each>
     </toobs:component>
@@ -18,7 +18,7 @@
   
   <xsl:template match="componentLayoutRef[loader/@type='0']">
     <toobs:layout layoutId="@layoutId" disable-output-escaping="yes">
-      <xsl:for-each select="/RuntimeLayout/Parameters/Parameter | ./parameters/parameter">
+      <xsl:for-each select="/layout/Parameters/Parameter | ./parameters/parameter">
         <toobs:parameter use="true"/>
       </xsl:for-each>
     </toobs:layout>
@@ -28,7 +28,7 @@
   <xsl:template match="componentRef[loader/@type='1']">
     <div id="{@componentId}Frame">
       <toobs:component componentId="{@componentId}" contentType="xhtml">
-        <xsl:for-each select="/RuntimeLayout/Parameters/Parameter | ./parameters/parameter">
+        <xsl:for-each select="/layout/Parameters/Parameter | ./parameters/parameter">
           <toobs:parameter use-context="true"/>
         </xsl:for-each>
       </toobs:component>

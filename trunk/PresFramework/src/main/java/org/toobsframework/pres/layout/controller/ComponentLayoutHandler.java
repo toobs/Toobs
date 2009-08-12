@@ -29,17 +29,16 @@ import org.toobsframework.util.Configuration;
 
 @SuppressWarnings("unchecked")
 public class ComponentLayoutHandler implements IComponentLayoutHandler {
+  protected final Log log = LogFactory.getLog(getClass());
 
-  private static Log log = LogFactory.getLog(ComponentLayoutHandler.class);
-  
   private UrlPathHelper urlPathHelper = new UrlPathHelper();
-  
+
   private IComponentLayoutManager componentLayoutManager = null;
   private ComponentRequestManager componentRequestManager = null;
   private IXMLTransformerHelper transformerHelper = null;
   private IDoItRefQueue doItRefQueue = null;
   private IComponentSecurity layoutSecurity;
-  
+
   /**
    * 
    * Retrieves the URL path to use for lookup and delegates to

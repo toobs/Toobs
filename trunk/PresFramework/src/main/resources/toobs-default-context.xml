@@ -2,66 +2,110 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="
-    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+    http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+
+  <bean id="toobsDefaultPlaceholderConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+    <property name="properties">
+      <props>
+        <prop key="toobs.doReload">true</prop>
+        <prop key="toobs.useChain">true</prop>
+        <prop key="toobs.useTranslets">false</prop>
+      </props>
+    </property>
+    <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
+    <property name="placeholderPrefix" value="@{"/>
+  </bean>
 
   <bean id="contextHelper" class="org.toobsframework.servlet.ContextHelper" />
-  
-  <bean id="componentLayoutHandler" class="org.toobsframework.pres.layout.controller.ComponentLayoutHandler">
+
+  <bean id="appHandler" class="org.toobsframework.pres.app.controller.AppHandler" lazy-init="true">
+    <property name="appManager" ref="appManager"/>
+    <property name="componentRequestManager" ref="componentRequestManager"/>
+    <property name="transformerHelper" ref="transformerHelper"/>
+  </bean>
+
+  <bean id="componentLayoutHandler" class="org.toobsframework.pres.layout.controller.ComponentLayoutHandler" lazy-init="true">
     <property name="componentLayoutManager" ref="componentLayoutManager"/>
     <property name="componentRequestManager" ref="componentRequestManager"/>
     <property name="transformerHelper" ref="transformerHelper"/>
   </bean>
 
-  <bean id="componentViewHandler" class="org.toobsframework.pres.component.controller.ComponentViewHandler">
+  <bean id="componentViewHandler" class="org.toobsframework.pres.component.controller.ComponentViewHandler" lazy-init="true">
     <property name="componentManager" ref="componentManager"/>
     <property name="componentRequestManager" ref="componentRequestManager"/>
     <property name="transformerHelper" ref="transformerHelper"/>
   </bean>
 
-  <bean id="doItHandler" class="org.toobsframework.pres.doit.controller.DoItHandler">
+  <bean id="doItHandler" class="org.toobsframework.pres.doit.controller.DoItHandler" lazy-init="true">
     <property name="doItManager" ref="doItManager"/>
     <property name="doItRunner" ref="doItRunner"/>
     <property name="componentRequestManager" ref="componentRequestManager"/>
   </bean>
 
-  <bean id="componentLayoutManager" class="org.toobsframework.pres.layout.manager.ComponentLayoutManager">
+  <bean id="xslResolver" class="org.toobsframework.transformpipeline.domain.XSLUriResolverImpl">
+    <property name="base">
+      <list>
+        <value>/WEB-INF/xsl/</value>
+        <value>xsl/</value>
+      </list>
+    </property>
+    <property name="doReload" value="@{toobs.doReload}"/>
+  </bean>
+
+  <bean id="appManager" class="org.toobsframework.pres.app.AppManager" lazy-init="true"/>
+
+  <bean id="componentLayoutManager" class="org.toobsframework.pres.layout.manager.ComponentLayoutManager" lazy-init="true">
+    <property name="xslResolver" ref="xslResolver"/>
     <property name="configFiles">
       <list>
+        <value>/WEB-INF/**/*.clc.xml</value>
         <value>classpath:**/*.clc.xml</value>
       </list>
     </property>
+    <property name="doReload" value="@{toobs.doReload}"/>
+    <property name="useChain" value="@{toobs.useChain}"/>
+    <property name="useTranslets" value="@{toobs.useTranslets}"/>
   </bean>
 
-  <bean id="componentManager" class="org.toobsframework.pres.component.manager.ComponentManager" init-method="init">
+  <bean id="componentManager" class="org.toobsframework.pres.component.manager.ComponentManager" lazy-init="true">
+    <property name="xslResolver" ref="xslResolver"/>
     <property name="dataProvider" ref="toobsDataProvider" />
     <property name="configFiles">
       <list>
+        <value>/WEB-INF/**/*.cc.xml</value>
         <value>classpath:**/*.cc.xml</value>
       </list>
     </property>
+    <property name="doReload" value="@{toobs.doReload}"/>
+    <property name="useChain" value="@{toobs.useChain}"/>
+    <property name="useTranslets" value="@{toobs.useTranslets}"/>
   </bean>
 
-  <bean id="doItManager" class="org.toobsframework.pres.doit.manager.DoItManager">
+  <bean id="doItManager" class="org.toobsframework.pres.doit.manager.DoItManager" lazy-init="true">
     <property name="configFiles">
       <list>
+        <value>/WEB-INF/**/*.doit.xml</value>
         <value>classpath:**/*.doit.xml</value>
       </list>
     </property>
+    <property name="doReload" value="@{toobs.doReload}"/>
   </bean>
 
-  <bean id="doItRunner" class="org.toobsframework.pres.doit.DoItRunner">
+  <bean id="doItRunner" class="org.toobsframework.pres.doit.DoItRunner" lazy-init="true">
     <property name="dataProvider" ref="toobsDataProvider" />
     <property name="componentRequestManager" ref="componentRequestManager"/>
   </bean>
 
-  <bean id="componentRequestManager" class="org.toobsframework.pres.util.ComponentRequestManager"/>
-  
-  <bean id="transformerHelper" class="org.toobsframework.pres.xsl.ComponentTransformerHelper">
+  <bean id="componentRequestManager" class="org.toobsframework.pres.util.ComponentRequestManager" lazy-init="true"/>
+
+  <bean id="transformerHelper" class="org.toobsframework.pres.xsl.ComponentTransformerHelper" lazy-init="true">
     <property name="componentManager" ref="componentManager"/>
     <property name="componentLayoutManager" ref="componentLayoutManager"/>
     <property name="componentRequestManager" ref="componentRequestManager"/>
     <property name="dataProvider" ref="toobsDataProvider" />
   </bean>
-  
-  <bean id="toobsDataProvider" class="org.toobsframework.pres.component.dataprovider.impl.CamelDataProviderImpl" />
+
+  <bean id="toobsDataProvider" class="org.toobsframework.pres.component.dataprovider.impl.CamelDataProviderImpl" lazy-init="true"/>
+
 </beans>
