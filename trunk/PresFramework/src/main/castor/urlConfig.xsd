@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema 
+    xmlns="http://www.example.org/urlConfig/" 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="http://www.toobsframework.org/schema/url"
+    elementFormDefault="qualified"
+    xmlns:xml="http://www.w3.org/XML/1998/namespace"
+    xmlns:url="http://www.toobsframework.org/schema/url">
+
+  <xsd:element name="Urls">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="url:Url" maxOccurs="unbounded" minOccurs="0"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+
+
+    <xsd:element name="Url">
+      <xsd:complexType>
+        <xsd:sequence>
+        </xsd:sequence>
+        <xsd:attribute name="pattern" type="xsd:string" use="required" />
+        <xsd:attribute name="contentType" type="xsd:string" use="optional" default="xhtml" />
+        <xsd:attribute name="layoutId" type="xsd:string" use="optional" />
+        <xsd:attribute name="componentId" type="xsd:string" use="optional" />
+        <xsd:attribute name="doItId" type="xsd:string" use="optional" />
+      </xsd:complexType>
+    </xsd:element>
+</xsd:schema>
