@@ -53,6 +53,17 @@
           </configuration>
           </execution>
           <execution>
+            <id>generate::toobsUrls</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <schema>${basedir}/src/main/castor/urlConfig.xsd</schema>
+              <packaging>org.toobsframework.pres.url.config</packaging>
+            </configuration>
+          </execution>
+          <execution>
             <id>generate::toobsApplication</id>
             <phase>generate-sources</phase>
             <goals>
