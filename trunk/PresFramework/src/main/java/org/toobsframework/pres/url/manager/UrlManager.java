@@ -3,6 +3,7 @@ package org.toobsframework.pres.url.manager;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.beanutils.ConvertUtils;
@@ -14,6 +15,8 @@ import org.toobsframework.pres.component.ComponentInitializationException;
 import org.toobsframework.pres.component.config.Component;
 import org.toobsframework.pres.component.config.Components;
 import org.toobsframework.pres.component.manager.ComponentManager;
+import org.toobsframework.pres.url.UrlMapping;
+import org.toobsframework.pres.url.UrlMappingUtil;
 import org.toobsframework.pres.url.config.Url;
 import org.toobsframework.pres.url.config.Urls;
 import org.toobsframework.transformpipeline.domain.XMLTransformerException;
@@ -23,24 +26,20 @@ import org.toobsframework.transformpipeline.domain.XSLUriResolverImpl;
 public class UrlManager extends ManagerBase implements IUrlManager {
 
   private static Log log = LogFactory.getLog(UrlManager.class);
-  private ConcurrentHashMap<String, org.toobsframework.pres.url.Url> registry;
+  private Map<String, UrlMapping> registry;
+  private static long localDeployTime = 0L;
   
-  public Url getUrl(String Id, long deployTime) throws Exception {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
   @Override
   protected void registerConfiguration(Object object, String fileName) {
     Urls urlConfig = (Urls) object;
     Url[] urls = urlConfig.getUrl();
     if ((urls != null) && (urls.length > 0)) {
       Url url = null;
-      org.toobsframework.pres.url.Url realizedUrl = null;
+      UrlMapping realizedUrl = null;
       for (int j = 0; j < urls.length; j++) {
         try {
           url = urls[j];
-          realizedUrl = new org.toobsframework.pres.url.Url();
+          realizedUrl = new UrlMapping();
           configureUrl(url, realizedUrl, fileName, registry);
           
           if (registry.containsKey(realizedUrl.getPattern()) && !isInitDone()) {
@@ -54,7 +53,7 @@ public class UrlManager extends ManagerBase implements IUrlManager {
     }
   }
 
-  private void configureUrl(Url url, org.toobsframework.pres.url.Url realizedUrl, String fileName, ConcurrentHashMap<String, org.toobsframework.pres.url.Url> registry) throws IOException {
+  private void configureUrl(Url url, UrlMapping realizedUrl, String fileName, Map<String, UrlMapping> registry) throws IOException {
     if (url.getComponentId() == null && url.getLayoutId() == null && url.getDoItId() == null) {
       throw new IOException("Url with pattern " + url.getPattern() + " requires one of componentId or LayoutId or DoItId set");
     }
@@ -70,11 +69,32 @@ public class UrlManager extends ManagerBase implements IUrlManager {
     realizedUrl.setDoItId(url.getDoItId());
     realizedUrl.setLayoutId(url.getLayoutId());
     realizedUrl.setComponentId(url.getComponentId());
+    realizedUrl.setWildcardMatching(url.getWildcardMatch());
     realizedUrl.init();
+    registry.put(url.getPattern(), realizedUrl);
+  }
+  
+  public UrlMapping getUrlMapping(String pattern, long deployTime) throws Exception {
+    if (isDoReload() || deployTime > localDeployTime) {
+      //Date initStart = new Date();
+      this.afterPropertiesSet();
+      //Date initEnd = new Date();
+      //log.info("Init Time: " + (initEnd.getTime() - initStart.getTime()));
+    }
+    localDeployTime = deployTime;
+
+    String[] paths = UrlMappingUtil.tokenizePath(pattern);
+    
+    for (UrlMapping urlMapping : registry.values()) {
+      if (urlMapping.matches(paths)) {
+        return urlMapping;
+      }
+    }
+    return null;
   }
 
   public void afterPropertiesSet() throws Exception {
-    registry = new ConcurrentHashMap<String, org.toobsframework.pres.url.Url>();
+    registry = new ConcurrentHashMap<String, UrlMapping>();
     loadConfig(Urls.class);
   }
 
