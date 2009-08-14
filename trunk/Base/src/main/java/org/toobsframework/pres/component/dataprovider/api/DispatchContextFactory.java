@@ -2,8 +2,7 @@ package org.toobsframework.pres.component.dataprovider.api;
 
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.toobsframework.util.IRequest;
 
 public class DispatchContextFactory {
   public static DispatchContext createDispatchContext(String action, String guid, String permissionContext, String namespace, Map<String, Object> inputParameters, Map<String, Object> outputParameters) {
@@ -17,10 +16,9 @@ public class DispatchContextFactory {
     return context;
   }
 
-  public static DispatchContextEx createDispatchContextEx(HttpServletRequest request, HttpServletResponse response, String action, String guid, String permissionContext, String namespace, Map<String, Object> inputParameters, Map<String, Object> outputParameters) {
+  public static DispatchContextEx createDispatchContextEx(IRequest request, String action, String guid, String permissionContext, String namespace, Map<String, Object> inputParameters, Map<String, Object> outputParameters) {
     DispatchContextEx context = new DispatchContextEx();
     context.setRequest(request);
-    context.setResponse(response);
     context.setAction(action);
     context.setGuid(guid);
     context.setPermissionContext(permissionContext);

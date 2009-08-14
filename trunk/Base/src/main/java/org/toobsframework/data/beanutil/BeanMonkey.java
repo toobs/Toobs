@@ -48,11 +48,16 @@ public class BeanMonkey {
   private static BeanFactory beanFactory = BeanMonkey.getBeanFactoryInstance();
   
   private static Class objectClass;
-  
+
+  private static Configuration configuration;
+
   static {
+  }
+
+  public BeanMonkey() {
     String objectClassProperty = "";
     try {
-      objectClassProperty = Configuration.getInstance().getProperty("toobs.beanmonkey.objectClass");
+      objectClassProperty = configuration.getProperty("toobs.beanmonkey.objectClass");
       if (objectClassProperty == null) {
         objectClass = Object.class; // so that it does not crash, but nobody subclasses it, so we should be cool
       } else {
@@ -62,7 +67,6 @@ public class BeanMonkey {
       log.error("Class for toobs.beanmonkey.objectClass property: " + objectClassProperty + " not found");
     }
   }
-
   /**
    * A utility method that just returns a new instance of a bean factory object.
    * @return
@@ -504,7 +508,7 @@ public class BeanMonkey {
       throws InvocationTargetException, IllegalAccessException,
       NoSuchMethodException, PermissionException {
     // Perform the assignment for this property
-    if (className.startsWith(Configuration.getInstance().getProperty("toobs.beanmonkey.dataPackage"))) {
+    if (className.startsWith(configuration.getProperty("toobs.beanmonkey.dataPackage"))) {
       className = className.substring(className.lastIndexOf(".") + 1);
       
       IObjectLoader odao = null;

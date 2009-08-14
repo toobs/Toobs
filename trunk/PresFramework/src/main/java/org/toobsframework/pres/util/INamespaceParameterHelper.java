@@ -1,11 +1,10 @@
 package org.toobsframework.pres.util;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.toobsframework.util.IRequest;
 
 public interface INamespaceParameterHelper {
 
   public boolean supports(String tagName);
-  public String[] getValue(String tagName, HttpServletRequest request, HttpServletResponse response);
+  public String[] getValue(IRequest request, String tagName);
 
 }

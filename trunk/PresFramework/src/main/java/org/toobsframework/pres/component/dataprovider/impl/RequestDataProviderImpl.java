@@ -10,6 +10,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.toobsframework.pres.component.dataprovider.api.*;
 import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.servlet.ContextHelper;
+import org.toobsframework.util.IRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -91,7 +92,7 @@ public class RequestDataProviderImpl implements IDataProvider {
     throw new ObjectNotFoundException("This Datasource does not support this action at this time.");
   }
 
-  public Object dispatchActionEx(HttpServletRequest request, HttpServletResponse response, String action, String dao, String objectType, String returnObjectType, String guidParam, String permissionContext, String indexParam, String namespace, Map params, Map outParams) throws Exception {
+  public Object dispatchActionEx(IRequest request, String action, String dao, String objectType, String returnObjectType, String guidParam, String permissionContext, String indexParam, String namespace, Map params, Map outParams) throws Exception {
 	    throw new ObjectNotFoundException("This Datasource does not support this action at this time.");
 	  }
 

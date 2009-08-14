@@ -1,5 +1,6 @@
 package org.toobsframework.transformpipeline.domain;
 
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -34,6 +35,8 @@ public interface IXMLTransformer {
   
   public static final String TRANSFORMER_HELPER = "transformerHelper";
 
+  public static final String COMPONENT_REQUEST = "componentRequest";
+
   /**
    * Contains the transformation logic.
    *
@@ -51,10 +54,22 @@ public interface IXMLTransformer {
       List<String> inputXMLs,
       Map<String, Object> params, IXMLTransformerHelper transformerHelper) throws XMLTransformerException;
 
+  public void transformStream(
+      OutputStream finalOutputStream,
+      List<String> inputXSLs,
+      Object xmlObject,
+      Map<String,Object> inputParams,
+      IXMLTransformerHelper transformerHelper) throws XMLTransformerException;
+
   public void setOutputProperties(Properties outputProperties);
   
   public void setURIResolver(URIResolver uriResolver);
 
   public void setParamListener(TraceListener paramListener);
+
+  public void init();
+
+  public void setTrace(boolean trace);
+  public void setDoReload(boolean doReload);
 }
 

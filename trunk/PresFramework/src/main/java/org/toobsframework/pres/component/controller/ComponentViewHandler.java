@@ -17,8 +17,6 @@ import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.pres.util.PresConstants;
 import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
-import org.toobsframework.util.Configuration;
-
 
 /**
 * Controller that transforms the virtual filename at the end of a URL
@@ -71,13 +69,7 @@ public class ComponentViewHandler implements IComponentViewHandler {
     }
     //Get component and render it.
     if(null != componentId && !componentId.equals("")) {
-      long deployTime;
-      if (request.getAttribute(PresConstants.DEPLOY_TIME) == null) {
-        deployTime = Configuration.getInstance().getDeployTime();
-      } else {
-        deployTime = Long.parseLong((String)request.getAttribute(PresConstants.DEPLOY_TIME));
-      }
-      Component component = this.componentManager.getComponent(componentId, deployTime);
+      Component component = this.componentManager.getComponent(componentId);
       boolean isTilesRequest = true;
       if (request.getAttribute(PresConstants.TILES_REQUEST_LOCAL) == null) {
         log.info("Setting component level request");
@@ -88,7 +80,7 @@ public class ComponentViewHandler implements IComponentViewHandler {
         isTilesRequest = false;
       }
       try {
-        output = this.componentManager.renderComponent(component, contentType, componentRequestManager.get().getParams(), componentRequestManager.get().getParams(), transformerHelper, request, response, true);
+        output = this.componentManager.renderComponent(componentRequestManager.get(), component, contentType, componentRequestManager.get().getParams(), componentRequestManager.get().getParams(), transformerHelper, true);
       } catch (Exception e) {
         throw e;
       } finally {

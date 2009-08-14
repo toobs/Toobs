@@ -8,8 +8,6 @@ import java.util.Collection;
 import java.util.ArrayList;
 
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.jxpath.JXPathContext;
@@ -30,10 +28,9 @@ import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.pres.util.PresConstants;
 import org.toobsframework.search.index.ISingleIndexBuilder;
+import org.toobsframework.util.IRequest;
 import org.toobsframework.util.constants.PlatformConstants;
 
-
-@SuppressWarnings("unchecked")
 public class DoItRunner implements IDoItRunner {
 
   private static Log log = LogFactory.getLog(DoItRunner.class);
@@ -43,7 +40,7 @@ public class DoItRunner implements IDoItRunner {
 
   private IDataProvider dataProvider;
 
-  public void runDoIt(HttpServletRequest request, HttpServletResponse response, DoIt doIt, Map paramMap, Map responseMap) throws Exception 
+  public void runDoIt(IRequest request, DoIt doIt, Map<String,Object> paramMap, Map<String,Object> responseMap) throws Exception 
   {
     // Run Actions
     Action thisAction = null;
@@ -66,20 +63,20 @@ public class DoItRunner implements IDoItRunner {
         }
         
         for(int i = 0; i < multipleActionsAry.length; i++) {
-          HashMap actionParams = new HashMap(paramMap);
+          Map<String,Object> actionParams = new HashMap<String,Object>(paramMap);
           responseMap.clear();
           actionParams.put(multipleActionsKey, multipleActionsAry[i]);
           actionParams.put(PlatformConstants.MULTI_ACTION_INSTANCE, new Integer(i));
-          Enumeration actions = doIt.getActions().enumerateAction();
+          Enumeration<Action> actions = doIt.getActions().enumerateAction();
           while (actions.hasMoreElements()) {
-            thisAction = (Action) actions.nextElement();
-            runAction(request, response, doIt.getName(), thisAction, actionParams, responseMap, (i == (multipleActionsAry.length - 1)));
+            thisAction = actions.nextElement();
+            runAction(request, doIt.getName(), thisAction, actionParams, responseMap, (i == (multipleActionsAry.length - 1)));
           }            
         }
-        Iterator iter = responseMap.keySet().iterator();
+        Iterator<String> iter = responseMap.keySet().iterator();
         while (iter.hasNext()) {
-          Object key = iter.next();
-          paramMap.put((String)key, responseMap.get(key));
+          String key = iter.next();
+          paramMap.put(key, responseMap.get(key));
           /*
           if (componentRequestManager.get().getHttpRequest() != null) {
             componentRequestManager.get().getHttpRequest().setAttribute((String)key, responseMap.get(key));
@@ -93,14 +90,14 @@ public class DoItRunner implements IDoItRunner {
       catch (Exception e) {
         if (e.getCause() instanceof ValidationException) {
           log.warn("Caught validation exception.");
-          this.pullErrorObjectsIntoRequest(doIt, paramMap, responseMap, multipleActionsKey, multipleActionsAry, (ValidationException)e, request, response);
+          this.pullErrorObjectsIntoRequest(request, doIt, paramMap, responseMap, multipleActionsKey, multipleActionsAry, (ValidationException)e);
         }
         throw e;
       }
     }
   }
       
-  private void runAction(HttpServletRequest request, HttpServletResponse response, String doItName, Action thisAction, Map params, Map responseParams, boolean lastAction)
+  private void runAction(IRequest request, String doItName, Action thisAction, Map<String,Object> params, Map<String,Object> responseParams, boolean lastAction)
     throws Exception {
           
     String actionType = thisAction.getActionType();
@@ -111,18 +108,17 @@ public class DoItRunner implements IDoItRunner {
       if (thisAction.getParameters() != null) {
         // Cant do this for now cause of the array problem
         //ParameterUtil.mapParameters(thisAction.getParameters().getParameter(), params, params, doItName);
-        ParameterUtil.mapDoItParameters(thisAction.getParameters().getParameter(), params, params, true, request, response);
+        ParameterUtil.mapDoItParameters(request, thisAction.getParameters().getParameter(), params, params, true );
       }
       try {
         if (thisAction.isExtended()) {
           retObj = this.getDataProvider().dispatchActionEx(
               request,
-              response,
               thisAction.getAction(), 
-              ((String[])ParameterUtil.resolveParam(thisAction.getServiceProvider(), params, request, response))[0], 
-              ((String[])ParameterUtil.resolveParam(thisAction.getInputObjectType(), params, request, response))[0], 
+              ((String[])ParameterUtil.resolveParam(request, thisAction.getServiceProvider(), params))[0], 
+              ((String[])ParameterUtil.resolveParam(request, thisAction.getInputObjectType(), params))[0], 
               thisAction.getReturnObjectType(),
-              ((String[])ParameterUtil.resolveParam(thisAction.getGuidParam(), params, request, response))[0], 
+              ((String[])ParameterUtil.resolveParam(request, thisAction.getGuidParam(), params))[0], 
               thisAction.getPermissionContext(),
               thisAction.getIndexParam(),
               thisAction.getNamespace(),
@@ -131,10 +127,10 @@ public class DoItRunner implements IDoItRunner {
         } else {
           retObj = this.getDataProvider().dispatchAction(
               thisAction.getAction(), 
-              ((String[])ParameterUtil.resolveParam(thisAction.getServiceProvider(), params, request, response))[0], 
-              ((String[])ParameterUtil.resolveParam(thisAction.getInputObjectType(), params, request, response))[0], 
+              ((String[])ParameterUtil.resolveParam(request, thisAction.getServiceProvider(), params))[0], 
+              ((String[])ParameterUtil.resolveParam(request, thisAction.getInputObjectType(), params))[0], 
               thisAction.getReturnObjectType(),
-              ((String[])ParameterUtil.resolveParam(thisAction.getGuidParam(), params, request, response))[0], 
+              ((String[])ParameterUtil.resolveParam(request, thisAction.getGuidParam(), params))[0], 
               thisAction.getPermissionContext(),
               thisAction.getIndexParam(),
               thisAction.getNamespace(),
@@ -155,27 +151,27 @@ public class DoItRunner implements IDoItRunner {
         throw e;
       }
     } else if (actionType.equalsIgnoreCase("cookieAction")) {
-      String cookieName = ((String[])ParameterUtil.resolveParam(params.get("cookieName"), params, request, response))[0];
-      String cookieValue = ((String[])ParameterUtil.resolveParam(params.get("cookieValue"), params, request, response))[0];
+      String cookieName = ((String[])ParameterUtil.resolveParam(request, params.get("cookieName"), params))[0];
+      String cookieValue = ((String[])ParameterUtil.resolveParam(request, params.get("cookieValue"), params))[0];
       int maxAge = -1;
       try {
-        maxAge = Integer.parseInt(((String[])ParameterUtil.resolveParam(params.get("maxAge"), params, request, response))[0]);
+        maxAge = Integer.parseInt(((String[])ParameterUtil.resolveParam(request, params.get("maxAge"), params))[0]);
       } catch (Exception e) {}
       
       Cookie doitCookie = new Cookie(cookieName, cookieValue);
       doitCookie.setMaxAge(maxAge);
       componentRequestManager.get().getHttpResponse().addCookie(doitCookie);
     } else if (actionType.equalsIgnoreCase("sessionAction")) {
-      Map sessionMap = new HashMap();
+      Map<String,Object> sessionMap = new HashMap<String,Object>();
 
       if (thisAction.getParameters() != null) {
-        ParameterUtil.mapDoItParameters(thisAction.getParameters().getParameter(), params, sessionMap, true, request, response);
+        ParameterUtil.mapDoItParameters(request, thisAction.getParameters().getParameter(), params, sessionMap, true);
       }
       HttpSession session = componentRequestManager.get().getHttpRequest().getSession();
-      Iterator iter = sessionMap.entrySet().iterator();
+      Iterator<Map.Entry<String,Object>> iter = sessionMap.entrySet().iterator();
       while (iter.hasNext()) {
-        Map.Entry entry = (Map.Entry)iter.next();
-        session.setAttribute((String)entry.getKey(), entry.getValue());
+        Map.Entry<String,Object> entry = iter.next();
+        session.setAttribute(entry.getKey(), entry.getValue());
       }
     } else if (actionType.equalsIgnoreCase("indexAction") && lastAction) {
       if (this.getIndexBuilder() != null) {
@@ -199,8 +195,8 @@ public class DoItRunner implements IDoItRunner {
       Parameter[] paramMap =  thisAction.getOutputParameters().getParameter();
       for(int j = 0; j < paramMap.length; j++){
          Parameter thisParam = paramMap[j];
-         String[] paramPath = ParameterUtil.resolveParam(thisParam.getPath(), params, request, response);
-         String[] paramName = ParameterUtil.resolveParam(thisParam.getName(), params, request, response);
+         String[] paramPath = ParameterUtil.resolveParam(request, thisParam.getPath(), params);
+         String[] paramName = ParameterUtil.resolveParam(request, thisParam.getName(), params);
          Object value = null;
          for (int i = 0; i <paramName.length; i++) {
            if(thisParam.getIsStatic()){
@@ -229,10 +225,10 @@ public class DoItRunner implements IDoItRunner {
       responseParams.put(thisAction.getReturnAttributeName(), context.getValue("./valueObject/guid"));
     }
 
-    Iterator iter = responseParams.keySet().iterator();
+    Iterator<String> iter = responseParams.keySet().iterator();
     while (iter.hasNext()) {
-      Object key = iter.next();
-      params.put((String)key, responseParams.get(key));
+      String key = iter.next();
+      params.put(key, responseParams.get(key));
     }
   
   }
@@ -243,14 +239,15 @@ public class DoItRunner implements IDoItRunner {
    *  of the posted request.  All such objects are put in the response parameter
    *  mapping under the "ValidationErrorObjects" key.
    */
-  private void pullErrorObjectsIntoRequest(DoIt doIt, Map paramMap, Map responseMap, String multipleActionsKey, String[] multipleActionsAry, ValidationException ve, HttpServletRequest request, HttpServletResponse response) throws Exception
+  @SuppressWarnings("unchecked")
+  private void pullErrorObjectsIntoRequest(IRequest request, DoIt doIt, Map<String,Object> paramMap, Map<String,Object> responseMap, String multipleActionsKey, String[] multipleActionsAry, ValidationException ve) throws Exception
   {
     if (log.isDebugEnabled()) {
       log.debug("ENTER pullErrorObjectsIntoRequest");
     }
     Action thisAction = null;
     Collection globalErrorObjects = new ArrayList();
-    Collection globalErrorMessages = new ArrayList();
+    Collection<String> globalErrorMessages = new ArrayList<String>();
     BeanFactory beanFactory = BeanMonkey.getBeanFactoryInstance();
     
     if(doIt.getActions() != null) {
@@ -287,7 +284,7 @@ public class DoItRunner implements IDoItRunner {
           }        
           
           //retrieve the input object for this action
-          Object inputObject = constructInputObjectFromAction(thisAction, actionParams, request, response);
+          Object inputObject = constructInputObjectFromAction(request, thisAction, actionParams);
           
           //if there's an input object 
           if(inputObject != null || actionStr.endsWith("Collection"))
@@ -297,7 +294,7 @@ public class DoItRunner implements IDoItRunner {
             }
             // before calling the getSafeBean method, have to 
             // stick this action's returnObjectType in the paramMap
-            String objectReturnType = ((String[])ParameterUtil.resolveParam(thisAction.getReturnObjectType(), actionParams, request, response))[0];
+            String objectReturnType = ((String[])ParameterUtil.resolveParam(request, thisAction.getReturnObjectType(), actionParams))[0];
             actionParams.put("returnObjectType", objectReturnType);
             
             // use the bean monkey to populate that object
@@ -305,7 +302,7 @@ public class DoItRunner implements IDoItRunner {
             boolean collection = false;
             String className = null;
             if (actionStr.endsWith("Collection")) {
-              String beanClazz = ((String[])ParameterUtil.resolveParam(thisAction.getInputObjectType(), actionParams, request, response))[0];
+              String beanClazz = ((String[])ParameterUtil.resolveParam(request, thisAction.getInputObjectType(), actionParams))[0];
               inputObject = BeanMonkey.populateCollection(beanClazz, thisAction.getIndexParam(), actionParams, false, thisAction.getValidationErrorMode(), instanceErrorMessages);
               collection = true;
               className = beanClazz.substring(beanClazz.lastIndexOf(".") + 1);
@@ -354,8 +351,8 @@ public class DoItRunner implements IDoItRunner {
           
           continue;
         }
-        globalErrorMessages.add(instanceErrorMessages);
-        globalErrorObjects.add(instanceErrorObjects);
+        globalErrorMessages.addAll(instanceErrorMessages);
+        globalErrorObjects.addAll(instanceErrorObjects);
       }      
       // put the populated error objs in the request scope.
       responseMap.put(PresConstants.VALIDATION_ERROR_OBJECTS, globalErrorObjects);
@@ -373,15 +370,16 @@ public class DoItRunner implements IDoItRunner {
    *   load an object of appropriate type using a dao, or just construct
    *   an empty object of appropriate type.
    */
-  private Object constructInputObjectFromAction(Action action, Map paramMap, HttpServletRequest request, HttpServletResponse response) throws Exception
+  @SuppressWarnings("unchecked")
+  private Object constructInputObjectFromAction(IRequest request, Action action, Map paramMap) throws Exception
   {
-    String objectDao = ((String[])ParameterUtil.resolveParam(action.getServiceProvider(), paramMap, request, response))[0];
-    String objectInputType = ((String[])ParameterUtil.resolveParam(action.getInputObjectType(), paramMap, request, response))[0]; 
+    String objectDao = ((String[])ParameterUtil.resolveParam(request, action.getServiceProvider(), paramMap))[0];
+    String objectInputType = ((String[])ParameterUtil.resolveParam(request, action.getInputObjectType(), paramMap))[0]; 
 
     // Fix the input params using the param mapping for 
     // this configuration.
     if (action.getParameters() != null) {
-      ParameterUtil.mapDoItParameters(action.getParameters().getParameter(), paramMap, paramMap, true, request, response);
+      ParameterUtil.mapDoItParameters(request, action.getParameters().getParameter(), paramMap, paramMap, true);
     }
      
     Object inputObject = null;
@@ -403,7 +401,7 @@ public class DoItRunner implements IDoItRunner {
     }
     
     //NOTE: passing leading '$' forces a lookup in the parameter map
-    String[] objectGuidArray = ((String[])ParameterUtil.resolveParam("$" + action.getGuidParam(), paramMap, request, response));
+    String[] objectGuidArray = ((String[])ParameterUtil.resolveParam(request, "$" + action.getGuidParam(), paramMap));
     String objectGuid = objectGuidArray == null ? null : objectGuidArray[0];
     
     // but if guid is present, replace the empty object with db load

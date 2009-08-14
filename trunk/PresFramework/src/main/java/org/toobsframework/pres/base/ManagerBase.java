@@ -13,6 +13,7 @@ import org.springframework.core.io.Resource;
 import org.toobsframework.pres.resources.IResourceCacheLoader;
 import org.toobsframework.pres.resources.ResourceCacheDescriptor;
 import org.toobsframework.pres.resources.ResourceUnmarshaller;
+import org.toobsframework.util.Configuration;
 
 /**
  * Common ancestor for the managers
@@ -20,13 +21,19 @@ import org.toobsframework.pres.resources.ResourceUnmarshaller;
  *
  */
 public abstract class ManagerBase implements ApplicationContextAware, InitializingBean {
-  private static Log log = LogFactory.getLog(ManagerBase.class);
+  protected final Log log = LogFactory.getLog(getClass());
 
   private static boolean initDone = false;
   private List<String> configFiles = null;
   private ResourceCacheDescriptor[] resourceCache = null;
   private boolean doReload = false;
+
   protected ApplicationContext applicationContext;
+  protected Configuration configuration;
+
+  public void afterPropertiesSet() throws Exception {
+    doReload = configuration.doReload();
+  }
 
   protected void initCache() {
     int l = configFiles.size();
@@ -102,6 +109,19 @@ public abstract class ManagerBase implements ApplicationContextAware, Initializi
     ManagerBase.initDone = initDone;
   }
 
+  protected boolean isDoReload() {
+    return configuration.doReload();
+  }
+
+  protected boolean useTranslets() {
+    return configuration.useTranslets();
+  }
+
+  protected boolean useChain() {
+    return configuration.useChain();
+  }
+
+
   public List<String> getConfigFiles() {
     return configFiles;
   }
@@ -114,15 +134,12 @@ public abstract class ManagerBase implements ApplicationContextAware, Initializi
     this.configFiles.addAll(configFiles);
   }
 
-  public boolean isDoReload() {
-    return doReload;
-  }
-
-  public void setDoReload(boolean doReload) {
-    this.doReload = doReload;
-  }
-
   public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
     this.applicationContext = applicationContext;
   }
+
+   public void setConfiguration(Configuration configuration) {
+    this.configuration = configuration;
+  }
+
 }

@@ -1,7 +1,6 @@
 package org.toobsframework.pres.util;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.toobsframework.util.IRequest;
 
 public class HeaderUtil implements INamespaceParameterHelper {
 
@@ -12,7 +11,7 @@ public class HeaderUtil implements INamespaceParameterHelper {
     return tagName.startsWith(NAMESPACE);
   }
 
-  public String[] getValue(String tagName, HttpServletRequest request, HttpServletResponse response) {
+  public String[] getValue(IRequest request, String tagName) {
     String[] ret = new String[]{""};
 
     if (!tagName.startsWith(NAMESPACE)) {
@@ -20,7 +19,7 @@ public class HeaderUtil implements INamespaceParameterHelper {
     }
 
     String headerName = tagName.substring(LEN_NAMESPACE);
-    String value = request.getHeader(headerName);
+    String value = request.getHttpRequest().getHeader(headerName);
     if (value != null) {
       ret = new String[] {value};
     }

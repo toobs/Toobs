@@ -1,5 +1,7 @@
 package org.toobsframework.transformpipeline.domain;
 
+import org.toobsframework.util.IRequest;
+
 /**
  * interface used to denote that certain data can be passed between transformations
  * to include context.

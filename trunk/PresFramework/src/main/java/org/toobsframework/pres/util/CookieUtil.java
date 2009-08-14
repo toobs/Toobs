@@ -1,10 +1,11 @@
 package org.toobsframework.pres.util;
 
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+
+import org.toobsframework.util.IRequest;
 
 public class CookieUtil implements INamespaceParameterHelper {
+
   static final String VALUE = "value:";
   static final String VERSION = "version:";
   static final String SECURE = "secure:";
@@ -23,8 +24,8 @@ public class CookieUtil implements INamespaceParameterHelper {
   public static final int LEN_NAMESPACE = NAMESPACE.length();
   
 
-  Cookie findCookie(HttpServletRequest request, String name) {
-    Cookie[] cookies = request.getCookies();
+  Cookie findCookie(IRequest request, String name) {
+    Cookie[] cookies = request.getHttpRequest().getCookies();
     for (Cookie cookie : cookies) {
       if (cookie.getName().equals(name)) {
         return cookie;
@@ -37,7 +38,7 @@ public class CookieUtil implements INamespaceParameterHelper {
     return tagName.startsWith(NAMESPACE);
   }
   
-  public String[] getValue(String tagName, HttpServletRequest request, HttpServletResponse response) {    
+  public String[] getValue(IRequest request, String tagName) {
     String[] ret = new String[]{""};
 
     if (!tagName.startsWith(NAMESPACE)) {

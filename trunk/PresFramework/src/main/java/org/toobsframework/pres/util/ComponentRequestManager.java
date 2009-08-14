@@ -1,15 +1,16 @@
 package org.toobsframework.pres.util;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.toobsframework.pres.component.dataprovider.api.IDataProviderObject;
+//import org.apache.commons.logging.Log;
+//import org.apache.commons.logging.LogFactory;
+//import org.toobsframework.pres.component.dataprovider.api.IDataProviderObject;
 import org.toobsframework.util.BaseRequestManager;
-import org.toobsframework.util.IRequest;
+//import org.toobsframework.util.IRequest;
 
 public class ComponentRequestManager extends BaseRequestManager {
 
-  private static Log log = LogFactory.getLog(ComponentRequestManager.class);
+//  private static Log log = LogFactory.getLog(ComponentRequestManager.class);
 
+  /*
   public void cacheObject(String oper, String type, String ident, Object obj) {
     String cacheKey = oper + "-" + type + "-" + ident;
     IRequest cr = get();
@@ -41,4 +42,5 @@ public class ComponentRequestManager extends BaseRequestManager {
     }
     return cachedObj;
   }
+  */
 }

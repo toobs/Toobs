@@ -1,20 +1,14 @@
 package org.toobsframework.pres.component.dataprovider.impl;
 
-import java.io.IOException;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.toobsframework.biz.scriptmanager.IScriptManager;
-import org.toobsframework.pres.component.dataprovider.api.DataProviderInitializationException;
 import org.toobsframework.pres.component.dataprovider.api.DataProviderNotInitializedException;
 import org.toobsframework.pres.component.dataprovider.api.IDataProvider;
 import org.toobsframework.pres.component.dataprovider.api.IDataProviderObject;
@@ -24,6 +18,7 @@ import org.toobsframework.pres.component.dataprovider.api.ObjectNotFoundExceptio
 import org.toobsframework.pres.component.dataprovider.api.PropertyNotFoundException;
 import org.toobsframework.pres.component.dataprovider.api.TypeMismatchException;
 import org.toobsframework.pres.util.ParameterUtil;
+import org.toobsframework.util.IRequest;
 import org.toobsframework.util.constants.PlatformConstants;
 
 
@@ -91,7 +86,7 @@ public class RhinoDataProviderImpl implements IDataProvider {
     ArrayList retObjects = new ArrayList();
   
     // Get Object
-    params.put("dao", ParameterUtil.resolveParam(objectDao, params, null, null));
+    params.put("dao", ParameterUtil.resolveParam(null, objectDao, params));
     params.put("searchMethod", searchMethod);
     params.put("searchCriteria", searchCriteria);
     params.put("permissionAction", permissionAction);
@@ -361,7 +356,7 @@ public class RhinoDataProviderImpl implements IDataProvider {
 	    return returnObj;
 	  }
 	  
-  public Object dispatchActionEx(HttpServletRequest request, HttpServletResponse response, String action, String dao, String objectType, 
+  public Object dispatchActionEx(IRequest request, String action, String dao, String objectType, 
 	      String returnObjectType, String guidParam, String permissionContext, String indexParam, String namespace, Map params, Map outParams) throws Exception {
 	  return dispatchAction(action, dao, objectType, returnObjectType, guidParam, permissionContext, indexParam, namespace, params, outParams);
 	}

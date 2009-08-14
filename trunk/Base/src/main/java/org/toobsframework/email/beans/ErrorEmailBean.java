@@ -20,7 +20,7 @@ public class ErrorEmailBean extends EmailBean {
   }
   
   public String getEmailSubject() {
-    String[] arguments = new String[] {Configuration.getInstance().getMainHost(), context, throwable.getMessage()};
+    String[] arguments = new String[] {/*Configuration.getInstance().getMainHost(),*/ context, throwable.getMessage()};
     return StringResource.formatString(super.getEmailSubject(), arguments);
   }
 

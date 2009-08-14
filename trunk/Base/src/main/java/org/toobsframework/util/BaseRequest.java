@@ -8,17 +8,17 @@ import javax.servlet.http.HttpServletResponse;
 public class BaseRequest implements IRequest {
   private HttpServletRequest httpRequest;
   HttpServletResponse httpResponse;
-  private Map params;
-  
-  public Map getParams() {
+  private Map<String,Object> params;
+
+  public Map<String,Object> getParams() {
     return params;
   }
 
-  public void setParams(Map params) {
+  public void setParams(Map<String,Object> params) {
     this.params = params;
   }
   
-  public BaseRequest(HttpServletRequest httpRequest, HttpServletResponse httpResponse, Map params) {
+  public BaseRequest(HttpServletRequest httpRequest, HttpServletResponse httpResponse, Map<String,Object> params) {
     this.httpRequest = httpRequest;
     this.httpResponse = httpResponse;
     this.params = params;

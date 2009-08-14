@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.URIResolver;
 
 import org.apache.commons.logging.Log;
@@ -20,27 +18,17 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.validation.ObjectError;
 import org.toobsframework.pres.component.config.GetObject;
 import org.toobsframework.exception.ParameterException;
-import org.toobsframework.pres.component.dataprovider.api.DataProviderNotInitializedException;
 import org.toobsframework.pres.component.dataprovider.api.IDataProvider;
 import org.toobsframework.pres.component.dataprovider.api.IDataProviderObject;
-import org.toobsframework.pres.component.dataprovider.api.InvalidSearchContextException;
-import org.toobsframework.pres.component.dataprovider.api.InvalidSearchFilterException;
-import org.toobsframework.pres.component.dataprovider.api.ObjectCreationException;
-import org.toobsframework.pres.component.dataprovider.api.ObjectNotFoundException;
 import org.toobsframework.pres.component.dataprovider.impl.DataProviderObjectImpl;
-import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.pres.util.CookieVO;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.pres.util.PresConstants;
-import org.toobsframework.pres.xsl.ComponentTransformerHelper;
-import org.toobsframework.servlet.ContextHelper;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
 import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 import org.toobsframework.transformpipeline.domain.XMLTransformerException;
 import org.toobsframework.util.BetwixtUtil;
-import org.toobsframework.util.Configuration;
 import org.toobsframework.util.IRequest;
-
 
 /**
  * @author pudney
@@ -57,9 +45,8 @@ public class Component {
   private static final String XML_END_ERROR_OBJS = "</errorobjects>";
 
   private static Log log = LogFactory.getLog(Component.class);
-  private ComponentRequestManager componentRequestManager;
-  
-  private String Id;
+
+  private String id;
 
   private boolean renderErrorObject;
 
@@ -83,10 +70,9 @@ public class Component {
   
   private IDataProvider dataProvider;
 
-  public Component() {
-    this.Id = null;
+  public Component(String id) {
+    this.id = id;
     this.initDone = false;
-    componentRequestManager = (ComponentRequestManager)ContextHelper.getWebApplicationContext().getBean("componentRequestManager");
   }
 
   public void init() throws ComponentInitializationException {
@@ -99,12 +85,12 @@ public class Component {
    * @param paramsOut
    * @return an array of all the objects implementing IDataSourceObject
    */
-  public IDataProviderObject[] getObjects(Map<String,Object> paramsIn, Map<String,Object> paramsOut, IXMLTransformerHelper transformerHelper, HttpServletRequest request, HttpServletResponse response) throws ComponentException,
+  public IDataProviderObject[] getObjects(IRequest request, Map<String,Object> paramsIn, Map<String,Object> paramsOut, IXMLTransformerHelper transformerHelper) throws ComponentException,
       ComponentNotInitializedException, ParameterException {
     List<IDataProviderObject> allObjects = new ArrayList<IDataProviderObject>();
     if (!this.initDone) {
       ComponentNotInitializedException ex = new ComponentNotInitializedException();
-      ex.setComponentId(this.Id);
+      ex.setComponentId(this.id);
       throw ex;
     }
 
@@ -115,7 +101,7 @@ public class Component {
       //Fix the params using the param mapping for 
       //this configuration.
       if(thisObjDef.getParameters() != null){
-        ParameterUtil.mapParameters("Component:" + this.Id + ":GetObject:" + thisObjDef.getServiceProvider(), thisObjDef.getParameters().getParameter(), params, params, this.Id, allObjects, request, response);
+        ParameterUtil.mapParameters(request, "Component:" + this.id + ":GetObject:" + thisObjDef.getServiceProvider(), thisObjDef.getParameters().getParameter(), params, params, this.id, allObjects);
       }
 
       List<IDataProviderObject> theseObjects = new ArrayList<IDataProviderObject>();
@@ -124,8 +110,8 @@ public class Component {
       Map<String,Object> outParams = new HashMap<String,Object>();
       // TODO: JG I need to put the cookies: notations into into parameters
       if (thisObjDef.getAction().equals("getCookie")) {
-        String searchCriteria = ParameterUtil.resolveParam(thisObjDef.getSearchCriteria(), params, request, response)[0];
-        String thisGuidParam = ParameterUtil.resolveParam(thisObjDef.getGuidParam(), params, request, response)[0];
+        String searchCriteria = ParameterUtil.resolveParam(request, thisObjDef.getSearchCriteria(), params)[0];
+        String thisGuidParam = ParameterUtil.resolveParam(request, thisObjDef.getGuidParam(), params)[0];
         String cookieName = (searchCriteria != null ? searchCriteria : "");
         Object guidValue = params.get(thisGuidParam);
         if (guidValue != null && guidValue.getClass().isArray()) {
@@ -135,7 +121,7 @@ public class Component {
         }
         String cookieValue = null;
         
-        Cookie[] cookies = componentRequestManager.get().getHttpRequest().getCookies();
+        Cookie[] cookies = request.getHttpRequest().getCookies();
         if (cookies != null) {
           for (int c = 0; c < cookies.length; c++) {
             Cookie cookie = cookies[c];
@@ -149,14 +135,14 @@ public class Component {
           theseObjects.add(this.createObject(new CookieVO(cookieName, cookieValue)));
         }
       } else {
-        theseObjects.add(getDispatchedObject(thisObjDef, params, outParams, request, response));
+        theseObjects.add(getDispatchedObject(request, thisObjDef, params, outParams));
       }
       // TODO SNIP!!!
       ParameterUtil.mapScriptParams(outParams, paramsIn);
       if(thisObjDef.getOutputParameters() != null){
-        ParameterUtil.mapOutputParameters(thisObjDef.getOutputParameters().getParameter(), paramsIn, this.Id, theseObjects, request, response);
+        ParameterUtil.mapOutputParameters(request, thisObjDef.getOutputParameters().getParameter(), paramsIn, this.id, theseObjects);
         if (paramsOut != null) {
-          ParameterUtil.mapOutputParameters(thisObjDef.getOutputParameters().getParameter(), paramsOut, this.Id, theseObjects, request, response);
+          ParameterUtil.mapOutputParameters(request, thisObjDef.getOutputParameters().getParameter(), paramsOut, this.id, theseObjects);
         }
       }
       allObjects.addAll(theseObjects);
@@ -208,22 +194,26 @@ public class Component {
   }
 */
   
-  public IDataProviderObject getDispatchedObject(GetObject thisObjDef,  Map<String, Object> params, Map<String, Object> outParams, HttpServletRequest request, HttpServletResponse response) throws ComponentException,
+  public IDataProviderObject getDispatchedObject(IRequest request, GetObject thisObjDef,  Map<String, Object> params, Map<String, Object> outParams) throws ComponentException,
       ComponentNotInitializedException {
     IDataProviderObject object = null;
     if (!this.initDone) {
       ComponentNotInitializedException ex = new ComponentNotInitializedException();
-      ex.setComponentId(this.Id);
+      ex.setComponentId(this.id);
       throw ex;
     }
     try {
+      
+      /* TODO Move caching logic
       if (!thisObjDef.getNoCache()) {
         object = componentRequestManager.checkRequestCache(thisObjDef.getServiceProvider(), thisObjDef.getAction(), "");
       }
+      
       if (object == null) {
+      */
         Object obj;
         if (thisObjDef.isExtended()) {
-          obj = dataProvider.dispatchActionEx(request, response, thisObjDef.getAction(), thisObjDef.getServiceProvider(), 
+          obj = dataProvider.dispatchActionEx(request, thisObjDef.getAction(), thisObjDef.getServiceProvider(), 
               "", "", thisObjDef.getGuidParam(), thisObjDef.getPermissionAction(), "", 
               "", params, outParams);
         } else {
@@ -237,10 +227,12 @@ public class Component {
         } else if (obj != null){
           object = (IDataProviderObject) obj;
         }
+        /*
         if (!thisObjDef.getNoCache() && object != null) {
           componentRequestManager.cacheObject(thisObjDef.getServiceProvider(), thisObjDef.getAction(), "", object);
         }
       }
+      */
     } catch (Exception ex) {
       throw new ComponentException("Component " + getId() + " cannot get object with action " + thisObjDef.getAction(), ex);
     }
@@ -260,21 +252,21 @@ public class Component {
    * @throws ComponentNotInitializedException
    * @throws ComponentException
    */
-  public String render(String contentType, Map<String, Object> params, IXMLTransformerHelper transformerHelper, HttpServletRequest request, HttpServletResponse response, Map<String, Object> outParams, URIResolver uriResolver)
+  public String render(IRequest request, String contentType, Map<String, Object> params, IXMLTransformerHelper transformerHelper, Map<String, Object> outParams, URIResolver uriResolver)
       throws ComponentNotInitializedException, ComponentException, ParameterException {
     StringBuffer renderedOutput = new StringBuffer();
     Date start = new Date();
-    String componentXML = this.getObjectsAsXML(params, outParams, transformerHelper, request, response);
+    String componentXML = this.getObjectsAsXML(request, params, outParams, transformerHelper);
     Date endGet = new Date();
 
     if (!contentType.equals("bizXML")) {
-      renderedOutput.append(this.callXMLPipeline(contentType, componentXML, params, transformerHelper, uriResolver, request, response));
+      renderedOutput.append(this.callXMLPipeline(request, contentType, componentXML, params, transformerHelper, uriResolver));
     } else {
       renderedOutput.append(componentXML);
     }
     Date end = new Date();
     if (log.isDebugEnabled()) {
-      log.debug("Comp [" + Id + "] gTime: " + (endGet.getTime()-start.getTime()) + " rTime: " + (end.getTime()-endGet.getTime()) + " fTime: " + (end.getTime()-start.getTime()));
+      log.debug("Comp [" + id + "] gTime: " + (endGet.getTime()-start.getTime()) + " rTime: " + (end.getTime()-endGet.getTime()) + " fTime: " + (end.getTime()-start.getTime()));
     }
     return renderedOutput.toString();
   }
@@ -296,13 +288,13 @@ public class Component {
    * @throws ComponentException
    */
   @SuppressWarnings("unchecked")
-  private String getObjectsAsXML(Map<String, Object> params, Map<String, Object> outParams, IXMLTransformerHelper transformerHelper, HttpServletRequest request, HttpServletResponse response)
+  private String getObjectsAsXML(IRequest request, Map<String, Object> params, Map<String, Object> outParams, IXMLTransformerHelper transformerHelper)
       throws ComponentNotInitializedException, ComponentException, ParameterException {
     StringBuffer xml = new StringBuffer();
-    IDataProviderObject[] objects = this.getObjects(params, outParams, transformerHelper, request, response);
+    IDataProviderObject[] objects = this.getObjects(request, params, outParams, transformerHelper);
     try {
       xml.append(XML_HEADER);
-      xml.append(XML_START_COMPONENTS).append(" id=\"").append(this.Id).append("\">");
+      xml.append(XML_START_COMPONENTS).append(" id=\"").append(this.id).append("\">");
       xml.append(XML_START_OBJECTS);
       if ((objects != null) && (objects.length > 0)) {
         for (int i = 0; i < objects.length; i++) {
@@ -314,7 +306,7 @@ public class Component {
       xml.append(XML_END_OBJECTS);
       if (renderErrorObject) {
         if (params.containsKey(PresConstants.VALIDATION_ERROR_MESSAGES)) {
-          componentRequestManager.get().getHttpResponse().setHeader("toobs.error.validation", "true");
+          request.getHttpResponse().setHeader("toobs.error.validation", "true");
           List<ObjectError> globalErrorList = (List<ObjectError>)params.get(PresConstants.VALIDATION_ERROR_MESSAGES);
           for (int g = 0; g < globalErrorList.size(); g++) {
             xml.append(XML_START_ERRORS);
@@ -353,7 +345,7 @@ public class Component {
    * @throws ComponentNotInitializedException
    * @throws ComponentException
    */
-  private String callXMLPipeline(String contentType, String inputXMLString, Map<String, Object> inParams, IXMLTransformerHelper transformerHelper, URIResolver uriResolver, HttpServletRequest request, HttpServletResponse response)
+  private String callXMLPipeline(IRequest request, String contentType, String inputXMLString, Map<String, Object> inParams, IXMLTransformerHelper transformerHelper, URIResolver uriResolver)
       throws ComponentException, ParameterException {
     StringBuffer outputString = new StringBuffer();
     List<String> outputXML = new ArrayList<String>();
@@ -378,11 +370,11 @@ public class Component {
           //Fix the params using the param mapping for 
           //this configuration.
           if(transform.getTransformParams() != null){
-            ParameterUtil.mapParameters("Transform:" + transform.getTransformName(), transform.getTransformParams().getParameter(), inParams, params, this.Id, request, response);
+            ParameterUtil.mapParameters(request, "Transform:" + transform.getTransformName(), transform.getTransformParams().getParameter(), inParams, params, this.id);
           }
         }
       } else {
-        throw new ComponentException("Component with id: " + this.Id + " does not have a transform for content type: " + contentType);
+        throw new ComponentException("Component with id: " + this.id + " does not have a transform for content type: " + contentType);
       }
       //ParameterUtil.mapFrameworkParams(inParams, params);
 
@@ -400,10 +392,7 @@ public class Component {
 
       // Do Transformation
       if (inputXSLs.size() > 0) {
-        params.put("context", Configuration.getInstance().getMainContext() + "/");
-        if (inParams.get("appContext") != null) {
-          params.put("appContext", inParams.get("appContext"));
-        }
+        params.put(IXMLTransformer.COMPONENT_REQUEST, request);
         outputXML = xmlTransformer.transform(inputXSLs, inputXML, params, transformerHelper);
       } else {
         outputXML = inputXML;
@@ -479,11 +468,11 @@ public class Component {
   }
 
   public void setId(String Id) {
-    this.Id = Id;
+    this.id = Id;
   }
 
   public String getId() {
-    return this.Id;
+    return this.id;
   }
 
   public void setTransforms(Map<String, List<Transform>> transforms) {

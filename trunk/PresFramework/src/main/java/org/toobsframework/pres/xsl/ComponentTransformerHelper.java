@@ -5,8 +5,10 @@ import org.toobsframework.pres.component.manager.IComponentManager;
 import org.toobsframework.pres.layout.manager.IComponentLayoutManager;
 import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
+import org.toobsframework.util.Configuration;
 
 public class ComponentTransformerHelper implements IXMLTransformerHelper {
+  protected Configuration configuration = null;
   protected ComponentRequestManager componentRequestManager = null;
   protected IComponentManager componentManager = null;
   protected IComponentLayoutManager componentLayoutManager = null;
@@ -63,6 +65,21 @@ public class ComponentTransformerHelper implements IXMLTransformerHelper {
   public void setComponentLayoutManager(
       IComponentLayoutManager componentLayoutManager) {
     this.componentLayoutManager = componentLayoutManager;
+  }
+
+  /**
+   * @return the toobs configuration
+   */
+  public Configuration getConfiguration() {
+    return configuration;
+  }
+
+  /**
+   * 
+   * @param configuration the toobs configuration to set
+   */
+  public void setConfiguration(Configuration configuration) {
+    this.configuration = configuration;
   }
 
 }

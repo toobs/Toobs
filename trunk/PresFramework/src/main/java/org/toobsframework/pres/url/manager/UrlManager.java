@@ -1,34 +1,24 @@
 package org.toobsframework.pres.url.manager;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.beanutils.ConvertUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.toobsframework.data.beanutil.converter.DateToStringConverter;
 import org.toobsframework.pres.base.ManagerBase;
-import org.toobsframework.pres.component.ComponentInitializationException;
-import org.toobsframework.pres.component.config.Component;
-import org.toobsframework.pres.component.config.Components;
-import org.toobsframework.pres.component.manager.ComponentManager;
 import org.toobsframework.pres.url.UrlMapping;
 import org.toobsframework.pres.url.UrlMappingUtil;
 import org.toobsframework.pres.url.config.Url;
 import org.toobsframework.pres.url.config.Urls;
-import org.toobsframework.transformpipeline.domain.XMLTransformerException;
-import org.toobsframework.transformpipeline.domain.XMLTransformerFactory;
-import org.toobsframework.transformpipeline.domain.XSLUriResolverImpl;
 
 public class UrlManager extends ManagerBase implements IUrlManager {
 
-  private static Log log = LogFactory.getLog(UrlManager.class);
   private Map<String, UrlMapping> registry;
-  private static long localDeployTime = 0L;
-  
+
+  public void afterPropertiesSet() throws Exception {
+    registry = new ConcurrentHashMap<String, UrlMapping>();
+    loadConfig(Urls.class);
+  }
+
   @Override
   protected void registerConfiguration(Object object, String fileName) {
     Urls urlConfig = (Urls) object;
@@ -74,14 +64,13 @@ public class UrlManager extends ManagerBase implements IUrlManager {
     registry.put(url.getPattern(), realizedUrl);
   }
   
-  public UrlMapping getUrlMapping(String pattern, long deployTime) throws Exception {
-    if (isDoReload() || deployTime > localDeployTime) {
+  public UrlMapping getUrlMapping(String pattern) throws Exception {
+    if (isDoReload()) {
       //Date initStart = new Date();
       this.afterPropertiesSet();
       //Date initEnd = new Date();
       //log.info("Init Time: " + (initEnd.getTime() - initStart.getTime()));
     }
-    localDeployTime = deployTime;
 
     String[] paths = UrlMappingUtil.tokenizePath(pattern);
     
@@ -91,11 +80,6 @@ public class UrlManager extends ManagerBase implements IUrlManager {
       }
     }
     return null;
-  }
-
-  public void afterPropertiesSet() throws Exception {
-    registry = new ConcurrentHashMap<String, UrlMapping>();
-    loadConfig(Urls.class);
   }
 
 }

@@ -7,11 +7,10 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.toobsframework.util.BaseRequest;
 
-
 public class ComponentRequest extends BaseRequest {
 
-  public ComponentRequest(HttpServletRequest httpRequest, HttpServletResponse httpResponse, Map params) {
+  public ComponentRequest(HttpServletRequest httpRequest, HttpServletResponse httpResponse, Map<String,Object> params) {
     super(httpRequest, httpResponse, params);
   }
-  
+
 }

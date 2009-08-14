@@ -7,19 +7,15 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.io.IOException;
+import java.util.Set;
 
-import javax.xml.transform.URIResolver;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.xalan.trace.TraceListener;
-import org.springframework.beans.factory.InitializingBean;
 import org.toobsframework.pres.layout.ComponentLayoutInitializationException;
 import org.toobsframework.pres.layout.ComponentLayoutNotFoundException;
-import org.toobsframework.pres.base.ManagerBase;
+import org.toobsframework.pres.base.XslManagerBase;
 import org.toobsframework.pres.component.config.ContentType;
 import org.toobsframework.pres.layout.RuntimeLayout;
 import org.toobsframework.pres.layout.RuntimeLayoutConfig;
@@ -28,73 +24,50 @@ import org.toobsframework.pres.layout.config.Layout;
 import org.toobsframework.pres.layout.config.Layouts;
 import org.toobsframework.pres.layout.config.Section;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
-import org.toobsframework.transformpipeline.domain.XMLTransformerException;
-import org.toobsframework.transformpipeline.domain.XMLTransformerFactory;
-import org.toobsframework.transformpipeline.domain.XSLUriResolverImpl;
 import org.toobsframework.exception.PermissionException;
 
-public final class ComponentLayoutManager extends ManagerBase implements IComponentLayoutManager, InitializingBean {
+public final class ComponentLayoutManager extends XslManagerBase implements IComponentLayoutManager {
 
-  private static Log log = LogFactory.getLog(ComponentLayoutManager.class);
-
-  private Map<String, RuntimeLayout> registry;
-  private long localDeployTime = 0L;
-
-  private boolean useTranslets = false;
-  private boolean useChain = false;
-
-  private URIResolver xslResolver;
-  private IXMLTransformer defaultTransformer;
-  private IXMLTransformer htmlTransformer;
-  private IXMLTransformer xmlTransformer;
-  private TraceListener paramListener;
+  private Map<String, RuntimeLayout> runtimeRegistry;
+  private Map<String, LayoutConfigHolder> configRegistry;
 
   private ComponentLayoutManager() throws ComponentLayoutInitializationException {
     log.info("Constructing new ComponentLayoutManager");
   }
 
   // Read from config file
-  public void afterPropertiesSet() throws ComponentLayoutInitializationException, XMLTransformerException {
-    XMLTransformerFactory.getInstance().setUseChain(useChain);
-    XMLTransformerFactory.getInstance().setUseTranslets(useTranslets);
-
-    xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_XML, xslResolver, paramListener);
-    htmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_HTML, xslResolver, paramListener);
-    defaultTransformer = XMLTransformerFactory.getInstance().getDefaultTransformer(xslResolver);
-
-    registry = new HashMap<String, RuntimeLayout>();
-    if (this.xslResolver == null) {
-      this.xslResolver = new XSLUriResolverImpl();
-    }
-
+  public void afterPropertiesSet() throws Exception {
+    super.afterPropertiesSet();
+    configRegistry = new LinkedHashMap<String, LayoutConfigHolder>();
     loadConfig(Layouts.class);
+    configureRegistry();
   }
 
-  public RuntimeLayout getLayout(String Id, long deployTime)
+  public RuntimeLayout getLayout(String Id)
       throws ComponentLayoutNotFoundException, ComponentLayoutInitializationException {
-    if (isDoReload() || deployTime > localDeployTime) {
+    if (isDoReload()) {
       Date initStart = new Date();
       this.loadConfig(Layouts.class);
+      configureRegistry();
       Date initEnd = new Date();
       log.info("Init Time: " + (initEnd.getTime() - initStart.getTime()));
     }
-    if (!registry.containsKey(Id)) {
+    if (!runtimeRegistry.containsKey(Id)) {
       ComponentLayoutNotFoundException ex = new ComponentLayoutNotFoundException();
       ex.setComponentLayoutId(Id);
       throw ex;
     }
-    localDeployTime = deployTime;
-    return (RuntimeLayout) registry.get(Id);
+    return (RuntimeLayout) runtimeRegistry.get(Id);
   }
   
   public RuntimeLayout getLayout(PermissionException permissionException)
     throws ComponentLayoutNotFoundException, ComponentLayoutInitializationException {
     String objectErrorPage = permissionException.getAction() + permissionException.getObjectTypeName();
-    if (!registry.containsKey(objectErrorPage)) {
+    if (!runtimeRegistry.containsKey(objectErrorPage)) {
       log.info("Permission Error page " + objectErrorPage + " not defined");
       return null;
     }
-    return (RuntimeLayout) registry.get(objectErrorPage);
+    return (RuntimeLayout) runtimeRegistry.get(objectErrorPage);
   }
 
   @Override
@@ -102,27 +75,66 @@ public final class ComponentLayoutManager extends ManagerBase implements ICompon
     Layouts componentLayoutConfig = (Layouts) object;
     Layout[] layouts = componentLayoutConfig.getLayout();
     if ((layouts != null) && (layouts.length > 0)) {
-      Layout compLayout = null;
-      RuntimeLayout layout = null;
       for (int j = 0; j < layouts.length; j ++) {
         try {
-          compLayout = layouts[j];
-          layout = new RuntimeLayout();
-          configureLayout(compLayout, layout, defaultTransformer, htmlTransformer, xmlTransformer, registry);
-        
-          if (registry.containsKey(compLayout.getId()) && !isInitDone()) {
-            log.warn("Overriding layout with Id: " + compLayout.getId());
+          if (configRegistry.containsKey(layouts[j].getId()) && !isInitDone()) {
+            log.warn("Overriding layout with Id: " + layouts[j].getId());
           }
-          registry.put(compLayout.getId(), layout);
+          configRegistry.put(layouts[j].getId(), new LayoutConfigHolder(layouts[j]));
         } catch (Exception e) {
-          log.warn("Error configuring and registering component " + compLayout.getId() + ": " + e.getMessage(), e);
+          log.warn("Error configuring and registering component " + layouts[j].getId() + ": " + e.getMessage(), e);
         }
       }
     }
   }
-  public static void configureLayout(Layout compLayout, RuntimeLayout layout, 
-      IXMLTransformer defaultTransformer, IXMLTransformer htmlTransformer, IXMLTransformer xmlTransformer, 
-      Map<String, RuntimeLayout> registry) throws ComponentLayoutInitializationException, IOException {
+
+  private void configureRegistry() throws ComponentLayoutInitializationException {
+    runtimeRegistry = new HashMap<String, RuntimeLayout>();
+    for (Map.Entry<String,LayoutConfigHolder> configEntry : configRegistry.entrySet()) {
+      LayoutConfigHolder holder = configEntry.getValue();
+      if (!holder.configured || !runtimeRegistry.containsKey(configEntry.getKey())) {
+        processLayoutConfig(holder, null);
+      }
+    }
+    if (!isDoReload()) {
+      configRegistry.clear();
+      configRegistry = null;
+    }
+  }
+
+  private void processLayoutConfig(LayoutConfigHolder configHolder, String childName) throws ComponentLayoutInitializationException {
+    String extend = configHolder.layout.getExtend();
+
+    // Check to see if there is a parent and it has been initialized
+    if (extend != null) {
+      LayoutConfigHolder parentConfigHolder = configRegistry.get(extend);
+      if (parentConfigHolder != null) {
+        if (!runtimeRegistry.containsKey(extend)) {
+          processLayoutConfig(parentConfigHolder, extend);
+        }
+        parentConfigHolder.addChild(extend);
+      } else {
+        log.warn("Extension layout " + extend + " not found for layout " + configHolder.layout.getId());
+      }
+    }
+
+    RuntimeLayout runtimeLayout = new RuntimeLayout();
+    configureLayout(configHolder.layout, runtimeLayout, defaultTransformer, htmlTransformer, xmlTransformer);
+    runtimeRegistry.put(runtimeLayout.getId(), runtimeLayout);
+    configHolder.configured = true;
+
+    if (childName != null) {
+      configHolder.addChild(extend);
+    }
+  }
+
+  public void configureLayout(
+      Layout compLayout, 
+      RuntimeLayout layout, 
+      IXMLTransformer defaultTransformer, 
+      IXMLTransformer htmlTransformer, 
+      IXMLTransformer xmlTransformer) throws ComponentLayoutInitializationException {
+
     RuntimeLayoutConfig layoutConfig = new RuntimeLayoutConfig();
     List<Section> tempSections = new ArrayList<Section>();
 
@@ -132,7 +144,7 @@ public final class ComponentLayoutManager extends ManagerBase implements ICompon
       String[] extSplit = extendStr.split(";");
       for (int ext = 0; ext < extSplit.length; ext++) {
         String extension = extSplit[ext];
-        RuntimeLayout extend = registry.get(extension);
+        RuntimeLayout extend = runtimeRegistry.get(extension);
         if (extend == null) {
           log.error("The Layout extension " + extension + " for " + compLayout.getId() + 
               " could not be located in the registry.\n"
@@ -245,20 +257,31 @@ public final class ComponentLayoutManager extends ManagerBase implements ICompon
     });
   }
 
-  public void setParamListener(TraceListener paramListener) {
-    this.paramListener = paramListener;
-  }
+  private class LayoutConfigHolder {
+    boolean configured;
+    Layout layout;
+    Set<String> children;
+    private LayoutConfigHolder(Layout layout) {
+      this.layout = layout;
+    }
 
-  public void setXslResolver(URIResolver xslResolver) {
-    this.xslResolver = xslResolver;
-  }
+    public Set<String> getChildren() {
+      return children;
+    }
+    public void addChild(String child) {
+      if (children == null) {
+        children = new HashSet<String>();
+      }
+      this.children.add(child);
+    }
 
-  public void setUseTranslets(boolean useTranslets) {
-    this.useTranslets = useTranslets;
-  }
+    public boolean isConfigured() {
+      return configured;
+    }
 
-  public void setUseChain(boolean useChain) {
-    this.useChain = useChain;
+    public void setConfigured(boolean configured) {
+      this.configured = configured;
+    }
+    
   }
-
 }

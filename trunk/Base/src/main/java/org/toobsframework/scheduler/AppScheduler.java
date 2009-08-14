@@ -19,20 +19,15 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.toobsframework.management.MemoryMonitor;
 import org.toobsframework.util.Configuration;
 
-
 public class AppScheduler implements BeanFactoryAware {
-  
-  private BeanFactory beanFactory;
-  
-  public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-    this.beanFactory = beanFactory;
-  }
+  private static final Log log = LogFactory.getLog(AppScheduler.class);
 
-  private static Log log = LogFactory.getLog(AppScheduler.class);
+  private Configuration configuration;
+  private BeanFactory beanFactory;
 
   private Scheduler scheduler = null;
   private MemoryMonitor memMon = null;
-  private List appSchedules;
+  private List<AppScheduleInfo> appSchedules;
   
   public AppScheduler(){
   }
@@ -41,13 +36,13 @@ public class AppScheduler implements BeanFactoryAware {
     try {
       SchedulerFactory sf = new StdSchedulerFactory();
       scheduler = sf.getScheduler();
-      Iterator iter = appSchedules.iterator();
+      Iterator<AppScheduleInfo> iter = appSchedules.iterator();
       while (iter.hasNext()) {
         AppScheduleInfo appInfo = (AppScheduleInfo)iter.next();
         try {
           JobDetail job = new JobDetail(appInfo.getJobName(), appInfo.getGroupName(), java.lang.Class.forName(appInfo.getJobClass()));
           String jobSchedule = appInfo.getJobSchedule();
-          String jobSchedOvr = Configuration.getInstance().getProperty(appInfo.getJobEnvCronProperty());
+          String jobSchedOvr = configuration.getProperty(appInfo.getJobEnvCronProperty());
           if (jobSchedOvr != null && jobSchedOvr.length() > 0) {
             jobSchedule = jobSchedOvr; 
           }
@@ -78,7 +73,7 @@ public class AppScheduler implements BeanFactoryAware {
   public void destroy() {
     try {
       scheduler.shutdown();
-      Iterator iter = appSchedules.iterator();
+      Iterator<AppScheduleInfo> iter = appSchedules.iterator();
       while (iter.hasNext()) {
         AppScheduleInfo appInfo = (AppScheduleInfo)iter.next();
         ScheduledJob job = (ScheduledJob)beanFactory.getBean(appInfo.getJobName());
@@ -89,11 +84,20 @@ public class AppScheduler implements BeanFactoryAware {
     }
   }
 
-  public List getAppSchedules() {
+  public List<AppScheduleInfo> getAppSchedules() {
     return appSchedules;
   }
 
-  public void setAppSchedules(List appSchedules) {
+  public void setAppSchedules(List<AppScheduleInfo> appSchedules) {
     this.appSchedules = appSchedules;
   }
+
+  public void setConfiguration(Configuration configuration) {
+    this.configuration = configuration;
+  }
+
+  public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+    this.beanFactory = beanFactory;
+  }
+
 }

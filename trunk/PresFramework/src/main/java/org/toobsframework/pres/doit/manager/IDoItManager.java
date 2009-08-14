@@ -7,7 +7,7 @@ import org.toobsframework.pres.doit.config.DoIt;
 
 public interface IDoItManager {
 
-  public abstract DoIt getDoIt(String Id, long deployTime) throws Exception;
+  public abstract DoIt getDoIt(String Id) throws Exception;
 
   public void addConfigFiles(List<String> configFiles);
   

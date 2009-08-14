@@ -14,6 +14,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.io.Resource;
+import org.toobsframework.util.Configuration;
 
 import javax.xml.transform.Source;
 import javax.xml.transform.TransformerException;
@@ -26,10 +27,12 @@ public class XSLUriResolverImpl implements URIResolver, ApplicationContextAware,
   public static String COMPONENT_MANAGER_XSL = "component-manager.xsl";
 
   protected ApplicationContext applicationContext;
+  protected Configuration configuration;
   protected Map<String, URL> sourceMap;
-  private boolean doReload;
   private List<String> contextBase;
   private List<String> classpathBase;
+
+  private boolean doReload;
 
   public XSLUriResolverImpl() {
   }
@@ -50,6 +53,7 @@ public class XSLUriResolverImpl implements URIResolver, ApplicationContextAware,
     }
     sourceMap = new ConcurrentHashMap<String,URL>();
     sourceMap.put(COMPONENT_MANAGER_XSL, resolveClasspathResource(COMPONENT_MANAGER_XSL, ""));
+    this.doReload = configuration.doReload();
   }
 
   public Source resolve(String xslFile, String base) throws TransformerException {
@@ -144,4 +148,7 @@ public class XSLUriResolverImpl implements URIResolver, ApplicationContextAware,
     this.classpathBase = classpathBase;
   }
 
+  public void setConfiguration(Configuration configuration) {
+    this.configuration = configuration;
+  }
 }

@@ -6,7 +6,7 @@ import org.toobsframework.pres.url.UrlMapping;
 
 public interface IUrlManager {
 
-  public abstract UrlMapping getUrlMapping(String pattern, long deployTime) throws Exception;
+  public abstract UrlMapping getUrlMapping(String pattern) throws Exception;
 
   public void addConfigFiles(List<String> configFiles);
   

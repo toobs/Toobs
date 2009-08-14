@@ -6,15 +6,21 @@ import java.net.MalformedURLException;
 
 import javax.xml.transform.TransformerException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.xalan.extensions.XSLProcessorContext;
 import org.apache.xalan.templates.ElemExtensionCall;
 import org.apache.xalan.transformer.TransformerImpl;
 import org.apache.xml.serializer.SerializationHandler;
 import org.toobsframework.pres.xsl.ComponentTransformerHelper;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
+import org.toobsframework.util.Configuration;
+import org.toobsframework.util.IRequest;
 import org.xml.sax.SAXException;
 
 public class TagBase {
+  protected final Log log = LogFactory.getLog(getClass());
+  
 
   /**
    * Obtain the helper (which is stored as a property in the xsl)
@@ -30,6 +36,26 @@ public class TagBase {
     }
     ComponentTransformerHelper transformerHelper = (ComponentTransformerHelper) th;
     return transformerHelper;
+  }
+
+  protected IRequest getComponentRequest(XSLProcessorContext processorContext) throws TransformerException {
+    TransformerImpl transformer = processorContext.getTransformer();
+    Object th = transformer.getParameter(IXMLTransformer.COMPONENT_REQUEST);
+    if (th == null || !(th instanceof IRequest)) {
+      throw new TransformerException("Internal error: the property " + IXMLTransformer.COMPONENT_REQUEST + " needs to be properly initialized prior to calling the transformation.");
+    }
+    IRequest request = (IRequest) th;
+    return request;
+  }
+
+  protected Configuration getConfiguration(XSLProcessorContext processorContext) throws TransformerException {
+    TransformerImpl transformer = processorContext.getTransformer();
+    Object th = transformer.getParameter(IXMLTransformer.TRANSFORMER_HELPER);
+    if (th == null || !(th instanceof ComponentTransformerHelper)) {
+      throw new TransformerException("Internal error: the property " + IXMLTransformer.TRANSFORMER_HELPER + " needs to be properly initialized prior to calling the transformation.");
+    }
+    ComponentTransformerHelper transformerHelper = (ComponentTransformerHelper) th;
+    return transformerHelper.getConfiguration();
   }
 
   /**

@@ -3,8 +3,6 @@ package org.toobsframework.pres.doit.manager;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.toobsframework.pres.base.ManagerBase;
 import org.toobsframework.pres.doit.DoItInitializationException;
 import org.toobsframework.pres.doit.config.DoIt;
@@ -14,35 +12,27 @@ import org.toobsframework.pres.doit.config.DoItConfig;
  * @author sean
  */
 public final class DoItManager extends ManagerBase implements IDoItManager {
-
-  private static Log log = LogFactory.getLog(DoItManager.class);
-
-  private static long localDeployTime = 0L;
-
   private Map<String, DoIt> registry;
 
   private DoItManager() throws DoItInitializationException {
     log.info("Constructing new DoItManager");
-    registry = new HashMap<String, DoIt>();
-  }
-
-  public DoIt getDoIt(String Id, long deployTime) throws DoItInitializationException {
-    if (isDoReload() || deployTime > localDeployTime) {
-      //Date initStart = new Date();
-      this.afterPropertiesSet();
-      //Date initEnd = new Date();
-      //log.info("Init Time: " + (initEnd.getTime() - initStart.getTime()));
-    }
-    if (!registry.containsKey(Id)) {
-      throw new DoItInitializationException("DoIt " + Id + " not found");
-    }
-    localDeployTime = deployTime;
-    return registry.get(Id);
   }
 
   // Read from config file
   public void afterPropertiesSet() throws DoItInitializationException {
+    registry = new HashMap<String, DoIt>();
     loadConfig(DoItConfig.class);
+  }
+
+  
+  public DoIt getDoIt(String Id) throws DoItInitializationException {
+    if (isDoReload()) {
+      loadConfig(DoItConfig.class);
+    }
+    if (!registry.containsKey(Id)) {
+      throw new DoItInitializationException("DoIt " + Id + " not found");
+    }
+    return registry.get(Id);
   }
 
   @Override

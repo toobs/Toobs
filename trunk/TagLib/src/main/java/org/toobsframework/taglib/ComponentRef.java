@@ -6,16 +6,14 @@
  */
 package org.toobsframework.taglib;
 
-import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.pres.util.PresConstants;
 import org.toobsframework.pres.xsl.ComponentTransformerHelper;
-import org.toobsframework.pres.component.manager.IComponentManager;
 import org.toobsframework.pres.component.ComponentException;
 import org.toobsframework.pres.component.ComponentNotFoundException;
 import org.toobsframework.pres.component.ComponentInitializationException;
 import org.toobsframework.pres.component.ComponentNotInitializedException;
-import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 import org.toobsframework.util.Configuration;
+import org.toobsframework.util.IRequest;
 import org.toobsframework.servlet.ContextHelper;
 import org.toobsframework.exception.ParameterException;
 import org.springframework.beans.factory.BeanFactory;
@@ -25,7 +23,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.tagext.BodyTagSupport;
 import java.io.IOException;
-import java.io.Writer;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -77,25 +74,19 @@ public class ComponentRef extends BodyTagSupport {
   public int doEndTag() throws JspException {
 
     ComponentTransformerHelper transformerHelper = (ComponentTransformerHelper) beanFactory.getBean(this.transformerHelper);
-    //Setup deploytime
-    long deployTime;
-    if (parameterMap.get(PresConstants.DEPLOY_TIME) == null) {
-      deployTime = Configuration.getInstance().getDeployTime();
-    } else {
-      deployTime = Long.parseLong((String)parameterMap.get(PresConstants.DEPLOY_TIME));
-    }
 
     //Setup Component Request
-    transformerHelper.getComponentRequestManager().set(null, null, parameterMap);
+    transformerHelper.getComponentRequestManager().set((HttpServletRequest)pageContext.getRequest(), (HttpServletResponse)pageContext.getResponse(), parameterMap);
 
+    IRequest request = transformerHelper.getComponentRequestManager().get();
     if(dataObject != null && dataObjectName != null) {
-      transformerHelper.getComponentRequestManager().get().putParam(dataObjectName, dataObject);
+      request.putParam(dataObjectName, dataObject);
     }
 
     //Find component
     org.toobsframework.pres.component.Component component = null;
     try {
-      component = transformerHelper.getComponentManager().getComponent(componentId, deployTime);
+      component = transformerHelper.getComponentManager().getComponent(componentId);
     } catch (ComponentNotFoundException e) {
       throw new JspException("Could not find component with Id:" + componentId, e);
     } catch (ComponentInitializationException e) {
@@ -108,9 +99,9 @@ public class ComponentRef extends BodyTagSupport {
     }
     String output = "";
     try {
-      output = transformerHelper.getComponentManager().renderComponent(component, contentType, 
+      output = transformerHelper.getComponentManager().renderComponent(request, component, contentType, 
           transformerHelper.getComponentRequestManager().get().getParams(), 
-          transformerHelper.getComponentRequestManager().get().getParams(), transformerHelper, (HttpServletRequest)pageContext.getRequest(), (HttpServletResponse)pageContext.getResponse(), true);
+          transformerHelper.getComponentRequestManager().get().getParams(), transformerHelper, true);
     } catch (ComponentNotInitializedException e) {
       throw new JspException("Component with Id:" + componentId +": is not intitialized.", e);
     } catch (ComponentException e) {

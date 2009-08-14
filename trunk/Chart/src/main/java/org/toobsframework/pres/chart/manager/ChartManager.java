@@ -4,44 +4,34 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.net.URL;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.exolab.castor.xml.Unmarshaller;
+import org.toobsframework.pres.base.ManagerBase;
 import org.toobsframework.pres.chart.ChartDefinition;
 import org.toobsframework.pres.chart.ChartInitializationException;
 import org.toobsframework.pres.chart.ChartNotFoundException;
 import org.toobsframework.pres.chart.config.Chart;
 import org.toobsframework.pres.chart.config.ChartConfig;
-import org.toobsframework.util.Configuration;
-
 
 @SuppressWarnings("unchecked")
-public final class ChartManager implements IChartManager {
+public final class ChartManager extends ManagerBase implements IChartManager {
 
   private static Log log = LogFactory.getLog(ChartManager.class);
   
   private static Map registry;
-  private static boolean doReload = true;
-  private static boolean initDone = false;
-  private static long[] lastModified;
-  
+
   private List configFiles = null;
-  
+
   private ChartManager() throws ChartInitializationException {
     log.info("Constructing new ChartManager");
-    registry = new HashMap();
   }
   
   public ChartDefinition getChartDefinition(String Id)
       throws ChartNotFoundException, ChartInitializationException {
-    if (doReload || !initDone) {
+    if (isDoReload() || !isInitDone()) {
       Date initStart = new Date();
-      this.init();
+      this.loadConfig(ChartConfig.class);
       Date initEnd = new Date();
       log.info("Init Time: " + (initEnd.getTime() - initStart.getTime()));
     }
@@ -53,59 +43,15 @@ public final class ChartManager implements IChartManager {
     }
   }
   
-  public void init() throws ChartInitializationException {
-    synchronized (registry) {
-      InputStreamReader reader = null;
-      if(configFiles == null) {
-        return;
-      }
-      int l = configFiles.size();
-      if (lastModified == null) {
-        log.info("LastModified is null " + this.toString() + " Registry " + registry);
-        lastModified = new long[l];
-      }
-      for(int fileCounter = 0; fileCounter < l; fileCounter++) {
-        String fileName = (String)configFiles.get(fileCounter);
-        try {
-          if (log.isDebugEnabled()) {
-            log.debug("Checking Configuration file: " + fileName);
-          }
-          ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-          URL configFileURL = classLoader.getResource(fileName);
-          if (configFileURL == null) {
-            log.warn("Configuration file " + fileName + " not found");
-            continue;
-          }
-          File configFile = new File(configFileURL.getFile());
-          if (configFile.lastModified() <= lastModified[fileCounter]) {
-            continue;
-          }
-          log.info("Reloading ChartConfig file [" + fileName + "]");
-          //registry.clear();
-          reader = new InputStreamReader(configFileURL.openStream());
-          Unmarshaller unmarshaller = new Unmarshaller(Class.forName(ChartConfig.class.getName()));
-          unmarshaller.setValidation(false);
-          
-          ChartConfig chartConfig = (ChartConfig) unmarshaller.unmarshal(reader);
+  public void afterPropertiesSet() throws ChartInitializationException {
+    registry = new HashMap();
+    this.loadConfig(ChartConfig.class);
+  }
 
-          registerCharts(chartConfig.getChart());
-
-          doReload = Configuration.getInstance().getReloadComponents();
-          lastModified[fileCounter] = configFile.lastModified();
-        } catch (Exception ex) {
-          log.error("ComponentLayout initialization failed " + ex.getMessage(), ex);
-          doReload = true;
-        } finally {
-          if (reader != null) {
-            try {
-              reader.close();
-            } catch (IOException e) {
-            }
-          }
-        }
-      }
-      initDone = true;
-    }
+  @Override
+  protected void registerConfiguration(Object object, String fileName) {
+    ChartConfig chartConfig = (ChartConfig) object;
+    registerCharts(chartConfig.getChart());
   }
 
   private void registerCharts(Chart[] charts) {
@@ -140,7 +86,7 @@ public final class ChartManager implements IChartManager {
         chartDefinition.setPlot(chart.getPlot());
 
         
-        if (registry.containsKey(chart.getId()) && !initDone) {
+        if (registry.containsKey(chart.getId()) && !isInitDone()) {
           log.warn("Overriding chartDefinition with Id: " + chart.getId());
         }
         registry.put(chart.getId(), chartDefinition);
@@ -159,4 +105,5 @@ public final class ChartManager implements IChartManager {
   public void addConfigFiles(List configFiles) {
     this.configFiles.addAll(configFiles);
   }
+
 }

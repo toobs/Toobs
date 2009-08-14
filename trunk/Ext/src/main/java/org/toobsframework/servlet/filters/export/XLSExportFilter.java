@@ -15,12 +15,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.toobsframework.servlet.filters.compression.FilterResponseWrapper;
-import org.toobsframework.util.Configuration;
-
 
 public class XLSExportFilter extends BaseExportFilter implements Filter {
 
-  // TODO: generate a serialVersionUID
+  private static final long serialVersionUID = 3441012659534856787L;
 
   /** The logger instance */
   private static Log log = LogFactory.getLog(XLSExportFilter.class);
@@ -28,11 +26,15 @@ public class XLSExportFilter extends BaseExportFilter implements Filter {
   /** The Filter config */
   private FilterConfig config = null;
 
-  public void init(FilterConfig config) 
-  throws ServletException 
-  {
+  private String contextName;
+
+  public void init(FilterConfig config) throws ServletException {
     this.config = config;
     this.config.getServletContext().log("XLSFilter - init()");
+    contextName = this.config.getServletContext().getServletContextName();
+    if (contextName == null) {
+      contextName = "/";
+    }
   }
 
   public void destroy() {
@@ -41,50 +43,50 @@ public class XLSExportFilter extends BaseExportFilter implements Filter {
   }
 
   /**
-   *  Pipe the fetched *.xls <fo> xml output from the ComponentLayoutManager through the FO transformer
-   *  in order to get a viable pdf file.  Set the response headers, response stream, and the browser
-   *  should pick the pdf up and handle it properly.
+   * Pipe the fetched *.xls <fo> xml output from the ComponentLayoutManager
+   * through the FO transformer in order to get a viable pdf file. Set the
+   * response headers, response stream, and the browser should pick the pdf up
+   * and handle it properly.
    */
-  public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
-  throws IOException, ServletException
-  {
+  public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
     this.config.getServletContext().log("XLSFilter - doFilter(...)");
     log.debug("ENTER doFilter(...)");
 
     HttpServletResponse httpResponse = (HttpServletResponse) response;
     HttpServletRequest httpRequest = (HttpServletRequest) request;
-    
+
     // set headers so browser knows it's looking at a pdf
-    //httpResponse.setHeader("Content-Disposition", "attachment");
-    
-    //first chain the filters... ie do everything else first... this filter
-    //will work on the data that comes back after the transform has already been run
+    // httpResponse.setHeader("Content-Disposition", "attachment");
+
+    // first chain the filters... ie do everything else first... this filter
+    // will work on the data that comes back after the transform has already
+    // been run
     FilterResponseWrapper wrapper = new FilterResponseWrapper(httpResponse);
     chain.doFilter(request, wrapper);
-    
+
     String fileName;
     String exportMode = httpRequest.getParameter("exportMode");
     if ("table".equals(exportMode)) {
-      fileName = httpRequest.getParameter("component") + ".xls"; 
+      fileName = httpRequest.getParameter("component") + ".xls";
     } else {
-      fileName = httpRequest.getRequestURI().substring(Configuration.getInstance().getMainContext().length() + 1).replace("xxls", "xls");
+      fileName = httpRequest.getRequestURI().substring(contextName.length() + 1).replace("xxls", "xls");
     }
-    
+
     // set headers so browser knows it's looking at a pdf
     httpResponse.setContentType("application/vnd.ms-excel");
     httpResponse.setHeader("Pragma", "public");
     httpResponse.setDateHeader("Expires", 0);
-    httpResponse.setHeader("Cache-Control","must-revalidate, post-check=0, pre-check=0");
-    httpResponse.setHeader("Cache-Control","public");
-    httpResponse.setHeader("Content-Description","File Transfer");
-    httpResponse.setHeader("Content-Disposition","attachment; filename=\"" + fileName + "\"");
-    
-    //now fetch the output stream and response data
+    httpResponse.setHeader("Cache-Control", "must-revalidate, post-check=0, pre-check=0");
+    httpResponse.setHeader("Cache-Control", "public");
+    httpResponse.setHeader("Content-Description", "File Transfer");
+    httpResponse.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+
+    // now fetch the output stream and response data
     ServletOutputStream httpOutputStream = httpResponse.getOutputStream();
     byte[] responseData = wrapper.getData();
-    
+
     httpOutputStream.write(responseData);
-    
+
     if (log.isDebugEnabled()) {
       log.debug("EXIT doFilter(...)");
     }

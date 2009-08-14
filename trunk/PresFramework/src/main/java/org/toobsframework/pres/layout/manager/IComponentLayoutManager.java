@@ -10,7 +10,7 @@ import org.toobsframework.pres.layout.RuntimeLayout;
 
 public interface IComponentLayoutManager {
 
-  public abstract RuntimeLayout getLayout(String Id, long deployTime)
+  public abstract RuntimeLayout getLayout(String Id)
       throws ComponentLayoutNotFoundException, ComponentLayoutInitializationException;
 
   public abstract RuntimeLayout getLayout(PermissionException permissionException)

@@ -132,10 +132,14 @@ public class DateHelper {
           long inputDateAsLong = Long.parseLong(inputDate);
           date = new Date(inputDateAsLong);
         } catch (NumberFormatException ex) {
-          date = (new SimpleDateFormat(
+          
+          date = (new SimpleDateFormat("mm/dd/yyyy"
+              /* TODO Make a standard date format tag
               Configuration.getInstance().getDateFormat() + " "
-                  + Configuration.getInstance().getTimeFormat()))
+                  + Configuration.getInstance().getTimeFormat()
+               */))
               .parse(inputDate);
+
         }
 
         String formattedDateString = DateHelper.getFormattedDate(inputDate,

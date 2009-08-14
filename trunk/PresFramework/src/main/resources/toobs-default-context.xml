@@ -10,14 +10,21 @@
       <props>
         <prop key="toobs.doReload">true</prop>
         <prop key="toobs.useChain">true</prop>
-        <prop key="toobs.useTranslets">false</prop>
       </props>
     </property>
     <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
-    <property name="placeholderPrefix" value="@{"/>
   </bean>
 
-  <bean id="contextHelper" class="org.toobsframework.servlet.ContextHelper" />
+  <bean id="toobsConfiguration" class="org.toobsframework.util.Configuration" lazy-init="true">
+    <property name="properties">
+      <props>
+        <prop key="toobs.doReload">${toobs.doReload}</prop>
+        <prop key="toobs.useChain">${toobs.useChain}</prop>
+      </props>
+    </property>
+  </bean>
+
+  <bean id="contextHelper" class="org.toobsframework.servlet.ContextHelper" lazy-init="true" />
 
   <bean id="appHandler" class="org.toobsframework.pres.app.controller.AppHandler" lazy-init="true">
     <property name="appManager" ref="appManager"/>
@@ -54,7 +61,7 @@
         <value>xsl/</value>
       </list>
     </property>
-    <property name="doReload" value="@{toobs.doReload}"/>
+    <property name="configuration" ref="toobsConfiguration"/>
   </bean>
 
   <bean id="appManager" class="org.toobsframework.pres.app.AppManager" lazy-init="true"/>
@@ -67,9 +74,7 @@
         <value>classpath:**/*.clc.xml</value>
       </list>
     </property>
-    <property name="doReload" value="@{toobs.doReload}"/>
-    <property name="useChain" value="@{toobs.useChain}"/>
-    <property name="useTranslets" value="@{toobs.useTranslets}"/>
+    <property name="configuration" ref="toobsConfiguration"/>
   </bean>
 
   <bean id="componentManager" class="org.toobsframework.pres.component.manager.ComponentManager" lazy-init="true">
@@ -81,9 +86,7 @@
         <value>classpath:**/*.cc.xml</value>
       </list>
     </property>
-    <property name="doReload" value="@{toobs.doReload}"/>
-    <property name="useChain" value="@{toobs.useChain}"/>
-    <property name="useTranslets" value="@{toobs.useTranslets}"/>
+    <property name="configuration" ref="toobsConfiguration"/>
   </bean>
 
   <bean id="doItManager" class="org.toobsframework.pres.doit.manager.DoItManager" lazy-init="true">
@@ -93,7 +96,7 @@
         <value>classpath:**/*.doit.xml</value>
       </list>
     </property>
-    <property name="doReload" value="@{toobs.doReload}"/>
+    <property name="configuration" ref="toobsConfiguration"/>
   </bean>
 
   <bean id="doItRunner" class="org.toobsframework.pres.doit.DoItRunner" lazy-init="true">
@@ -104,6 +107,7 @@
   <bean id="componentRequestManager" class="org.toobsframework.pres.util.ComponentRequestManager" lazy-init="true"/>
 
   <bean id="transformerHelper" class="org.toobsframework.pres.xsl.ComponentTransformerHelper" lazy-init="true">
+    <property name="configuration" ref="toobsConfiguration"/>
     <property name="componentManager" ref="componentManager"/>
     <property name="componentLayoutManager" ref="componentLayoutManager"/>
     <property name="componentRequestManager" ref="componentRequestManager"/>

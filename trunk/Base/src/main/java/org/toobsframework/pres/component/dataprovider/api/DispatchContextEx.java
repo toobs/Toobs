@@ -2,8 +2,7 @@ package org.toobsframework.pres.component.dataprovider.api;
 
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.toobsframework.util.IRequest;
 
 /**
  * This class contains the data being interchanged with dispatch receivers in data providers
@@ -92,9 +91,7 @@ public class DispatchContextEx {
    */
   Object contextObject = null;
 
-  private HttpServletRequest request;
-
-  private HttpServletResponse response;
+  private IRequest request;
 
   /**
    * @return the action
@@ -194,11 +191,8 @@ public class DispatchContextEx {
     this.contextObject = contextObject;
   }
 
-  public void setRequest(HttpServletRequest request) {
+  public void setRequest(IRequest request) {
     this.request = request;    
   }
 
-  public void setResponse(HttpServletResponse response) {
-    this.response = response;    
-  }
 }

@@ -6,11 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.beanutils.ConvertUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.xalan.trace.TraceListener;
-import org.springframework.beans.factory.InitializingBean;
-import org.toobsframework.pres.base.ManagerBase;
+import org.toobsframework.pres.base.XslManagerBase;
 import org.toobsframework.pres.component.ComponentException;
 import org.toobsframework.pres.component.ComponentInitializationException;
 import org.toobsframework.pres.component.ComponentNotFoundException;
@@ -23,84 +19,56 @@ import org.toobsframework.exception.ParameterException;
 import org.toobsframework.pres.component.dataprovider.api.DataProviderInitializationException;
 import org.toobsframework.pres.component.dataprovider.api.IDataProvider;
 import org.toobsframework.pres.component.dataprovider.manager.DataProviderNotFoundException;
-import org.toobsframework.transformpipeline.domain.IXMLTransformer;
 import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
-import org.toobsframework.transformpipeline.domain.XMLTransformerException;
-import org.toobsframework.transformpipeline.domain.XMLTransformerFactory;
-import org.toobsframework.transformpipeline.domain.XSLUriResolverImpl;
+import org.toobsframework.util.IRequest;
 
 import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.xml.transform.URIResolver;
-
-
 /**
  * @author pudney
  */
-public final class ComponentManager extends ManagerBase implements IComponentManager, InitializingBean {
-
-  private static Log log = LogFactory.getLog(ComponentManager.class);
-
-  private long localDeployTime = 0L;
+public final class ComponentManager extends XslManagerBase implements IComponentManager {
 
   private IDataProvider dataProvider;
-
-  private URIResolver xslResolver;
-
-  private boolean useTranslets = false;
-  private boolean useChain = false;
-
-  private IXMLTransformer defaultTransformer;
-  private IXMLTransformer htmlTransformer;
-  private IXMLTransformer xmlTransformer;
-  private TraceListener paramListener;
   private ConcurrentHashMap<String, org.toobsframework.pres.component.Component> registry;
 
   private ComponentManager() throws ComponentInitializationException {
     log.info("Constructing new ComponentManager");
   }
 
-  public void afterPropertiesSet() throws ComponentInitializationException, XMLTransformerException {
-    XMLTransformerFactory.getInstance().setUseChain(useChain);
-    XMLTransformerFactory.getInstance().setUseTranslets(useTranslets);
-
-    xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_XML, xslResolver, paramListener);
-    htmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_HTML, xslResolver, paramListener);
-    defaultTransformer = XMLTransformerFactory.getInstance().getDefaultTransformer(xslResolver);
-
+  public void afterPropertiesSet() throws Exception {
+    super.afterPropertiesSet();
     registry = new ConcurrentHashMap<String, org.toobsframework.pres.component.Component>();
-    if (this.xslResolver == null) {
-      this.xslResolver = new XSLUriResolverImpl();
-    }
     ConvertUtils.register(new DateToStringConverter(), String.class);
 
     loadConfig(Components.class);
   }
 
-  public org.toobsframework.pres.component.Component getComponent(String Id, long deployTime)
+  public org.toobsframework.pres.component.Component getComponent(String Id)
       throws ComponentNotFoundException, ComponentInitializationException {
 
-    if (isDoReload() || deployTime > localDeployTime) {
+    if (isDoReload()) {
       this.loadConfig(Components.class);
     }
     if (!registry.containsKey(Id)) {
       throw new ComponentNotFoundException(Id);
     }
-    localDeployTime = deployTime;
     return registry.get(Id);
   }
 
   public String renderComponent(
+      IRequest request,
       org.toobsframework.pres.component.Component component,
-      String contentType, Map<String, Object> params, Map<String, Object> paramsOut, 
-      IXMLTransformerHelper transformerHelper, HttpServletRequest request, HttpServletResponse response, boolean appendUrlScanner)
+      String contentType, 
+      Map<String, Object> params, 
+      Map<String, Object> paramsOut, 
+      IXMLTransformerHelper transformerHelper, 
+      boolean appendUrlScanner)
       throws ComponentNotInitializedException, ComponentException, ParameterException {
-    return component.render(contentType, params, transformerHelper, request, response, paramsOut, null);
+    return component.render(request, contentType, params, transformerHelper, paramsOut, null);
   }
-  
+
   @Override
   protected void registerConfiguration(Object object, String fileName) {
     Components componentConfig = (Components) object;
@@ -111,7 +79,7 @@ public final class ComponentManager extends ManagerBase implements IComponentMan
       for (int j = 0; j < components.length; j++) {
         try {
           comp = components[j];
-          uic = new org.toobsframework.pres.component.Component();
+          uic = new org.toobsframework.pres.component.Component(comp.getId());
           configureComponent(comp, uic, dataProvider, fileName, registry);
           
           uic.setXmlTransformer(xmlTransformer);
@@ -174,35 +142,11 @@ public final class ComponentManager extends ManagerBase implements IComponentMan
     
   }
 
-  public void setUseTranslets(boolean useTranslets) {
-    this.useTranslets = useTranslets;
-  }
-
-  public boolean isUseTranslets() {
-    return useTranslets;
-  }
-
-  public void setUseChain(boolean useChain) {
-    this.useChain = useChain;
-  }
-
-  public boolean isUseChain() {
-    return useChain;
-  }
-
-  public void setParamListener(TraceListener paramListener) {
-    this.paramListener = paramListener;
-  }
-
   /**
    * @param dataProvider the dataProvider to set
    */
   public void setDataProvider(IDataProvider dataProvider) {
     this.dataProvider = dataProvider;
-  }
-
-  public void setXslResolver(URIResolver xslResolver) {
-    this.xslResolver = xslResolver;
   }
 
 }

@@ -44,10 +44,7 @@ public class ChartHandler implements IChartHandler, BeanFactoryAware {
   private ChartBuilder chartBuilder = null;
   private ComponentRequestManager componentRequestManager = null;
   private BeanFactory beanFactory;
-
-  public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-    this.beanFactory = beanFactory;
-  }
+  private Configuration configuration;
 
   
   /**
@@ -114,7 +111,7 @@ public class ChartHandler implements IChartHandler, BeanFactoryAware {
     if (chartDef.doImageWithMap()) {
       response.setContentType("text/html; charset=UTF-8");
       String genFileName = chartDef.getId() + "-" + new Date().getTime() + ".png";
-      String imageOutputFileName = Configuration.getInstance().getUploadDir() + genFileName;
+      String imageOutputFileName = configuration.getUploadDir() + genFileName;
       File imageOutputFile = new File(imageOutputFileName);
       OutputStream os = null;
       try {
@@ -128,7 +125,8 @@ public class ChartHandler implements IChartHandler, BeanFactoryAware {
       PrintWriter writer = response.getWriter();
       StringBuffer sb = new StringBuffer();
 
-      sb.append("<img id=\"chart-").append(chartDef.getId()).append("\" src=\"").append(Configuration.getInstance().getMainContext() + "/upload/" + genFileName).append("\" ismap=\"ismap\" usemap=\"#").append(chartDef.getId()).append("Map\" />");
+      // TODO BUGBUG Chart location needs to fixed
+      sb.append("<img id=\"chart-").append(chartDef.getId()).append("\" src=\"").append(/*Configuration.getInstance().getMainContext() +*/ "/upload/" + genFileName).append("\" ismap=\"ismap\" usemap=\"#").append(chartDef.getId()).append("Map\" />");
       URLTagFragmentGenerator urlGenerator;
       if (chartDef.getUrlFragmentBean() != null) {
         urlGenerator = (URLTagFragmentGenerator)beanFactory.getBean(chartDef.getUrlFragmentBean());
@@ -138,7 +136,7 @@ public class ChartHandler implements IChartHandler, BeanFactoryAware {
       sb.append(ImageMapUtilities.getImageMap(chartDef.getId() + "Map", chartRenderingInfo, null, urlGenerator));
       writer.print(sb.toString());
       writer.flush();
-      
+
     } else {
       response.setContentType("image/png");
 
@@ -191,5 +189,14 @@ public class ChartHandler implements IChartHandler, BeanFactoryAware {
   public void setChartBuilder(ChartBuilder chartBuilder) {
     this.chartBuilder = chartBuilder;
   }
+
+  public void setConfiguration(Configuration configuration) {
+    this.configuration = configuration;
+  }
+
+  public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+    this.beanFactory = beanFactory;
+  }
+
 
 }

@@ -5,12 +5,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.jxpath.JXPathContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.AxisLocation;
 import org.jfree.chart.axis.CategoryAxis;
@@ -40,6 +38,7 @@ import org.jfree.ui.RectangleInsets;
 import org.jfree.ui.TextAnchor;
 import org.jfree.ui.VerticalAlignment;
 import org.jfree.util.SortOrder;
+
 import org.toobsframework.pres.chart.config.BasePlot;
 import org.toobsframework.pres.chart.config.DataElement;
 import org.toobsframework.pres.chart.config.Dataset;
@@ -54,6 +53,7 @@ import org.toobsframework.pres.chart.config.types.SubtitlePositionType;
 import org.toobsframework.pres.chart.config.types.SubtitleVerticalAlignmentType;
 import org.toobsframework.data.beanutil.BeanMonkey;
 import org.toobsframework.pres.util.ParameterUtil;
+import org.toobsframework.util.IRequest;
 
 
 //@SuppressWarnings("unchecked")
@@ -117,14 +117,14 @@ public class ChartUtil {
     domainLabelPositions.put("down90", DOM_LABEL_DOWN_90_TYPE );
   }
   
-  public static void configureLegend(JFreeChart chart, Legend legend, Map params, HttpServletRequest request, HttpServletResponse response) {
+  public static void configureLegend(IRequest componentRequest, JFreeChart chart, Legend legend, Map params) {
     if (legend != null) {
       if (legend.getBorder() != null) {
-        RectangleInsets rect = getRectangle(legend.getBorder(), params, request, response);
+        RectangleInsets rect = getRectangle(componentRequest, legend.getBorder(), params);
         chart.getLegend().setBorder(rect.getTop(), rect.getLeft(), rect.getBottom(), rect.getRight());
       }
       if (legend.getPadding() != null) {
-        chart.getLegend().setItemLabelPadding(getRectangle(legend.getPadding(), params, request, response));
+        chart.getLegend().setItemLabelPadding(getRectangle(componentRequest, legend.getPadding(), params));
       }
     }
   }
@@ -164,11 +164,11 @@ public class ChartUtil {
     return edge;
   }
   
-  public static String evaluateTextLabel(TextLabel textLabel, Map params, HttpServletRequest request, HttpServletResponse response) {
+  public static String evaluateTextLabel(IRequest componentRequest, TextLabel textLabel, Map params) {
     if (textLabel == null || textLabel.getPath() == null) return null;
     
     if (textLabel.getIsStatic()) {
-      return ParameterUtil.resolveParam(textLabel.getPath(), params, textLabel.getDefault(), request, response)[0];
+      return ParameterUtil.resolveParam(componentRequest, textLabel.getPath(), params, textLabel.getDefault())[0];
     }
     JXPathContext context = JXPathContext.newContext(params);
     String labelText = (String)context.getValue(textLabel.getPath());
@@ -192,11 +192,11 @@ public class ChartUtil {
     return new Color(Integer.parseInt(color, 16));
   }
 
-  public static RectangleInsets getRectangle(RectangleSet rectangleSet, Map params, HttpServletRequest request, HttpServletResponse response) {
-    double top = Double.parseDouble( ParameterUtil.resolveParam(rectangleSet.getTop(), params, "0.0", request, response)[0] );
-    double bot = Double.parseDouble( ParameterUtil.resolveParam(rectangleSet.getBottom(), params, "0.0", request, response)[0] );
-    double lef = Double.parseDouble( ParameterUtil.resolveParam(rectangleSet.getLeft(), params, "0.0", request, response)[0] );
-    double rit = Double.parseDouble( ParameterUtil.resolveParam(rectangleSet.getRight(), params, "0.0", request, response)[0] );
+  public static RectangleInsets getRectangle(IRequest componentRequest, RectangleSet rectangleSet, Map params) {
+    double top = Double.parseDouble( ParameterUtil.resolveParam(componentRequest, rectangleSet.getTop(), params, "0.0")[0] );
+    double bot = Double.parseDouble( ParameterUtil.resolveParam(componentRequest, rectangleSet.getBottom(), params, "0.0")[0] );
+    double lef = Double.parseDouble( ParameterUtil.resolveParam(componentRequest, rectangleSet.getLeft(), params, "0.0")[0] );
+    double rit = Double.parseDouble( ParameterUtil.resolveParam(componentRequest, rectangleSet.getRight(), params, "0.0")[0] );
     return new RectangleInsets(top, lef, bot, rit);
   }
   
@@ -226,7 +226,7 @@ public class ChartUtil {
     }
   }
   
-  public static CategoryAxis createCategoryAxis(DomainAxisDef categoryAxisDef, Map params, boolean is3D, HttpServletRequest request, HttpServletResponse response) {
+  public static CategoryAxis createCategoryAxis(IRequest componentRequest, DomainAxisDef categoryAxisDef, Map params, boolean is3D) {
     CategoryAxis categoryAxis;
     if (is3D) {
       categoryAxis = new CategoryAxis3D();
@@ -235,7 +235,7 @@ public class ChartUtil {
     }
     if (categoryAxisDef != null) {
       if (categoryAxisDef.getDomainLabel() != null) {
-        categoryAxis.setLabel(evaluateTextLabel(categoryAxisDef.getDomainLabel(), params, request, response));
+        categoryAxis.setLabel(evaluateTextLabel(componentRequest, categoryAxisDef.getDomainLabel(), params));
         if (categoryAxisDef.getDomainLabel().getFont() != null) {
           categoryAxis.setLabelFont(getFont(categoryAxisDef.getDomainLabel(), null));
         }
@@ -243,7 +243,7 @@ public class ChartUtil {
       }
       
       if (categoryAxisDef.getLabelPosition() != null) {
-        Integer labelPos = domainLabelPositions.get(ParameterUtil.resolveParam(categoryAxisDef.getLabelPosition(), params, "standard", request, response)[0]);
+        Integer labelPos = domainLabelPositions.get(ParameterUtil.resolveParam(componentRequest, categoryAxisDef.getLabelPosition(), params, "standard")[0]);
         if (labelPos != null) {
           switch (labelPos) {
           case DOM_LABEL_STANDARD_TYPE:
@@ -264,9 +264,9 @@ public class ChartUtil {
           }
         }
       }
-      double domainMargin = Double.parseDouble( ParameterUtil.resolveParam(categoryAxisDef.getDomainMargin(), params, "0.0", request, response)[0] );
-      double lowerMargin = Double.parseDouble( ParameterUtil.resolveParam(categoryAxisDef.getLowerMargin(), params, "0.0", request, response)[0] );
-      double upperMargin = Double.parseDouble( ParameterUtil.resolveParam(categoryAxisDef.getUpperMargin(), params, "0.0", request, response)[0] );
+      double domainMargin = Double.parseDouble( ParameterUtil.resolveParam(componentRequest, categoryAxisDef.getDomainMargin(), params, "0.0")[0] );
+      double lowerMargin = Double.parseDouble( ParameterUtil.resolveParam(componentRequest, categoryAxisDef.getLowerMargin(), params, "0.0")[0] );
+      double upperMargin = Double.parseDouble( ParameterUtil.resolveParam(componentRequest, categoryAxisDef.getUpperMargin(), params, "0.0")[0] );
 
       categoryAxis.setCategoryMargin(domainMargin);
       categoryAxis.setLowerMargin(lowerMargin);
@@ -275,14 +275,14 @@ public class ChartUtil {
     return categoryAxis;
   }
 
-  public static void configurePlot(Plot plot, org.toobsframework.pres.chart.config.BasePlot plotDef, DomainAxisDef categoryAxisDef, RangeAxisDef valueAxisDef, Map params, HttpServletRequest request, HttpServletResponse response) {
+  public static void configurePlot(IRequest componentRequest, Plot plot, org.toobsframework.pres.chart.config.BasePlot plotDef, DomainAxisDef categoryAxisDef, RangeAxisDef valueAxisDef, Map params) {
     if (plotDef != null) {
-      float foregroundAlpha = Float.parseFloat( ParameterUtil.resolveParam(plotDef.getForegroundAlpha(), params, "1.0", request, response)[0] );
+      float foregroundAlpha = Float.parseFloat( ParameterUtil.resolveParam(componentRequest, plotDef.getForegroundAlpha(), params, "1.0")[0] );
       plot.setForegroundAlpha(foregroundAlpha);
 
-      if (plot instanceof CategoryPlot && ParameterUtil.resolveParam(plotDef.getOrientation(), params, "horizontal", request, response)[0].equals("horizontal")) {
+      if (plot instanceof CategoryPlot && ParameterUtil.resolveParam(componentRequest, plotDef.getOrientation(), params, "horizontal")[0].equals("horizontal")) {
         ((CategoryPlot)plot).setOrientation(PlotOrientation.HORIZONTAL);
-        boolean is3D = (ParameterUtil.resolveParam(plotDef.getIs3D(), params, "false", request, response)[0].equals("false") ? false : true);
+        boolean is3D = (ParameterUtil.resolveParam(componentRequest, plotDef.getIs3D(), params, "false")[0].equals("false") ? false : true);
         if (is3D) {
           ((CategoryPlot)plot).setRowRenderingOrder(SortOrder.DESCENDING);
           ((CategoryPlot)plot).setColumnRenderingOrder(SortOrder.DESCENDING);
@@ -292,17 +292,17 @@ public class ChartUtil {
       }
 
       if (plotDef.getInsets() != null) {
-        plot.setInsets(getRectangle(plotDef.getInsets(), params, request, response));
+        plot.setInsets(getRectangle(componentRequest, plotDef.getInsets(), params));
       }
       if (plot instanceof CategoryPlot && plotDef.getAxisOffsets() != null) {
-        ((CategoryPlot)plot).setAxisOffset(getRectangle(plotDef.getAxisOffsets(), params, request, response));
+        ((CategoryPlot)plot).setAxisOffset(getRectangle(componentRequest, plotDef.getAxisOffsets(), params));
       }
 
       if (plotDef.getBackgroundColor() != null) {
         plot.setBackgroundPaint(getColor(plotDef.getBackgroundColor()));
       }
       if (plot instanceof CategoryPlot && categoryAxisDef != null) {
-        AxisLocation dLabelPos = axisLocations.get(ParameterUtil.resolveParam(categoryAxisDef.getLocation(), params, "bottomOrLeft", request, response)[0]);
+        AxisLocation dLabelPos = axisLocations.get(ParameterUtil.resolveParam(componentRequest, categoryAxisDef.getLocation(), params, "bottomOrLeft")[0]);
         if (dLabelPos != null) {
           ((CategoryPlot)plot).setDomainAxisLocation(dLabelPos);
         }
@@ -312,7 +312,7 @@ public class ChartUtil {
         }
       }
       if (plot instanceof CategoryPlot && valueAxisDef != null) {
-        AxisLocation rLabelPos = axisLocations.get(ParameterUtil.resolveParam(valueAxisDef.getLocation(), params, "bottomOrRight", request, response)[0]);
+        AxisLocation rLabelPos = axisLocations.get(ParameterUtil.resolveParam(componentRequest, valueAxisDef.getLocation(), params, "bottomOrRight")[0]);
         if (rLabelPos != null) {
           ((CategoryPlot)plot).setRangeAxisLocation(rLabelPos);
         }
@@ -324,11 +324,11 @@ public class ChartUtil {
     }
   }
 
-  public static AbstractRenderer getRenderer(BasePlot plot, DatasetGroup group, Map params, HttpServletRequest request, HttpServletResponse response) {
+  public static AbstractRenderer getRenderer(IRequest componentRequest, BasePlot plot, DatasetGroup group, Map params) {
     AbstractRenderer renderer = null;
     
-    String format = ParameterUtil.resolveParam(group.getRenderer(), params, "area", request, response)[0];
-    boolean is3D = (ParameterUtil.resolveParam(plot.getIs3D(), params, "false", request, response)[0].equals("false") ? false : true);
+    String format = ParameterUtil.resolveParam(componentRequest, group.getRenderer(), params, "area")[0];
+    boolean is3D = (ParameterUtil.resolveParam(componentRequest, plot.getIs3D(), params, "false")[0].equals("false") ? false : true);
     
     switch (supportedRenderers.get(format)) {
       case ChartUtil.RENDERER_TYPE_AREA:
@@ -389,14 +389,14 @@ public class ChartUtil {
       case ChartUtil.RENDERER_TYPE_PIE:
         break;
     }
-    configureDomainItemLabels(plot, renderer, params, is3D, request, response);
+    configureDomainItemLabels(componentRequest, plot, renderer, params, is3D);
     configureSeriesPaint(plot, group, renderer);
     return renderer;
   }
 
-  public static void configureDomainItemLabels(BasePlot plot, AbstractRenderer renderer, Map params, boolean is3D, HttpServletRequest request, HttpServletResponse response) {
+  public static void configureDomainItemLabels(IRequest componentRequest, BasePlot plot, AbstractRenderer renderer, Map params, boolean is3D) {
     if (plot.getShowDomainItemLabels()) {
-      String orientation = ParameterUtil.resolveParam(plot.getOrientation(), params, "horizontal", request, response)[0];
+      String orientation = ParameterUtil.resolveParam(componentRequest, plot.getOrientation(), params, "horizontal")[0];
       if (orientation.equals("horizontal")) {
         ItemLabelPosition position1;
         if (is3D) {

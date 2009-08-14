@@ -18,7 +18,6 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.toobsframework.data.beanutil.BeanMonkey;
 import org.toobsframework.pres.component.dataprovider.api.DataProviderInitializationException;
 import org.toobsframework.pres.component.dataprovider.api.DataProviderNotInitializedException;
-import org.toobsframework.pres.component.dataprovider.api.IDataProvider;
 import org.toobsframework.pres.component.dataprovider.api.IDataProviderObject;
 import org.toobsframework.pres.component.dataprovider.api.InvalidContextException;
 import org.toobsframework.pres.component.dataprovider.api.ObjectCreationException;
@@ -118,7 +117,7 @@ public class DataProviderReflectImpl implements  BeanFactoryAware { //IDataSourc
     ArrayList retObjects = new ArrayList();
 
     // Get Object
-    params.put("dao", ParameterUtil.resolveParam(objectDao, params, null, null));
+    params.put("dao", ParameterUtil.resolveParam(null, objectDao, params));
     params.put("searchMethod", searchMethod);
     params.put("searchCriteria", searchCriteria);
     params.put("permissionAction", permissionAction);

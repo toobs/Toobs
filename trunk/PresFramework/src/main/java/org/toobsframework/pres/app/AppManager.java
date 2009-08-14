@@ -16,9 +16,11 @@ import javax.xml.transform.URIResolver;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xalan.trace.TraceListener;
+
 import org.exolab.castor.xml.MarshalException;
 import org.exolab.castor.xml.Unmarshaller;
 import org.exolab.castor.xml.ValidationException;
+
 import org.toobsframework.exception.ParameterException;
 import org.toobsframework.pres.app.config.Applications;
 import org.toobsframework.pres.app.config.ComponentConfig;
@@ -41,7 +43,6 @@ import org.toobsframework.pres.layout.ComponentLayoutInitializationException;
 import org.toobsframework.pres.layout.RuntimeLayout;
 import org.toobsframework.pres.layout.config.Layout;
 import org.toobsframework.pres.layout.config.Layouts;
-import org.toobsframework.pres.layout.manager.ComponentLayoutManager;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
 import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 import org.toobsframework.transformpipeline.domain.XMLTransformerException;
@@ -59,9 +60,6 @@ public class AppManager extends ManagerBase implements AppReader {
   private Hashtable<String,ToobsApplication> appRegistry;
   private boolean doReload = false;
 
-  private boolean useTranslets = false;
-  private boolean useChain = false;
-
   private TraceListener paramListener;
 
   public AppManager() throws ComponentLayoutInitializationException {
@@ -70,9 +68,6 @@ public class AppManager extends ManagerBase implements AppReader {
 
   public void afterPropertiesSet() throws XMLTransformerException, ComponentLayoutInitializationException {
     appRegistry = new Hashtable<String,ToobsApplication>();
-
-    XMLTransformerFactory.getInstance().setUseChain(useChain);
-    XMLTransformerFactory.getInstance().setUseTranslets(useTranslets);
 
     loadConfig();
   }
@@ -164,9 +159,9 @@ public class AppManager extends ManagerBase implements AppReader {
 
       URIResolver uriResolver = new XSLUriResolverImpl(null, toobsApp.getXslLocations());
 
-      IXMLTransformer xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_XML, uriResolver, paramListener);
-      IXMLTransformer htmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_HTML, uriResolver, paramListener);
-      IXMLTransformer defaultTransformer = XMLTransformerFactory.getInstance().getDefaultTransformer(uriResolver);
+      IXMLTransformer xmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_XML, uriResolver, paramListener, configuration);
+      IXMLTransformer htmlTransformer = XMLTransformerFactory.getInstance().getChainTransformer(XMLTransformerFactory.OUTPUT_FORMAT_HTML, uriResolver, paramListener, configuration);
+      IXMLTransformer defaultTransformer = XMLTransformerFactory.getInstance().getDefaultTransformer(uriResolver, configuration);
 
       configureLayouts(toobsApp,toobsAppDef.getLayoutConfig(), appDir, xmlTransformer, htmlTransformer, defaultTransformer);
       configureComponents(toobsApp,toobsAppDef.getComponentConfig(), appDir, xmlTransformer, htmlTransformer, defaultTransformer);
@@ -233,9 +228,9 @@ public class AppManager extends ManagerBase implements AppReader {
             Component comp = null;
             for (int k = 0; k < comps.length; k ++) {
               compDef = comps[k];
-              
-              comp = new Component();
-              
+
+              comp = new Component(compDef.getId());
+
               ComponentManager.configureComponent(compDef, comp, null, fileName, compMap);
               comp.setXmlTransformer(xmlTransformer);
               comp.setDefaultTransformer(defaultTransformer);
@@ -323,7 +318,8 @@ public class AppManager extends ManagerBase implements AppReader {
               
               layout = new RuntimeLayout();
               
-              ComponentLayoutManager.configureLayout(compLayout, layout, defaultTransformer, htmlTransformer, xmlTransformer, layoutMap);
+              //TODO Refiggert Apps
+              //ComponentLayoutManager.configureLayout(compLayout, layout, defaultTransformer, htmlTransformer, xmlTransformer, layoutMap);
               layout.setXmlTransformer(xmlTransformer);
               layout.setDefaultTransformer(defaultTransformer);
               layout.setHtmlTransformer(htmlTransformer);
@@ -397,7 +393,7 @@ public class AppManager extends ManagerBase implements AppReader {
     try {
       if (appRequest.getRequestType() == AppRequestTypeEnum.COMPONENT) {
         Component component = getApp(appRequest.getAppName()).getComponents().get(appRequest.getViewName());
-        component.render(appRequest.getContentType(), request.getParams(), transformerHelper, request.getHttpRequest(), request.getHttpResponse(), request.getParams(), null);
+        component.render(request, appRequest.getContentType(), request.getParams(), transformerHelper, request.getParams(), null);
 
         return null;
       } else {

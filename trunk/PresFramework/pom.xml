@@ -24,7 +24,7 @@
               <goal>generate</goal>
             </goals>
           <configuration>
-            <schema>PresFramework/src/main/castor/componentConfig.xsd</schema>
+            <schema>${basedir}/src/main/castor/componentConfig.xsd</schema>
             <packaging>org.toobsframework.pres.component.config</packaging>
           </configuration>
           </execution>
@@ -35,9 +35,9 @@
               <goal>generate</goal>
             </goals>
           <configuration>
-            <schema>PresFramework/src/main/castor/componentLayoutConfig.xsd</schema>
+            <schema>${basedir}/src/main/castor/componentLayoutConfig.xsd</schema>
             <packaging>org.toobsframework.pres.layout.config</packaging>
-            <bindingfile>PresFramework/src/main/castor/compBinding.xml</bindingfile>
+            <bindingfile>${basedir}/src/main/castor/compBinding.xml</bindingfile>
           </configuration>
           </execution>
           <execution>
@@ -47,9 +47,9 @@
               <goal>generate</goal>
             </goals>
           <configuration>
-            <schema>PresFramework/src/main/castor/doItConfig.xsd</schema>
+            <schema>${basedir}/src/main/castor/doItConfig.xsd</schema>
             <packaging>org.toobsframework.pres.doit.config</packaging>
-            <bindingfile>PresFramework/src/main/castor/compBinding.xml</bindingfile>
+            <bindingfile>${basedir}/src/main/castor/compBinding.xml</bindingfile>
           </configuration>
           </execution>
           <execution>
@@ -70,7 +70,7 @@
               <goal>generate</goal>
             </goals>
             <configuration>
-              <schema>PresFramework/src/main/castor/toobsApplication.xsd</schema>
+              <schema>${basedir}/src/main/castor/toobsApplication.xsd</schema>
               <packaging>org.toobsframework.pres.app.config</packaging>
             </configuration>
           </execution>

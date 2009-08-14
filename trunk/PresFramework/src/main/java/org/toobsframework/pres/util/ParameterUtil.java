@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.jxpath.JXPathContext;
@@ -20,9 +19,8 @@ import org.springframework.web.util.WebUtils;
 import org.toobsframework.pres.component.config.Parameter;
 import org.toobsframework.pres.component.dataprovider.api.IDataProviderObject;
 import org.toobsframework.pres.doit.config.Forward;
+import org.toobsframework.util.IRequest;
 import org.toobsframework.exception.ParameterException;
-import org.toobsframework.util.Configuration;
-
 
 @SuppressWarnings("unchecked")
 public class ParameterUtil {
@@ -45,8 +43,9 @@ public class ParameterUtil {
     excludedParameters.add("hibernateFilter.FILTERED");
     
     envParameters = new HashMap();
-    envParameters.put("host", Configuration.getInstance().getMainHost() );
-    envParameters.put("toobs.debug", Configuration.getInstance().getProperty("toobs.debug", "false") );
+    // TODO provide for these
+    //envParameters.put("host", Configuration.getInstance().getMainHost() );
+    //envParameters.put("toobs.debug", Configuration.getInstance().getProperty("toobs.debug", "false") );
     
     namespaceHelpers = new ArrayList();
     namespaceHelpers.add(new CookieUtil());
@@ -80,9 +79,9 @@ public class ParameterUtil {
     return "";
   }
 
-  public static String resoveForwardPath(Forward forwardDef, Map parameters, String urlPath, HttpServletRequest request, HttpServletResponse response) {
+  public static String resoveForwardPath(IRequest request, Forward forwardDef, Map parameters, String urlPath) {
     String forwardPath = null;
-    forwardPath = ((String[])ParameterUtil.resolveParam(forwardDef.getUri(), parameters, request, response))[0];
+    forwardPath = ((String[])ParameterUtil.resolveParam(request, forwardDef.getUri(), parameters))[0];
     if (forwardPath != null && forwardDef.getUseContext()) {
       String contextPath = ParameterUtil.extractContextPathFromUrlPath(urlPath);
       forwardPath = (contextPath.length()>0 ? "/" + contextPath + "/" : "") + forwardPath; 
@@ -139,20 +138,24 @@ public class ParameterUtil {
     return params;
   }
   
-  public static void mapParameters(String callingContext, 
+  public static void mapParameters(
+      IRequest request, 
+      String callingContext, 
       Parameter[] paramMap, 
       Map inParams, 
       Map outParams, 
-      String scopeId, HttpServletRequest request, HttpServletResponse response) throws ParameterException {
-    mapParameters(callingContext, paramMap, inParams, outParams, scopeId, null, request, response);
+      String scopeId) throws ParameterException {
+    mapParameters(request, callingContext, paramMap, inParams, outParams, scopeId, null);
   }
   
-  public static void mapParameters(String callingContext, 
+  public static void mapParameters(
+      IRequest request, 
+      String callingContext, 
       Parameter[] paramMap, 
       Map inParams, 
       Map outParams, 
       String scopeId, 
-      List<IDataProviderObject> objects, HttpServletRequest request, HttpServletResponse response) throws ParameterException {
+      List<IDataProviderObject> objects) throws ParameterException {
     JXPathContext context = JXPathContext.newContext(inParams);
     for(int j = 0; j < paramMap.length; j++){
       Parameter thisParam = paramMap[j];
@@ -168,8 +171,8 @@ public class ParameterUtil {
         if(!thisParam.getOverwriteExisting() && inParams.get(thisParam.getName()) != null) {
           continue;
         }
-        thisName = resolveParam(thisParam.getName(), inParams, request, response)[0];
-        thisPath = resolveParam(thisParam.getPath(), inParams, request, response)[0];
+        thisName = resolveParam(request, thisParam.getName(), inParams)[0];
+        thisPath = resolveParam(request, thisParam.getPath(), inParams)[0];
         boolean condition = true;
         if (thisParam.getCondition() != null) {
           Object condObj = context.getValue(thisParam.getCondition());
@@ -252,7 +255,7 @@ public class ParameterUtil {
           } else if (value != null && !(value instanceof ArrayList) && String.valueOf(value).length() > 0) {
             outParams.put(thisName, String.valueOf(value));
           } else if (thisParam.getDefault() != null) {
-            String [] defVal = resolveParam(thisParam.getDefault(), inParams, request, response);
+            String [] defVal = resolveParam(request, thisParam.getDefault(), inParams);
             if (defVal != null) {
               outParams.put(thisName, defVal[0]);
             }
@@ -269,7 +272,7 @@ public class ParameterUtil {
     }
   }
 
-  public static void mapOutputParameters(Parameter[] paramMap, Map paramsIn, String scopeId, List<IDataProviderObject> objects, HttpServletRequest request, HttpServletResponse response) {
+  public static void mapOutputParameters(IRequest request, Parameter[] paramMap, Map paramsIn, String scopeId, List<IDataProviderObject> objects) {
     for(int j = 0; j < paramMap.length; j++){
       Parameter thisParam = paramMap[j];
       if (thisParam.getScope() != null && 
@@ -285,9 +288,9 @@ public class ParameterUtil {
       }
       JXPathContext context = null;
       Object value = null;
-      String paramName = resolveParam(thisParam.getName(), paramsIn, request, response)[0];
+      String paramName = resolveParam(request, thisParam.getName(), paramsIn)[0];
       try {
-        String thisPath = resolveParam(thisParam.getPath(), paramsIn, request, response)[0];
+        String thisPath = resolveParam(request, thisParam.getPath(), paramsIn)[0];
         if(thisParam.getIsStatic()){
           value = thisPath;
         } else {
@@ -330,7 +333,7 @@ public class ParameterUtil {
         paramsIn.put(paramName, value);
       } catch (JXPathException e) {
         if (thisParam.getDefault() != null) {
-          String[] def = resolveParam(thisParam.getDefault(), paramsIn, request, response);
+          String[] def = resolveParam(request, thisParam.getDefault(), paramsIn);
           if (def != null && def.length > 0) {
             paramsIn.put(paramName, def[0]);
           }
@@ -343,7 +346,7 @@ public class ParameterUtil {
     }
   }
   
-  public static void mapDoItParameters(Parameter[] paramMap, Map paramsIn, Map paramsOut, boolean useJXPathContext, HttpServletRequest request, HttpServletResponse response) 
+  public static void mapDoItParameters(IRequest request,  Parameter[] paramMap, Map paramsIn, Map paramsOut, boolean useJXPathContext) 
   {
     JXPathContext context = null;
     if(useJXPathContext)
@@ -354,25 +357,25 @@ public class ParameterUtil {
       Object value = null;
       if(thisParam.getIsStatic()) {
         String [] valueAry = new String[1];
-        valueAry[0] = resolveParam(thisParam.getPath(), paramsIn, request, response)[0];
+        valueAry[0] = resolveParam(request, thisParam.getPath(), paramsIn)[0];
         value = valueAry;
       } else {
-        value = context.getValue(resolveParam(thisParam.getPath(), paramsIn, request, response)[0]);
+        value = context.getValue(resolveParam(request, thisParam.getPath(), paramsIn)[0]);
         if (value != null && value.getClass().isArray() && ((Object[])value).length == 1) {
           value = ((Object[])value)[0];
         } else if (value == null && thisParam.getDefault() != null) {
           value = thisParam.getDefault();
         }
       }
-      paramsOut.put(resolveParam(thisParam.getName(), paramsIn, request, response)[0], value);
+      paramsOut.put(resolveParam(request, thisParam.getName(), paramsIn)[0], value);
     }
   }
   
-  public static String[] resolveParam(Object input, Map params, HttpServletRequest request, HttpServletResponse response) {
-    return resolveParam(input, params, null, request, response);
+  public static String[] resolveParam(IRequest request, Object input, Map params) {
+    return resolveParam(request, input, params, null);
   }
   
-  public static String[] resolveParam(Object input, Map params, Object defaultValue, HttpServletRequest request, HttpServletResponse response) {
+  public static String[] resolveParam(IRequest request, Object input, Map params, Object defaultValue) {
     String[] output;
     if (input != null && input.getClass().isArray()) {
       output = (String[])input;
@@ -426,7 +429,7 @@ public class ParameterUtil {
         break;
       case '!':
         String in = ((String)input).substring(1);
-        String[] out = resolveNamespacedParam(in, params, request, response);
+        String[] out = resolveNamespacedParam(request, in, params);
         if (out != null) {
           output = out;
         }
@@ -440,10 +443,10 @@ public class ParameterUtil {
     return output;
   }
   
-  public static String[] resolveNamespacedParam(String input, Map params, HttpServletRequest request, HttpServletResponse response) {
+  public static String[] resolveNamespacedParam(IRequest request, String input, Map params) {
     for (INamespaceParameterHelper helper : namespaceHelpers) {
       if (helper.supports(input)) {
-        return helper.getValue(input, request, response);
+        return helper.getValue(request, input);
       }
     }
    return null; 

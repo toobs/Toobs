@@ -14,21 +14,15 @@ import org.toobsframework.pres.util.PresConstants;
 import org.toobsframework.util.Configuration;
 
 public class RestHandlerMapping extends AbstractHandlerMapping {
-  
+
   ComponentViewController componentConroller;
   ComponentLayoutController layoutController;
   DoItController doItcontroller;
   IUrlManager urlManager;
-  
+
   @Override
   protected Object getHandlerInternal(HttpServletRequest httpRequest) throws Exception {
-    long deployTime;
-    if (httpRequest.getAttribute(PresConstants.DEPLOY_TIME) == null) {
-      deployTime = Configuration.getInstance().getDeployTime();
-    } else {
-      deployTime = Long.parseLong((String)httpRequest.getAttribute(PresConstants.DEPLOY_TIME));
-    }
-    UrlMapping mapping = urlManager.getUrlMapping(httpRequest.getPathInfo(), deployTime);
+    UrlMapping mapping = urlManager.getUrlMapping(httpRequest.getPathInfo());
     
     //Request req = (Request) httpRequest;
     // TODO Auto-generated method stub

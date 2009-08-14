@@ -18,12 +18,10 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.fop.apps.FOPException;
 import org.apache.fop.apps.MimeConstants;
 import org.toobsframework.servlet.filters.compression.FilterResponseWrapper;
-import org.toobsframework.util.Configuration;
-
 
 public class PDFExportFilter extends BaseExportFilter implements Filter {
 
-  // TODO: generate a serialVersionUID
+  private static final long serialVersionUID = -968249206640558155L;
 
   /** The logger instance */
   private static Log log = LogFactory.getLog(PDFExportFilter.class);
@@ -31,11 +29,15 @@ public class PDFExportFilter extends BaseExportFilter implements Filter {
   /** The Filter config */
   private FilterConfig config = null;
 
-  public void init(FilterConfig config) 
-  throws ServletException 
-  {
+  private String contextName;
+
+  public void init(FilterConfig config) throws ServletException {
     this.config = config;
     this.config.getServletContext().log("PDFFilter - init()");
+    contextName = this.config.getServletContext().getServletContextName();
+    if (contextName == null) {
+      contextName = "/";
+    }
   }
 
   public void destroy() {
@@ -44,9 +46,10 @@ public class PDFExportFilter extends BaseExportFilter implements Filter {
   }
 
   /**
-   *  Pipe the fetched *.pdf <fo> xml output from the ComponentLayoutManager through the FO transformer
-   *  in order to get a viable pdf file.  Set the response headers, response stream, and the browser
-   *  should pick the pdf up and handle it properly.
+   * Pipe the fetched *.pdf <fo> xml output from the ComponentLayoutManager
+   * through the FO transformer in order to get a viable pdf file. Set the
+   * response headers, response stream, and the browser should pick the pdf up
+   * and handle it properly.
    */
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
   throws IOException, ServletException
@@ -70,7 +73,7 @@ public class PDFExportFilter extends BaseExportFilter implements Filter {
     if ("table".equals(exportMode)) {
       fileName = httpRequest.getParameter("component") + ".pdf";
     } else {
-      fileName = httpRequest.getRequestURI().substring(Configuration.getInstance().getMainContext().length() + 1).replace("xpdf", "pdf");
+      fileName = httpRequest.getRequestURI().substring(contextName.length() + 1).replace("xpdf", "pdf");
     }
 
     // set headers so browser knows it's looking at a pdf

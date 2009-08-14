@@ -24,8 +24,6 @@ import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.pres.util.PresConstants;
 import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
-import org.toobsframework.util.Configuration;
-
 
 @SuppressWarnings("unchecked")
 public class ComponentLayoutHandler implements IComponentLayoutHandler {
@@ -50,7 +48,7 @@ public class ComponentLayoutHandler implements IComponentLayoutHandler {
    */
   public ModelAndView handleRequestInternal(HttpServletRequest request, HttpServletResponse response) throws Exception {
 
-    String output = "";
+    String output = null;
     String urlPath = this.urlPathHelper.getLookupPathForRequest(request);
     request.getSession().setAttribute(PresConstants.SESSION_LAST_VIEW, urlPath);
     String layoutId = ParameterUtil.extractViewNameFromUrlPath(urlPath);
@@ -64,37 +62,33 @@ public class ComponentLayoutHandler implements IComponentLayoutHandler {
     if (log.isDebugEnabled()) {
       startTime = new Date();
     }
+
+    //Write out to the response.
+    response.setContentType("text/html; charset=UTF-8");
+    response.setHeader("Pragma",        "no-cache");                           // HTTP 1.0
+    response.setHeader("Cache-Control", "no-cache, must-revalidate, private"); // HTTP 1.1
+
     //Get component and render it.
     if(null != layoutId && !layoutId.equals("")) {
       RuntimeLayout layout = null;
-      long deployTime = 0L;
       try {
         request.setAttribute("layoutId", layoutId);
         request.setAttribute("contextPath", contextPath + (contextPath.length() > 0 ? "/" : ""));
         request.setAttribute("appContext", contextPath);
         request.setAttribute("outputFormat", extension);
 
-        Date dts = null;
-        if (log.isDebugEnabled()) {
-          dts = new Date();
-        }
-        deployTime = Configuration.getInstance().getDeployTime();
-        Date dte = null;
-        if (log.isDebugEnabled()) {
-          dte = new Date();
-          log.debug("Deploy Check Time - " + (dte.getTime() - dts.getTime()));
-        }
-        request.setAttribute(PresConstants.DEPLOY_TIME, String.valueOf(deployTime));
-
-        layout = this.componentLayoutManager.getLayout(layoutId, deployTime);
+        layout = this.componentLayoutManager.getLayout(layoutId);
       } catch (ComponentLayoutNotFoundException cnfe) {
+        // TODO Missing layout handler
         log.warn("Component Layout " + layoutId + " not found.");
-        layout = this.componentLayoutManager.getLayout("FeatureNotEnabled", deployTime);
+        layout = this.componentLayoutManager.getLayout("FeatureNotEnabled");
         //throw cnfe;
       }
       try {
         Map params = ParameterUtil.buildParameterMap(request);
         componentRequestManager.set(request, response, params);
+
+        // TODO Sec check layout handler
         boolean hasAccess = true;
         if (layoutSecurity != null) {
           hasAccess = layoutSecurity.hasAccess(layoutId);
@@ -102,21 +96,21 @@ public class ComponentLayoutHandler implements IComponentLayoutHandler {
         params.put("pageAccess", String.valueOf(hasAccess));
         if (!hasAccess && layout.getConfig().getNoAccessLayout() != null) {
           try {
-            layout = this.componentLayoutManager.getLayout(layout.getConfig().getNoAccessLayout(), deployTime);
+            layout = this.componentLayoutManager.getLayout(layout.getConfig().getNoAccessLayout());
             output = layout.render(componentRequestManager.get(), transformerHelper);
           } catch (ComponentLayoutNotFoundException cnfe) {
             log.warn("No Access Component Layout " + layout.getConfig().getNoAccessLayout() + " not found.");
             throw cnfe;
           }
         } else {
-          output = layout.render(componentRequestManager.get(), extension, transformerHelper);
+          layout.renderStream(response.getOutputStream(), componentRequestManager.get(), extension, transformerHelper);
         }
         
         if (layout.getDoItRef() != null) {
           Map actionParams = new HashMap();
           if (layout.getDoItRef().getParameters() != null) {
             Parameter[] parameters = layout.getDoItRef().getParameters().getParameter();
-            ParameterUtil.mapDoItParameters(parameters, params, actionParams, true, request, response);
+            ParameterUtil.mapDoItParameters(componentRequestManager.get(), parameters, params, actionParams, true);
           }
           doItRefQueue.put(layout.getDoItRef().getDoItId(), actionParams);
         }
@@ -139,14 +133,12 @@ public class ComponentLayoutHandler implements IComponentLayoutHandler {
       throw new Exception ("No layoutId specified");
     }
 
-    //Write out to the response.
-    response.setContentType("text/html; charset=UTF-8");
-    response.setHeader("Pragma",        "no-cache");                           // HTTP 1.0
-    response.setHeader("Cache-Control", "no-cache, must-revalidate, private"); // HTTP 1.1
-    PrintWriter writer = response.getWriter();
-    writer.print(output);
-    writer.flush();
-    
+    if (output != null) {
+      PrintWriter writer = response.getWriter();
+      writer.print(output);
+      writer.flush();
+    }
+
     if (log.isDebugEnabled()) {
       Date endTime = new Date();
       log.debug("Time [" + layoutId + "] - " + (endTime.getTime() - startTime.getTime()));
