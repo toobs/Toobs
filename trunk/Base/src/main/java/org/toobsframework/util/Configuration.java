@@ -3,16 +3,15 @@ package org.toobsframework.util;
 import java.util.Date;
 import java.util.Properties;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 public class Configuration {
-  private final Log log = LogFactory.getLog(getClass());
 
   public static final String USE_TRANSLETS_PROPERTY = "toobs.useTranslets";
   public static final String USE_CHAIN_PROPERTY     = "toobs.useChain";
   public static final String RELOAD_PROPERTY = "toobs.doReload";
   public static final String DEBUG_PROPERTY = "toobs.debug";
+  public static final String SHOW_STACK_PROPERTY = "toobs.showStackTrace";
+  public static final String USE_PARALLEL_PROPERTY = "toobs.enableParallel";
+  public static final String ERROR_COMPONENT_PROPERTY = "toobs.errorComponent";
 
   public static final String LAYOUT_EXT_PROPERTY = "toobs.layout.ext";
   public static final String COMPONENT_EXT_PROPERTY = "toobs.component.ext";
@@ -21,6 +20,8 @@ public class Configuration {
   public static final String LAYOUT_EXT_DEFAULT = ".html";
   public static final String COMPONENT_EXT_DEFAULT = ".comp";
   public static final String CHART_EXT_DEFAULT = ".chart";
+
+  public static final String ERROR_COMPONENT_DEFAULT = "error";
 
   public static final String UPLOAD_DIR_PROPERTY = "toobs.uploadDir";
 
@@ -116,6 +117,33 @@ public class Configuration {
 
   public void setProperties(Properties properties) {
     this.properties = properties;
+  }
+
+  public boolean showStackTrace() {
+    String prop = getProperty(SHOW_STACK_PROPERTY);
+    if ((prop != null && prop.equalsIgnoreCase("true")) || prop == null) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  public boolean enableParallel() {
+    String prop = getProperty(USE_PARALLEL_PROPERTY);
+    if ((prop != null && prop.equalsIgnoreCase("true")) || prop == null) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  public String getErrorComponentName() {
+    String prop = getProperty(ERROR_COMPONENT_PROPERTY);
+    if (prop != null && prop.length() > 0) {
+      return prop;
+    } else {
+      return ERROR_COMPONENT_DEFAULT;
+    }
   }
 
 }

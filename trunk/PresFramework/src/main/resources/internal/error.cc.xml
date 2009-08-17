@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Components xmlns="http://www.toobsframework.org/schema/component" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+  http://www.toobsframework.org/schema/component http://www.toobsframework.org/schema/componentConfig-0.1.0.xsd">
+
+  <Component id="error">
+    <Pipeline>
+      <ContentType contentType="xhtml">
+        <Transform name="internal/components/error"/>
+      </ContentType>
+    </Pipeline>
+  </Component>
+
+  <Component id="missing">
+    <Pipeline>
+      <ContentType contentType="xhtml">
+        <Transform name="internal/components/error"/>
+      </ContentType>
+    </Pipeline>
+  </Component>
+
+  <Component id="denied">
+    <Pipeline>
+      <ContentType contentType="xhtml">
+        <Transform name="internal/components/error"/>
+      </ContentType>
+    </Pipeline>
+  </Component>
+
+</Components>

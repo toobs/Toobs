@@ -5,23 +5,26 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-//import org.apache.commons.logging.Log;
-//import org.apache.commons.logging.LogFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.toobsframework.pres.url.UrlDispatchInfo;
 
-@SuppressWarnings("unchecked")
 public class BaseRequestManager {
+  protected final Log log = LogFactory.getLog(getClass());
 
-  //private static Log log = LogFactory.getLog(BaseRequestManager.class);
+  protected static ThreadLocal<IRequest> requestHolder = new ThreadLocal<IRequest>();
 
-  protected static ThreadLocal requestHolder = new ThreadLocal();
-  
-  public void set(HttpServletRequest httpRequest, HttpServletResponse httpResponse, Map params) {
-    BaseRequest request = new BaseRequest(httpRequest, httpResponse, params);
+  public IRequest set(UrlDispatchInfo dispatchInfo, HttpServletRequest httpRequest, HttpServletResponse httpResponse, Map<String,Object> params, boolean expectResponse) {
+    IRequest request = new BaseRequest(dispatchInfo, httpRequest, httpResponse, params, expectResponse);
+    if (get() != null) {
+      log.warn("REQUEST ALREADY SET");
+    }
     requestHolder.set(request);
+    return request;
   }
-  
+
   public IRequest get() {
-    IRequest request = (BaseRequest)requestHolder.get();
+    IRequest request = requestHolder.get();
     return request;
   }
 

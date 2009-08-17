@@ -8,7 +8,6 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.AbstractController;
 
-@SuppressWarnings("unchecked")
 public class AttachmentController extends AbstractController {
 
   private static Log log = LogFactory.getLog(AttachmentController.class);

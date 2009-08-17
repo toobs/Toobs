@@ -1,5 +1,6 @@
 package org.toobsframework.pres.component.manager;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +25,7 @@ public interface IComponentManager {
       Map<String, Object> paramsOut, 
       IXMLTransformerHelper transformerHelper, 
       boolean appendUrlScanner)
-      throws ComponentNotInitializedException, ComponentException, ParameterException;
+      throws ComponentNotInitializedException, ComponentException, ParameterException, IOException;
 
   public void addConfigFiles(List<String> configFiles);
 }

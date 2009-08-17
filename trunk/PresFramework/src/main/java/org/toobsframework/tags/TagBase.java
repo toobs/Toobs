@@ -12,10 +12,10 @@ import org.apache.xalan.extensions.XSLProcessorContext;
 import org.apache.xalan.templates.ElemExtensionCall;
 import org.apache.xalan.transformer.TransformerImpl;
 import org.apache.xml.serializer.SerializationHandler;
+import org.toobsframework.pres.util.IComponentRequest;
 import org.toobsframework.pres.xsl.ComponentTransformerHelper;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
 import org.toobsframework.util.Configuration;
-import org.toobsframework.util.IRequest;
 import org.xml.sax.SAXException;
 
 public class TagBase {
@@ -38,13 +38,13 @@ public class TagBase {
     return transformerHelper;
   }
 
-  protected IRequest getComponentRequest(XSLProcessorContext processorContext) throws TransformerException {
+  protected IComponentRequest getComponentRequest(XSLProcessorContext processorContext) throws TransformerException {
     TransformerImpl transformer = processorContext.getTransformer();
     Object th = transformer.getParameter(IXMLTransformer.COMPONENT_REQUEST);
-    if (th == null || !(th instanceof IRequest)) {
+    if (th == null || !(th instanceof IComponentRequest)) {
       throw new TransformerException("Internal error: the property " + IXMLTransformer.COMPONENT_REQUEST + " needs to be properly initialized prior to calling the transformation.");
     }
-    IRequest request = (IRequest) th;
+    IComponentRequest request = (IComponentRequest) th;
     return request;
   }
 

@@ -5,6 +5,8 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.toobsframework.pres.url.UrlDispatchInfo;
+
 public interface IRequest {
 
   public abstract Map<String, Object> getParams();
@@ -13,12 +15,8 @@ public interface IRequest {
 
   public abstract HttpServletRequest getHttpRequest();
 
-  public abstract void setHttpRequest(HttpServletRequest httpRequest);
-
   public abstract HttpServletResponse getHttpResponse();
   
-  public abstract void setHttpResponse(HttpServletResponse httpResponse);
-
   public abstract Boolean getSingleBooleanParam(String paramName);
 
   public abstract String getString(String paramName);
@@ -29,4 +27,9 @@ public interface IRequest {
 
   public abstract Object putParam(String paramName, Object paramValue);
 
+  public abstract Map<String,Object> getResponseParams();
+
+  public abstract void setResponseParams(Map<String,Object> responseParams);
+
+  public abstract UrlDispatchInfo getDispatchInfo();
 }

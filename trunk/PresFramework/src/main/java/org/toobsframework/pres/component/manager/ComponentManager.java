@@ -1,5 +1,6 @@
 package org.toobsframework.pres.component.manager;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,6 +20,7 @@ import org.toobsframework.exception.ParameterException;
 import org.toobsframework.pres.component.dataprovider.api.DataProviderInitializationException;
 import org.toobsframework.pres.component.dataprovider.api.IDataProvider;
 import org.toobsframework.pres.component.dataprovider.manager.DataProviderNotFoundException;
+import org.toobsframework.pres.util.PresConstants;
 import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 import org.toobsframework.util.IRequest;
 
@@ -42,6 +44,7 @@ public final class ComponentManager extends XslManagerBase implements IComponent
     registry = new ConcurrentHashMap<String, org.toobsframework.pres.component.Component>();
     ConvertUtils.register(new DateToStringConverter(), String.class);
 
+    this.insertConfigFile(PresConstants.TOOBS_INTERNAL_ERROR_CONFIG_COMPONENTS);
     loadConfig(Components.class);
   }
 
@@ -65,8 +68,8 @@ public final class ComponentManager extends XslManagerBase implements IComponent
       Map<String, Object> paramsOut, 
       IXMLTransformerHelper transformerHelper, 
       boolean appendUrlScanner)
-      throws ComponentNotInitializedException, ComponentException, ParameterException {
-    return component.render(request, contentType, params, transformerHelper, paramsOut, null);
+      throws ComponentNotInitializedException, ComponentException, ParameterException, IOException {
+    return component.render(request, contentType, params, transformerHelper, paramsOut);
   }
 
   @Override

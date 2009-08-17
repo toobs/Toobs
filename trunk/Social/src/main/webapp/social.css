@@ -1,11 +1,22 @@
 body {
-  margin:0px; 
+  width: 970px;
+  margin: auto !important;
   padding:0px;
   font-family: "lucida grande",tahoma,verdana,arial,sans-serif;
-  background-color: white;
-  font-size: 10px;
+  border-left: 1px solid #dcdcdc;
+  border-right: 1px solid #dcdcdc;
+  background: #fff;
+  font-size: .75em;
   text-align:center;
   min-width:800px;
+}
+
+span.label {
+  display:block;
+}
+span.data {
+  display:block;
+  float:left;
 }
 
 .menubar-container {

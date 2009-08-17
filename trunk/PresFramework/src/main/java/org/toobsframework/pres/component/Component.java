@@ -1,6 +1,8 @@
 package org.toobsframework.pres.component;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -11,19 +13,17 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.Cookie;
-import javax.xml.transform.URIResolver;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.validation.ObjectError;
+import org.toobsframework.pres.base.Transformable;
 import org.toobsframework.pres.component.config.GetObject;
 import org.toobsframework.exception.ParameterException;
 import org.toobsframework.pres.component.dataprovider.api.IDataProvider;
 import org.toobsframework.pres.component.dataprovider.api.IDataProviderObject;
 import org.toobsframework.pres.component.dataprovider.impl.DataProviderObjectImpl;
+import org.toobsframework.pres.doit.controller.strategy.ForwardStrategy;
 import org.toobsframework.pres.util.CookieVO;
 import org.toobsframework.pres.util.ParameterUtil;
-import org.toobsframework.pres.util.PresConstants;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
 import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 import org.toobsframework.transformpipeline.domain.XMLTransformerException;
@@ -33,7 +33,7 @@ import org.toobsframework.util.IRequest;
 /**
  * @author pudney
  */
-public class Component {
+public class Component extends Transformable {
   private static final String XML_HEADER = "<?xml version=\"1.0\"?>";
   private static final String XML_START_COMPONENTS = "<component";
   private static final String XML_END_COMPONENTS = "</component>";
@@ -44,30 +44,17 @@ public class Component {
   private static final String XML_START_ERROR_OBJS = "<errorobjects>";
   private static final String XML_END_ERROR_OBJS = "</errorobjects>";
 
-  private static Log log = LogFactory.getLog(Component.class);
-
   private String id;
-
   private boolean renderErrorObject;
-
   private boolean scanUrls;
-
   private boolean initDone;
 
   private Map<String, List<Transform>> transforms;
-
   private GetObject[] objectsConfig;
-  
   private String[] controllerNames;
-
   private String[] styles;
-
   private String fileName;
 
-  private IXMLTransformer defaultTransformer;
-  private IXMLTransformer htmlTransformer;
-  private IXMLTransformer xmlTransformer;
-  
   private IDataProvider dataProvider;
 
   public Component(String id) {
@@ -251,24 +238,78 @@ public class Component {
    * @return rendered component
    * @throws ComponentNotInitializedException
    * @throws ComponentException
+   * @throws IOException 
    */
-  public String render(IRequest request, String contentType, Map<String, Object> params, IXMLTransformerHelper transformerHelper, Map<String, Object> outParams, URIResolver uriResolver)
-      throws ComponentNotInitializedException, ComponentException, ParameterException {
-    StringBuffer renderedOutput = new StringBuffer();
+  public String render(IRequest request, String contentType, Map<String, Object> params, IXMLTransformerHelper transformerHelper, Map<String, Object> outParams)
+      throws ComponentNotInitializedException, ComponentException, ParameterException, IOException {
+    ByteArrayOutputStream renderedOutput = new ByteArrayOutputStream();
+
+    this.renderStream(renderedOutput, request, contentType, transformerHelper);
+
+    return new String(renderedOutput.toByteArray());
+  }
+
+  public void renderStream(OutputStream outputStream, IRequest componentRequest, String outputFormat, IXMLTransformerHelper transformerHelper) throws ComponentException, ParameterException, ComponentNotInitializedException, IOException {
     Date start = new Date();
-    String componentXML = this.getObjectsAsXML(request, params, outParams, transformerHelper);
+    String componentXML = this.getObjectsAsXML(componentRequest, componentRequest.getParams(), componentRequest.getResponseParams(), transformerHelper);
     Date endGet = new Date();
 
-    if (!contentType.equals("bizXML")) {
-      renderedOutput.append(this.callXMLPipeline(request, contentType, componentXML, params, transformerHelper, uriResolver));
+    if (!outputFormat.equals("bizXML")) {
+      this.callXMLPipeline(outputStream, componentRequest, outputFormat, componentXML, transformerHelper);
     } else {
-      renderedOutput.append(componentXML);
+      outputStream.write(componentXML.getBytes());
     }
+
     Date end = new Date();
     if (log.isDebugEnabled()) {
       log.debug("Comp [" + id + "] gTime: " + (endGet.getTime()-start.getTime()) + " rTime: " + (end.getTime()-endGet.getTime()) + " fTime: " + (end.getTime()-start.getTime()));
     }
-    return renderedOutput.toString();
+  }
+
+
+  /**
+   * Runs the objects through the xml pipeline to get the proper rendering of
+   * the component as defined in the config file.
+   * 
+   * @return rendered component
+   * @throws ComponentNotInitializedException
+   * @throws ComponentException
+   */
+  private void callXMLPipeline(OutputStream outputStream, IRequest request, String contentType, String inputXMLString, IXMLTransformerHelper transformerHelper)
+      throws ComponentException, ParameterException {
+
+    try {
+
+      List<String> inputXSLs = new ArrayList<String>();
+      Map<String, Object> transformParams = new HashMap<String, Object>();
+
+      // Prepare XSLs and Params.
+      List<Transform> contentTransforms = this.getTransforms().get(contentType);
+      if (contentTransforms != null && contentTransforms.size() > 0) {
+        Iterator<Transform> it = contentTransforms.iterator();
+        while (it.hasNext()) {
+          Transform transform = it.next();
+          inputXSLs.add(transform.getTransformName());
+          //Fix the params using the param mapping for 
+          //this configuration.
+          if(transform.getTransformParams() != null){
+            ParameterUtil.mapParameters(request, "Transform:" + transform.getTransformName(), transform.getTransformParams().getParameter(), request.getParams(), transformParams, this.id);
+          }
+        }
+      } else {
+        throw new ComponentException("Component with id: " + this.id + " does not have a transform for content type: " + contentType);
+      }
+
+      // Do Transformation
+      if (inputXSLs.size() > 0) {
+        transformParams.put(IXMLTransformer.COMPONENT_REQUEST, request);
+        getTransformer(inputXSLs, contentType).transformStream(outputStream, inputXSLs, inputXMLString, transformParams, transformerHelper);
+      }
+
+    } catch (XMLTransformerException xte) {
+      throw new ComponentException("Error running transform", xte);
+    }
+
   }
 
   /**
@@ -305,9 +346,9 @@ public class Component {
       }
       xml.append(XML_END_OBJECTS);
       if (renderErrorObject) {
-        if (params.containsKey(PresConstants.VALIDATION_ERROR_MESSAGES)) {
+        if (params.containsKey(ForwardStrategy.VALIDATION_ERROR_MESSAGES)) {
           request.getHttpResponse().setHeader("toobs.error.validation", "true");
-          List<ObjectError> globalErrorList = (List<ObjectError>)params.get(PresConstants.VALIDATION_ERROR_MESSAGES);
+          List<ObjectError> globalErrorList = (List<ObjectError>)params.get(ForwardStrategy.VALIDATION_ERROR_MESSAGES);
           for (int g = 0; g < globalErrorList.size(); g++) {
             xml.append(XML_START_ERRORS);
             List<ObjectError> errorList = (List<ObjectError>)globalErrorList.get(g);
@@ -317,8 +358,8 @@ public class Component {
             xml.append(XML_END_ERRORS);
           }
         }
-        if (params.containsKey(PresConstants.VALIDATION_ERROR_OBJECTS)) {
-          List<IDataProviderObject> globalMessageList = (List<IDataProviderObject>)params.get(PresConstants.VALIDATION_ERROR_OBJECTS);
+        if (params.containsKey(ForwardStrategy.VALIDATION_ERROR_OBJECTS)) {
+          List<IDataProviderObject> globalMessageList = (List<IDataProviderObject>)params.get(ForwardStrategy.VALIDATION_ERROR_OBJECTS);
           for (int g = 0; g < globalMessageList.size(); g++) {
             xml.append(XML_START_ERROR_OBJS);
             List<IDataProviderObject> errorList = (List<IDataProviderObject>)globalMessageList.get(g);
@@ -337,83 +378,9 @@ public class Component {
     return xml.toString();
   }
 
-  /**
-   * Runs the objects through the xml pipeline to get the proper rendering of
-   * the component as defined in the config file.
-   * 
-   * @return rendered component
-   * @throws ComponentNotInitializedException
-   * @throws ComponentException
-   */
-  private String callXMLPipeline(IRequest request, String contentType, String inputXMLString, Map<String, Object> inParams, IXMLTransformerHelper transformerHelper, URIResolver uriResolver)
-      throws ComponentException, ParameterException {
-    StringBuffer outputString = new StringBuffer();
-    List<String> outputXML = new ArrayList<String>();
-
-    try {
-      // Initialize variables needed to run transformer.
-      IXMLTransformer xmlTransformer = null;
-      List<String> inputXSLs = new ArrayList<String>();
-      Map<String, Object> params = new HashMap<String, Object>();
-      List<String> inputXML = new ArrayList<String>();
-
-      // Prepare XML
-      inputXML.add(inputXMLString);
-
-      // Prepare XSLs and Params.
-      List<Transform> contentTransforms = this.getTransforms().get(contentType);
-      if (contentTransforms != null && contentTransforms.size() > 0) {
-        Iterator<Transform> it = contentTransforms.iterator();
-        while (it.hasNext()) {
-          Transform transform = it.next();
-          inputXSLs.add(transform.getTransformName());
-          //Fix the params using the param mapping for 
-          //this configuration.
-          if(transform.getTransformParams() != null){
-            ParameterUtil.mapParameters(request, "Transform:" + transform.getTransformName(), transform.getTransformParams().getParameter(), inParams, params, this.id);
-          }
-        }
-      } else {
-        throw new ComponentException("Component with id: " + this.id + " does not have a transform for content type: " + contentType);
-      }
-      //ParameterUtil.mapFrameworkParams(inParams, params);
-
-      // Figure out which Transformer to run and prepare as
-      // necessary for that Transformer.
-      if (inputXSLs.size() > 1) {
-        if (!"xhtml".equals(contentType)) {
-          xmlTransformer = this.xmlTransformer;
-        } else {
-          xmlTransformer = this.htmlTransformer;
-        }
-      } else {
-        xmlTransformer = this.defaultTransformer;
-      }
-
-      // Do Transformation
-      if (inputXSLs.size() > 0) {
-        params.put(IXMLTransformer.COMPONENT_REQUEST, request);
-        outputXML = xmlTransformer.transform(inputXSLs, inputXML, params, transformerHelper);
-      } else {
-        outputXML = inputXML;
-      }
-
-    } catch (XMLTransformerException xte) {
-      throw new ComponentException("Error running transform", xte);
-    }
-
-    // Prepare output
-    for (int ox = 0; ox < outputXML.size(); ox++) {
-      outputString.append(outputXML.get(ox));
-    }
-    // Return
-    return outputString.toString();
-
-  }
-
   @SuppressWarnings("unchecked")
   private IDataProviderObject checkForValidation(Map<String, Object> paramsIn, GetObject getObjDef, String guid) throws ComponentException, ComponentNotInitializedException {
-    List<IDataProviderObject> errorObjects = (List<IDataProviderObject>)paramsIn.get(PresConstants.VALIDATION_ERROR_OBJECTS);
+    List<IDataProviderObject> errorObjects = (List<IDataProviderObject>)paramsIn.get(ForwardStrategy.VALIDATION_ERROR_OBJECTS);
     if(errorObjects != null)
     {
       for(int i = 0; i < errorObjects.size(); i++)
@@ -521,30 +488,6 @@ public class Component {
 
   public void setStyles(String[] styles) {
     this.styles = styles;
-  }
-
-  public IXMLTransformer getDefaultTransformer() {
-    return defaultTransformer;
-  }
-
-  public void setDefaultTransformer(IXMLTransformer defaultTransformer) {
-    this.defaultTransformer = defaultTransformer;
-  }
-
-  public IXMLTransformer getHtmlTransformer() {
-    return htmlTransformer;
-  }
-
-  public void setHtmlTransformer(IXMLTransformer htmlTransformer) {
-    this.htmlTransformer = htmlTransformer;
-  }
-
-  public IXMLTransformer getXmlTransformer() {
-    return xmlTransformer;
-  }
-
-  public void setXmlTransformer(IXMLTransformer xmlTransformer) {
-    this.xmlTransformer = xmlTransformer;
   }
 
   public IDataProvider getDataProvider() {

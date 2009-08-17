@@ -1,18 +1,12 @@
-/*
- * Created by IntelliJ IDEA.
- * User: spudney
- * Date: Sep 26, 2008
- * Time: 11:15:02 AM
- */
 package org.toobsframework.taglib;
 
-import org.toobsframework.pres.util.PresConstants;
+import org.toobsframework.pres.url.UrlDispatchInfo;
 import org.toobsframework.pres.xsl.ComponentTransformerHelper;
 import org.toobsframework.pres.component.ComponentException;
 import org.toobsframework.pres.component.ComponentNotFoundException;
 import org.toobsframework.pres.component.ComponentInitializationException;
 import org.toobsframework.pres.component.ComponentNotInitializedException;
-import org.toobsframework.util.Configuration;
+
 import org.toobsframework.util.IRequest;
 import org.toobsframework.servlet.ContextHelper;
 import org.toobsframework.exception.ParameterException;
@@ -43,12 +37,12 @@ public class ComponentRef extends BodyTagSupport {
 
   private String componentId;
   private String contentType = "xhtml";
-  private Map    parameterMap = new HashMap();
+  private Map<String,Object>    parameterMap = new HashMap<String,Object>();
   private String dataObjectName;
   private Object dataObject;
   private String transformerHelper;
 
-  public void setParameterMap(Map parameterMap) {
+  public void setParameterMap(Map<String,Object> parameterMap) {
     this.parameterMap = parameterMap;
   }
 
@@ -75,8 +69,9 @@ public class ComponentRef extends BodyTagSupport {
 
     ComponentTransformerHelper transformerHelper = (ComponentTransformerHelper) beanFactory.getBean(this.transformerHelper);
 
+    UrlDispatchInfo dispatchInfo = new UrlDispatchInfo("jsptag:" + componentId, componentId, "xhtml");
     //Setup Component Request
-    transformerHelper.getComponentRequestManager().set((HttpServletRequest)pageContext.getRequest(), (HttpServletResponse)pageContext.getResponse(), parameterMap);
+    transformerHelper.getComponentRequestManager().set(dispatchInfo, (HttpServletRequest)pageContext.getRequest(), (HttpServletResponse)pageContext.getResponse(), parameterMap, false);
 
     IRequest request = transformerHelper.getComponentRequestManager().get();
     if(dataObject != null && dataObjectName != null) {
@@ -108,6 +103,8 @@ public class ComponentRef extends BodyTagSupport {
       throw new JspException("Could not render component with Id:" + componentId, e);
     } catch (ParameterException e) {
       throw new JspException("Could not resolve parameters for component with Id:" + componentId, e);
+    } catch (IOException e) {
+      throw new JspException("Could not render component with Id:" + componentId, e);
     } finally {
       transformerHelper.getComponentRequestManager().unset();
     }

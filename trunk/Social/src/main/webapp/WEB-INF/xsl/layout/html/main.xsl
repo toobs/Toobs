@@ -7,18 +7,27 @@
 
   <xsl:include href="component-manager.xsl"/>
 
-  <xsl:template match="RuntimeLayout">
+  <xsl:template match="layout">
     <html>
       <head>
         <xsl:apply-templates select="./Section[@id='declarations']"/>
       </head>
-      
+
       <body>
-        <xsl:apply-templates select="./Section[@id='header']"/>
-        <xsl:apply-templates select="./Section[@id='signUp']"/>
-        <xsl:apply-templates select="./Section[@id='footer']"/>
+        <div id="soc-header">
+          <xsl:apply-templates select="./Section[@id='header']"/>
+        </div>
+        <div id="soc-leftcol">
+          <xsl:apply-templates select="./Section[@type='leftcol']"/>
+        </div>
+        <div id="soc-maincol">
+          <xsl:apply-templates select="./Section[@type='wide']"/>
+        </div>
+        <div id="soc-footer">
+          <xsl:apply-templates select="./Section[@id='footer']"/>
+        </div>
       </body>
     </html>
   </xsl:template>
-
+  
 </xsl:stylesheet>

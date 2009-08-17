@@ -134,6 +134,14 @@ public abstract class ManagerBase implements ApplicationContextAware, Initializi
     this.configFiles.addAll(configFiles);
   }
 
+  public void addConfigFile(String configFile) {
+    this.configFiles.add(configFile);
+  }
+
+  public void insertConfigFile(String configFile) {
+    this.configFiles.add(0, configFile);
+  }
+
   public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
     this.applicationContext = applicationContext;
   }

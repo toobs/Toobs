@@ -19,6 +19,7 @@ import org.toobsframework.pres.component.config.Parameter;
 import org.toobsframework.pres.doit.config.Action;
 import org.toobsframework.pres.doit.config.Actions;
 import org.toobsframework.pres.doit.config.DoIt;
+import org.toobsframework.pres.doit.controller.strategy.ForwardStrategy;
 import org.toobsframework.biz.validation.IValidator;
 import org.toobsframework.data.IObjectLoader;
 import org.toobsframework.data.beanutil.BeanMonkey;
@@ -26,7 +27,6 @@ import org.toobsframework.exception.ValidationException;
 import org.toobsframework.pres.component.dataprovider.api.IDataProvider;
 import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.pres.util.ParameterUtil;
-import org.toobsframework.pres.util.PresConstants;
 import org.toobsframework.search.index.ISingleIndexBuilder;
 import org.toobsframework.util.IRequest;
 import org.toobsframework.util.constants.PlatformConstants;
@@ -40,7 +40,7 @@ public class DoItRunner implements IDoItRunner {
 
   private IDataProvider dataProvider;
 
-  public void runDoIt(IRequest request, DoIt doIt, Map<String,Object> paramMap, Map<String,Object> responseMap) throws Exception 
+  public void runDoIt(IRequest request, DoIt doIt) throws Exception 
   {
     // Run Actions
     Action thisAction = null;
@@ -49,6 +49,8 @@ public class DoItRunner implements IDoItRunner {
 
       String multipleActionsKey = "defaultAction";
       String[] multipleActionsAry = new String[] {""};
+      Map<String,Object> paramMap = request.getParams();
+      Map<String,Object> responseMap = request.getResponseParams();
       try {
         if(actionsObj.getMultipleActionsKey() != null && !actionsObj.getMultipleActionsKey().equals("")) {
           multipleActionsKey = actionsObj.getMultipleActionsKey();
@@ -90,7 +92,7 @@ public class DoItRunner implements IDoItRunner {
       catch (Exception e) {
         if (e.getCause() instanceof ValidationException) {
           log.warn("Caught validation exception.");
-          this.pullErrorObjectsIntoRequest(request, doIt, paramMap, responseMap, multipleActionsKey, multipleActionsAry, (ValidationException)e);
+          this.pullErrorObjectsIntoRequest(request, doIt, paramMap, responseMap, multipleActionsKey, multipleActionsAry, (ValidationException)e.getCause());
         }
         throw e;
       }
@@ -145,9 +147,12 @@ public class DoItRunner implements IDoItRunner {
         }
         */
       } catch (Exception e) {
+        /* TODO Check to see if making responseParams work as error forward params
+         * cause this sucks balls
         if (e.getCause() instanceof ValidationException) {
           responseParams.put("ErrorForwardParams", params.get("ErrorForwardParams"));
         }
+        */
         throw e;
       }
     } else if (actionType.equalsIgnoreCase("cookieAction")) {
@@ -355,8 +360,8 @@ public class DoItRunner implements IDoItRunner {
         globalErrorObjects.addAll(instanceErrorObjects);
       }      
       // put the populated error objs in the request scope.
-      responseMap.put(PresConstants.VALIDATION_ERROR_OBJECTS, globalErrorObjects);
-      responseMap.put(PresConstants.VALIDATION_ERROR_MESSAGES, globalErrorMessages);
+      responseMap.put(ForwardStrategy.VALIDATION_ERROR_OBJECTS, globalErrorObjects);
+      responseMap.put(ForwardStrategy.VALIDATION_ERROR_MESSAGES, globalErrorMessages);
       
     }
     

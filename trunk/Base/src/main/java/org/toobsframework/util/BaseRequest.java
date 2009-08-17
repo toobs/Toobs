@@ -1,37 +1,43 @@
 package org.toobsframework.util;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.toobsframework.pres.url.UrlDispatchInfo;
+
 public class BaseRequest implements IRequest {
-  private HttpServletRequest httpRequest;
-  HttpServletResponse httpResponse;
+  private final UrlDispatchInfo dispatchInfo;
+  private final HttpServletRequest httpRequest;
+  private final HttpServletResponse httpResponse;
   private Map<String,Object> params;
+  private Map<String,Object> responseParams;
+
+  public BaseRequest(UrlDispatchInfo dispatchInfo, HttpServletRequest httpRequest, HttpServletResponse httpResponse, Map<String,Object> params, boolean expectResponse) {
+    this.dispatchInfo = dispatchInfo;
+    this.httpRequest = httpRequest;
+    this.httpResponse = httpResponse;
+    this.params = params;
+    if (expectResponse) {
+      this.setResponseParams(new HashMap<String,Object>());
+    }
+  }
+  
 
   public Map<String,Object> getParams() {
     return params;
   }
 
-  public void setParams(Map<String,Object> params) {
+  public void setParams(Map<String, Object> params) {
     this.params = params;
   }
-  
-  public BaseRequest(HttpServletRequest httpRequest, HttpServletResponse httpResponse, Map<String,Object> params) {
-    this.httpRequest = httpRequest;
-    this.httpResponse = httpResponse;
-    this.params = params;
-  }
-  
+
   public HttpServletRequest getHttpRequest() {
     return httpRequest;
   }
 
-  public void setHttpRequest(HttpServletRequest httpRequest) {
-    this.httpRequest = httpRequest;
-  }
-  
   public Boolean getSingleBooleanParam(String paramName) {
     Object param = this.params.get(paramName);
     if (param != null && param.getClass().isArray()) {
@@ -75,8 +81,16 @@ public class BaseRequest implements IRequest {
   public HttpServletResponse getHttpResponse() {
     return httpResponse;
   }
-  
-  public void setHttpResponse(HttpServletResponse httpResponse) {
-    this.httpResponse = httpResponse;
+
+  public Map<String,Object> getResponseParams() {
+    return responseParams;
+  }
+
+  public void setResponseParams(Map<String,Object> responseParams) {
+    this.responseParams = responseParams;
+  }
+
+  public UrlDispatchInfo getDispatchInfo() {
+    return dispatchInfo;
   }
 }

@@ -9,8 +9,13 @@ public class ComponentLayoutNotFoundException extends BaseException {
   private static final long serialVersionUID = 1L;
   private String componentLayoutId;
   
+  public ComponentLayoutNotFoundException(String componentLayoutId) {
+    super("Component with Id " + componentLayoutId + " not found in registry");
+    this.componentLayoutId = componentLayoutId;
+  }
+
   public void setComponentLayoutId(String componentLayoutId) {
-      this.componentLayoutId = componentLayoutId;
+    this.componentLayoutId = componentLayoutId;
   }
   
   public String getComponentLayoutId() {

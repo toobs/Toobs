@@ -32,4 +32,5 @@ public class CreateBrowsingContext {
     } else {
       return o.toString();
     }
-  }}
+  }
+}

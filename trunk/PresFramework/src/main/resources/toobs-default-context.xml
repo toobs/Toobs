@@ -8,6 +8,7 @@
   <bean id="toobsDefaultPlaceholderConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
     <property name="properties">
       <props>
+        <prop key="toobs.enableParallel">false</prop>
         <prop key="toobs.doReload">true</prop>
         <prop key="toobs.useChain">true</prop>
       </props>
@@ -18,6 +19,7 @@
   <bean id="toobsConfiguration" class="org.toobsframework.util.Configuration" lazy-init="true">
     <property name="properties">
       <props>
+        <prop key="toobs.doReload">${toobs.enableParallel}</prop>
         <prop key="toobs.doReload">${toobs.doReload}</prop>
         <prop key="toobs.useChain">${toobs.useChain}</prop>
       </props>
@@ -47,8 +49,11 @@
   <bean id="doItHandler" class="org.toobsframework.pres.doit.controller.DoItHandler" lazy-init="true">
     <property name="doItManager" ref="doItManager"/>
     <property name="doItRunner" ref="doItRunner"/>
+    <property name="forwardStrategy" ref="forwardStrategy"/>
     <property name="componentRequestManager" ref="componentRequestManager"/>
   </bean>
+
+  <bean id="forwardStrategy" class="org.toobsframework.pres.doit.controller.strategy.DefaultForwardStrategy"/>
 
   <bean id="xslResolver" class="org.toobsframework.transformpipeline.domain.XSLUriResolverImpl">
     <property name="contextBase">
@@ -68,6 +73,7 @@
 
   <bean id="componentLayoutManager" class="org.toobsframework.pres.layout.manager.ComponentLayoutManager" lazy-init="true">
     <property name="xslResolver" ref="xslResolver"/>
+    <property name="componentManager" ref="componentManager"/>
     <property name="configFiles">
       <list>
         <value>/WEB-INF/**/*.clc.xml</value>
@@ -104,7 +110,18 @@
     <property name="componentRequestManager" ref="componentRequestManager"/>
   </bean>
 
-  <bean id="componentRequestManager" class="org.toobsframework.pres.util.ComponentRequestManager" lazy-init="true"/>
+  <bean id="parallelTaskExecutor" class="org.springframework.scheduling.backportconcurrent.ThreadPoolTaskExecutor">
+    <property name="corePoolSize" value="10"/>
+    <property name="maxPoolSize" value="100"/>
+    <property name="queueCapacity" value="250"/>
+    <property name="rejectedExecutionHandler">
+      <bean id="callerRunsPolicy" class="edu.emory.mathcs.backport.java.util.concurrent.ThreadPoolExecutor$CallerRunsPolicy"/>
+    </property>  
+  </bean>
+
+  <bean id="componentRequestManager" class="org.toobsframework.pres.util.ComponentRequestManager" lazy-init="true">
+    <property name="parallelTaskExecutor" ref="parallelTaskExecutor"/>
+  </bean>
 
   <bean id="transformerHelper" class="org.toobsframework.pres.xsl.ComponentTransformerHelper" lazy-init="true">
     <property name="configuration" ref="toobsConfiguration"/>

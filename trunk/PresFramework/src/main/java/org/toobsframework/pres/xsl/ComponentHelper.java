@@ -1,5 +1,7 @@
 package org.toobsframework.pres.xsl;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -16,8 +18,10 @@ import org.apache.xalan.transformer.TransformerImpl;
 import org.apache.xml.serializer.SerializationHandler;
 import org.toobsframework.data.beanutil.BeanMonkey;
 import org.toobsframework.pres.component.Component;
+import org.toobsframework.pres.component.ParallelComponent;
 import org.toobsframework.pres.component.Transform;
 import org.toobsframework.pres.component.config.Parameter;
+import org.toobsframework.pres.util.IComponentRequest;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.pres.util.PresConstants;
 import org.toobsframework.tags.TagBase;
@@ -96,27 +100,33 @@ public class ComponentHelper extends TagBase {
     // Compute result
     Random randomGenerator = new Random();
     StringBuffer sb = new StringBuffer(); 
-    IRequest request = getComponentRequest(processorContext);
+    IComponentRequest request = getComponentRequest(processorContext);
     if (request == null) {
-      throw new TransformerException("Internal error: Invalid request passed to the layout throught the " + IXMLTransformer.TRANSFORMER_HELPER);
+      throw new TransformerException("Internal error: Invalid request passed to the layout through the " + IXMLTransformer.TRANSFORMER_HELPER);
     }
-    
+
     try {
   
       if(loader.equalsIgnoreCase("direct")) {
-        Map<String, Object> inParams = getRequestParameters(request, "Component:", componentId, request.getParams(), parameterList);
-        Component component = transformerHelper.getComponentManager().getComponent(ParameterUtil.resolveParam(request, componentId, inParams)[0]);
-        appendStyle(sb, component);
-        String randId = componentId + "_"+ randomGenerator.nextInt();
-        if(transformerHelper.getConfiguration().isDebug() && !component.getId().equalsIgnoreCase("componentFrame")) {
-          prependDebug(sb, component, randId, contentType);
+        ParallelComponent pc = null;
+        if ( (pc = request.getParallelComponent(componentId)) !=null ) {
+          appendStyle(sb, pc.getComponent());
+          sb.append(new String(pc.getOutput().toByteArray()));
+          appendControllers(sb, pc.getComponent());
+        } else {
+          Map<String, Object> inParams = getRequestParameters(request, "Component:", componentId, request.getParams(), parameterList);
+          Component component = transformerHelper.getComponentManager().getComponent(ParameterUtil.resolveParam(request, componentId, inParams)[0]);
+          appendStyle(sb, component);
+          String randId = componentId + "_"+ randomGenerator.nextInt();
+          if(transformerHelper.getConfiguration().isDebug() && !component.getId().equalsIgnoreCase("componentFrame")) {
+            prependDebug(sb, component, randId, contentType);
+          }
+          sb.append(transformerHelper.getComponentManager().renderComponent(request, component, contentType, inParams, request.getParams(), transformerHelper, false));
+          if(transformerHelper.getConfiguration().isDebug() && !component.getId().equalsIgnoreCase("componentFrame")) {
+            appendDebug(sb, component, randId, contentType);
+          }
+          appendControllers(sb, component);
         }
-        sb.append(transformerHelper.getComponentManager().renderComponent(request, component, contentType, inParams, request.getParams(), transformerHelper, false));
-        if(transformerHelper.getConfiguration().isDebug() && !component.getId().equalsIgnoreCase("componentFrame")) {
-          appendDebug(sb, component, randId, contentType);
-        }
-        appendControllers(sb, component);
-        
       } else if (loader.equalsIgnoreCase("lazy")) {
         Map inParams = getRequestParameters(request, "Component:", componentId, new HashMap(), parameterList);
         appendLazyAJAXCall(transformerHelper, sb, componentId, inParams);
@@ -237,13 +247,13 @@ public class ComponentHelper extends TagBase {
     transformer.setParameter(COMPONENT_HELPER_PARAMETERS, new Boolean(false));
 
     // Compute Results
-    IRequest request = getComponentRequest(processorContext);
+    IComponentRequest request = getComponentRequest(processorContext);
     if (request == null) {
-      throw new TransformerException("Internal error: Invalid request passed to the layout throught the " + IXMLTransformer.TRANSFORMER_HELPER);
+      throw new TransformerException("Internal error: Invalid request passed to the layout through the " + IXMLTransformer.TRANSFORMER_HELPER);
     }
 
     try {
-      request.setParams(getRequestParameters(request, "Layout:", layoutId, request.getParams(), parameterList));      
+      request.setParams(getRequestParameters(request, "Layout:", layoutId, request.getParams(), parameterList));
       String s = transformerHelper.getComponentLayoutManager().getLayout(ParameterUtil.resolveParam(request, layoutId, request.getParams())[0]).render(request, transformerHelper);
       serialize(processorContext, extensionElement, s, false);
     } catch (Exception ex) {
@@ -285,9 +295,9 @@ public class ComponentHelper extends TagBase {
     String contentType = getStringProperty("contentType", "xhtml", processorContext, extensionElement);
     
     // Compute Results
-    IRequest request = getComponentRequest(processorContext);
+    IComponentRequest request = getComponentRequest(processorContext);
     if (request == null) {
-      throw new TransformerException("Internal error: Invalid request passed to the layout throught the " + IXMLTransformer.TRANSFORMER_HELPER);
+      throw new TransformerException("Internal error: Invalid request passed to the layout through the " + IXMLTransformer.TRANSFORMER_HELPER);
     }
     try {
       StringBuffer sb = new StringBuffer(); 
@@ -366,7 +376,7 @@ public class ComponentHelper extends TagBase {
     // Compute Results
     IRequest request = getComponentRequest(processorContext);
     if (request == null) {
-      throw new TransformerException("Internal error: Invalid request passed to the layout throught the " + IXMLTransformer.TRANSFORMER_HELPER);
+      throw new TransformerException("Internal error: Invalid request passed to the layout through the " + IXMLTransformer.TRANSFORMER_HELPER);
     }
     try {
       
@@ -386,7 +396,70 @@ public class ComponentHelper extends TagBase {
       throw new TransformerException("Error inserting action=" + action + ": " + ex.getMessage(), ex);
     }
   }
-   
+
+  public void displayExceptionMessage(XSLProcessorContext processorContext, ElemExtensionCall extensionElement) throws TransformerException {
+
+    // Initialize
+    IRequest componentRequest = getComponentRequest(processorContext);
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("<pre>\n");
+    try {
+      if (componentRequest == null) {
+        throw new TransformerException("Internal error: Invalid request passed to the layout through the " + IXMLTransformer.TRANSFORMER_HELPER);
+      }
+      Object exObj = componentRequest.getParam(PresConstants.TOOBS_EXCEPTION_ATTR_NAME);
+      if (exObj != null && exObj instanceof Throwable ) {
+        Throwable t = (Throwable) exObj;
+        sb.append(t.getMessage());
+      }
+    } catch (Exception e) {
+      sb.append("Unable to display exception message caused by: ").append(e.getMessage());
+    }
+    sb.append("\n</pre>");
+    try {
+      serialize(processorContext, extensionElement, sb.toString(), false);
+    } catch (Exception e) {
+      throw new TransformerException(e);
+    }
+  }
+
+  public void displayExceptionStack(XSLProcessorContext processorContext, ElemExtensionCall extensionElement) throws TransformerException {
+
+    // Initialize
+    ComponentTransformerHelper transformerHelper = getTransformerHelper(processorContext);
+    IRequest componentRequest = getComponentRequest(processorContext);
+
+    StringWriter sb = new StringWriter();
+    sb.append("<pre>\n");
+    try {
+      if (componentRequest == null) {
+        throw new TransformerException("Internal error: Invalid request passed to the layout through the " + IXMLTransformer.TRANSFORMER_HELPER);
+      }
+      Object exObj = componentRequest.getParam(PresConstants.TOOBS_EXCEPTION_ATTR_NAME);
+      if (exObj != null && exObj instanceof Throwable ) {
+        Throwable t = (Throwable) exObj;
+        sb.append("Exception message: ").append(t.getMessage()).append('\n');
+        if (transformerHelper.getConfiguration().showStackTrace()) {
+          PrintWriter pw = new PrintWriter(sb); 
+          t.printStackTrace(pw);
+        }
+      }
+    } catch (Exception e) {
+      sb.append("Unable to display exception caused by: ").append(e.getMessage()).append('\n');
+      if (transformerHelper.getConfiguration().showStackTrace()) {
+        PrintWriter pw = new PrintWriter(sb); 
+        e.printStackTrace(pw);
+      }
+    }
+    sb.append("\n</pre>");
+    try {
+      serialize(processorContext, extensionElement, sb.toString(), false);
+    } catch (Exception e) {
+      throw new TransformerException(e);
+    }
+  }
+
   /*
   public String getUserAgent(ComponentTransformerHelper transformerHelper) throws XMLTransformerException {
     try {
@@ -402,16 +475,6 @@ public class ComponentHelper extends TagBase {
   }*/
   
   // ----------------------------------- END Public Tag Definitions --------------------------------------- //
-
-  
-  protected long getDeployTime(IRequest request) {
-    long deployTime = 0L;
-    if (request.getParams().containsKey(PresConstants.DEPLOY_TIME)) {
-      deployTime = Long.parseLong((String)request.getParams().get(PresConstants.DEPLOY_TIME));
-    }
-    return deployTime;
-  }
-
 
   protected void appendLazyAJAXCall(ComponentTransformerHelper transformerHelper, StringBuffer sb, String componentId, Map parameters) {
     Random randomGenerator = new Random();

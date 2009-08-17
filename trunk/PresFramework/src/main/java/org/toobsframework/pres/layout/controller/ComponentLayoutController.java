@@ -8,11 +8,10 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.AbstractController;
 
-@SuppressWarnings("unchecked")
 public class ComponentLayoutController extends AbstractController {
 
   private static Log log = LogFactory.getLog(ComponentLayoutController.class);
-  
+
   private IComponentLayoutHandler componentLayoutHandler;
   
   /**
@@ -26,10 +25,6 @@ public class ComponentLayoutController extends AbstractController {
    */
   public ModelAndView handleRequestInternal(HttpServletRequest request, HttpServletResponse response) throws Exception {
     return componentLayoutHandler.handleRequestInternal(request, response);
-  }
-
-  public IComponentLayoutHandler getComponentLayoutHandler() {
-    return componentLayoutHandler;
   }
 
   public void setComponentLayoutHandler(

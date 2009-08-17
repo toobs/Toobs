@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Layouts xmlns="http://www.toobsframework.org/schema/layout" xmlns:cc="http://www.toobsframework.org/schema/component"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+  http://www.toobsframework.org/schema/layout http://www.toobsframework.org/schema/componentLayoutConfig-0.1.0.xsd
+  http://www.toobsframework.org/schema/component http://www.toobsframework.org/schema/componentConfig-0.1.0.xsd">
+
+  <Layout id="error">
+    <cc:Pipeline>
+      <cc:ContentType contentType="xhtml">
+        <cc:Transform name="internal/layouts/error">
+        </cc:Transform>
+      </cc:ContentType>
+    </cc:Pipeline>
+  </Layout>
+
+  <Layout id="missing">
+    <cc:Pipeline>
+      <cc:ContentType contentType="xhtml">
+        <cc:Transform name="internal/layouts/error">
+        </cc:Transform>
+      </cc:ContentType>
+    </cc:Pipeline>
+  </Layout>
+
+  <Layout id="denied">
+    <cc:Pipeline>
+      <cc:ContentType contentType="xhtml">
+        <cc:Transform name="internal/layouts/error">
+        </cc:Transform>
+      </cc:ContentType>
+    </cc:Pipeline>
+  </Layout>
+</Layouts>

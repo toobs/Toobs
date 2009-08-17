@@ -15,19 +15,25 @@ import java.util.Set;
 
 import org.toobsframework.pres.layout.ComponentLayoutInitializationException;
 import org.toobsframework.pres.layout.ComponentLayoutNotFoundException;
+import org.toobsframework.pres.layout.ComponentRef;
 import org.toobsframework.pres.base.XslManagerBase;
+import org.toobsframework.pres.component.Component;
+import org.toobsframework.pres.component.ComponentInitializationException;
+import org.toobsframework.pres.component.ComponentNotFoundException;
 import org.toobsframework.pres.component.config.ContentType;
+import org.toobsframework.pres.component.manager.ComponentManager;
 import org.toobsframework.pres.layout.RuntimeLayout;
 import org.toobsframework.pres.layout.RuntimeLayoutConfig;
-import org.toobsframework.pres.layout.config.ComponentRef;
 import org.toobsframework.pres.layout.config.Layout;
 import org.toobsframework.pres.layout.config.Layouts;
 import org.toobsframework.pres.layout.config.Section;
+import org.toobsframework.pres.util.PresConstants;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
 import org.toobsframework.exception.PermissionException;
 
 public final class ComponentLayoutManager extends XslManagerBase implements IComponentLayoutManager {
 
+  private ComponentManager componentManager;
   private Map<String, RuntimeLayout> runtimeRegistry;
   private Map<String, LayoutConfigHolder> configRegistry;
 
@@ -39,12 +45,12 @@ public final class ComponentLayoutManager extends XslManagerBase implements ICom
   public void afterPropertiesSet() throws Exception {
     super.afterPropertiesSet();
     configRegistry = new LinkedHashMap<String, LayoutConfigHolder>();
+    this.insertConfigFile(PresConstants.TOOBS_INTERNAL_ERROR_CONFIG_LAYOUTS);
     loadConfig(Layouts.class);
     configureRegistry();
   }
 
-  public RuntimeLayout getLayout(String Id)
-      throws ComponentLayoutNotFoundException, ComponentLayoutInitializationException {
+  public RuntimeLayout getLayout(String layoutId) throws ComponentLayoutNotFoundException, ComponentLayoutInitializationException {
     if (isDoReload()) {
       Date initStart = new Date();
       this.loadConfig(Layouts.class);
@@ -52,14 +58,14 @@ public final class ComponentLayoutManager extends XslManagerBase implements ICom
       Date initEnd = new Date();
       log.info("Init Time: " + (initEnd.getTime() - initStart.getTime()));
     }
-    if (!runtimeRegistry.containsKey(Id)) {
-      ComponentLayoutNotFoundException ex = new ComponentLayoutNotFoundException();
-      ex.setComponentLayoutId(Id);
-      throw ex;
+
+    if (!runtimeRegistry.containsKey(layoutId)) {
+      throw new ComponentLayoutNotFoundException(layoutId);
     }
-    return (RuntimeLayout) runtimeRegistry.get(Id);
+
+    return (RuntimeLayout) runtimeRegistry.get(layoutId);
   }
-  
+
   public RuntimeLayout getLayout(PermissionException permissionException)
     throws ComponentLayoutNotFoundException, ComponentLayoutInitializationException {
     String objectErrorPage = permissionException.getAction() + permissionException.getObjectTypeName();
@@ -157,11 +163,17 @@ public final class ComponentLayoutManager extends XslManagerBase implements ICom
           throw new ComponentLayoutInitializationException("Layout " + compLayout.getId() + 
               " cannot extend " + extension + " cause it does not exist or has not yet been loaded");
         }
-        layoutConfig.addParam(extendConfig.getAllParams());
-        layoutConfig.addTransformParam(extendConfig.getAllTransformParams());
+        if (extendConfig.getAllParams() != null) {
+          layoutConfig.addParam(extendConfig.getAllParams());
+        }
+        if (extendConfig.getAllTransformParams() != null) {
+          layoutConfig.addTransformParam(extendConfig.getAllTransformParams());
+        }
 
-        tempSections.addAll(extendConfig.getAllSections());
-        
+        if (extendConfig.getAllSections() != null) {
+          tempSections.addAll(extendConfig.getAllSections());
+        }
+
         //layoutConfig.addSection(extendConfig.getAllSections());
         layoutConfig.setNoAccessLayout(extendConfig.getNoAccessLayout());
         //layout.addTransform(extend.getAllTransforms());
@@ -182,7 +194,28 @@ public final class ComponentLayoutManager extends XslManagerBase implements ICom
     }
 
     sortSections(tempSections);
+
     layoutConfig.addSection(tempSections);
+    for (Section section : tempSections) {
+      for (int i = 0; i < section.getComponentRefCount(); i++) {
+        org.toobsframework.pres.layout.config.ComponentRef componentRef = section.getComponentRef(i);
+        try {
+          Component component = componentManager.getComponent(componentRef.getComponentId());
+          if (componentRef.getLoader().toString().equalsIgnoreCase("direct")) {
+            layoutConfig.addComponentRef(new ComponentRef(component, componentRef.getParameters() ) );
+          }
+        } catch (ComponentNotFoundException e) {
+          throw new ComponentLayoutInitializationException(
+              "Layout " + compLayout.getId() + " could not be initialized. Referenced component " +
+              componentRef.getComponentId() + " could not be found");
+        } catch (ComponentInitializationException e) {
+          throw new ComponentLayoutInitializationException(
+              "Layout " + compLayout.getId() + " could not be initialized. Referenced component " +
+              componentRef.getComponentId() + " failed to initialize: " + e.getMessage(), e);
+        }
+      }
+    }
+
     //layoutConfig.addSection(compLayout.getSection());
 
     if (compLayout.getNoAccessLayout() != null) {
@@ -236,15 +269,15 @@ public final class ComponentLayoutManager extends XslManagerBase implements ICom
   }
 
   private static Section sortComponents(Section sec) {
-    List<ComponentRef> compRefs = Arrays.asList( sec.getComponentRef() );
+    List<org.toobsframework.pres.layout.config.ComponentRef> compRefs = Arrays.asList( sec.getComponentRef() );
 
-    Collections.sort(compRefs, new Comparator<ComponentRef>() {
-      public int compare(ComponentRef o1, ComponentRef o2) {
+    Collections.sort(compRefs, new Comparator<org.toobsframework.pres.layout.config.ComponentRef>() {
+      public int compare(org.toobsframework.pres.layout.config.ComponentRef o1, org.toobsframework.pres.layout.config.ComponentRef o2) {
         return o1.getOrder() - o2.getOrder();
       }
     });
 
-    ComponentRef[] sortedRefs = new ComponentRef[compRefs.size()];
+    org.toobsframework.pres.layout.config.ComponentRef[] sortedRefs = new org.toobsframework.pres.layout.config.ComponentRef[compRefs.size()];
     sec.setComponentRef(compRefs.toArray(sortedRefs));
     return sec;
   }
@@ -255,6 +288,10 @@ public final class ComponentLayoutManager extends XslManagerBase implements ICom
         return o1.getOrder() - o2.getOrder();
       }
     });
+  }
+
+  public void setComponentManager(ComponentManager componentManager) {
+    this.componentManager = componentManager;
   }
 
   private class LayoutConfigHolder {

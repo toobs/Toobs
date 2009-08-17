@@ -1,22 +1,29 @@
 package org.toobsframework.pres.component.controller;
 
-import java.io.PrintWriter;
+import java.io.IOException;
 import java.util.Date;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.springframework.web.util.UrlPathHelper;
 import org.springframework.web.servlet.ModelAndView;
+
+import org.toobsframework.exception.ParameterException;
+import org.toobsframework.pres.base.HandlerBase;
+import org.toobsframework.pres.base.strategy.DefaultMissingResourceStrategy;
 import org.toobsframework.pres.component.Component;
+import org.toobsframework.pres.component.ComponentException;
+import org.toobsframework.pres.component.ComponentInitializationException;
+import org.toobsframework.pres.component.ComponentNotFoundException;
+import org.toobsframework.pres.component.ComponentNotInitializedException;
 import org.toobsframework.pres.component.manager.IComponentManager;
+import org.toobsframework.pres.layout.ComponentLayoutInitializationException;
+import org.toobsframework.pres.layout.ComponentLayoutNotFoundException;
+import org.toobsframework.pres.url.UrlDispatchInfo;
 import org.toobsframework.pres.util.ComponentRequestManager;
-import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.pres.util.PresConstants;
 import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
+import org.toobsframework.util.IRequest;
 
 /**
 * Controller that transforms the virtual filename at the end of a URL
@@ -28,108 +35,135 @@ import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 * 
 * @author Sean
 */
-@SuppressWarnings("unchecked")
-public class ComponentViewHandler implements IComponentViewHandler {
+public class ComponentViewHandler extends HandlerBase implements IComponentViewHandler {
 
-  private static Log log = LogFactory.getLog(ComponentViewController.class);
-  
-  private UrlPathHelper urlPathHelper = new UrlPathHelper();
-  
   private IComponentManager componentManager = null;
-  private ComponentRequestManager componentRequestManager = null;
   private IXMLTransformerHelper transformerHelper = null;
+
+  public void afterPropertiesSet() throws Exception {
+    super.afterPropertiesSet();
+    if (this.getMissingResourceStrategy() == null) {
+      this.setMissingResourceStrategy(new DefaultMissingResourceStrategy());
+    }
+  }
+
+  @Override
+  protected ModelAndView handleRequestInternal(HttpServletRequest request, HttpServletResponse response, UrlDispatchInfo dispatchInfo) throws Exception {
   
-  /**
-   * 
-   * Retrieves the URL path to use for lookup and delegates to
-   * <code>getViewNameForUrlPath</code>.
-   * 
-   * @throws Exception Exception fetching or rendering component.
-   * @see #getViewNameForUrlPath
-   * 
-   */
-  public ModelAndView handleRequestInternal(HttpServletRequest request, HttpServletResponse response) throws Exception {
-  
-    String output = "";
-    String urlPath = this.urlPathHelper.getLookupPathForRequest(request);
-    String contextPath = ParameterUtil.extractContextPathFromUrlPath(urlPath);
-    String componentId = ParameterUtil.extractViewNameFromUrlPath(urlPath);
+    String componentId = dispatchInfo.getResourceId();
     if (log.isDebugEnabled()) {
-      log.debug("Rendering component '" + componentId + "' for lookup path: " + urlPath);
+      log.debug("Rendering component '" + componentId + "' for lookup path: " + dispatchInfo.getOriginalPath());
     }
-    
-    //Get settings out of request
-    String contentType = (String) request.getParameter("pipelineContentType");
-    if(contentType == null) {
-      contentType = "xhtml";
-    }
+
+    // Set expectResponse to true so a security strategy can return params if needed
+    IRequest componentRequest = this.setupComponentRequest(dispatchInfo, request, response, true);
+
     Date startTime = null;
     if (log.isDebugEnabled()) {
       startTime = new Date();
     }
-    //Get component and render it.
-    if(null != componentId && !componentId.equals("")) {
-      Component component = this.componentManager.getComponent(componentId);
-      boolean isTilesRequest = true;
-      if (request.getAttribute(PresConstants.TILES_REQUEST_LOCAL) == null) {
-        log.info("Setting component level request");
-        request.setAttribute("contextPath", contextPath + (contextPath.length() > 0 ? "/" : ""));
-        request.setAttribute("appContext", contextPath);
-        Map params = ParameterUtil.buildParameterMap(request, true);
-        componentRequestManager.set(request, response, params);
-        isTilesRequest = false;
-      }
+
+    Component component = null;
+
+    try {
+
       try {
-        output = this.componentManager.renderComponent(componentRequestManager.get(), component, contentType, componentRequestManager.get().getParams(), componentRequestManager.get().getParams(), transformerHelper, true);
-      } catch (Exception e) {
-        throw e;
-      } finally {
-        if (!isTilesRequest) {
-          this.componentRequestManager.unset();
-        }
+        //Set the output format for the layout
+        request.setAttribute("outputFormat", dispatchInfo.getContentType());
+
+        component = this.componentManager.getComponent(componentId);
+        this.renderSecureComponent(componentRequest, component);
+
+      } catch (ComponentNotFoundException cnfe) {
+        log.warn("Component " + dispatchInfo.getResourceId() + " not found.");
+        this.renderMissingComponent(componentRequest, dispatchInfo.getResourceId());
       }
-    } else {
-      throw new Exception ("No componentId specified");
+
+    } catch (Exception e) {
+      this.renderErrorComponent(componentRequest, e );
+    } finally {
+      this.componentRequestManager.unset();
     }
-  
-    //Write out to the response.
-    response.setContentType("text/html; charset=UTF-8");
-    response.setHeader("Pragma",        "no-cache");                // HTTP 1.0
-    response.setHeader("Cache-Control", "no-cache, must-revalidate, private");        // HTTP 1.1
-    PrintWriter writer = response.getWriter();
-    writer.print(output);
-    writer.flush();
-    
+
     if (log.isDebugEnabled()) {
       Date endTime = new Date();
       log.debug("Time [" + componentId + "] - " + (endTime.getTime() - startTime.getTime()));
     }
+
     return null;
-  
   }
-  
-  public IComponentManager getComponentManager() {
-    return componentManager;
+
+  private void renderSecureComponent(IRequest componentRequest, Component component) throws ComponentException, ParameterException, IOException, ComponentInitializationException, ComponentNotFoundException, ComponentNotInitializedException {
+
+    boolean hasAccess = true;
+    if (this.getResourceSecurityStrategy() != null) {
+      hasAccess = this.getResourceSecurityStrategy().hasAccess(componentRequest, component.getId());
+    }
+
+    if (!hasAccess) {
+      component = this.getNoAccessComponent(componentRequest);
+    }
+
+    this.renderComponent(componentRequest, component);
   }
-  
-  public void setComponentManager(IComponentManager componentManager) {
-    this.componentManager = componentManager;
+
+  protected void renderMissingComponent(IRequest componentRequest, String componentId) throws ComponentException, ParameterException, ComponentNotInitializedException, ComponentInitializationException, ComponentNotFoundException, IOException {
+    componentRequest.getParams().put(PresConstants.TOOBS_EXCEPTION_ATTR_NAME, new ComponentNotFoundException(componentId));
+    this.renderComponent(componentRequest, this.getMissingComponent(componentRequest));
   }
-  
-  public ComponentRequestManager getComponentRequestManager() {
-    return componentRequestManager;
+
+  protected void renderErrorComponent(IRequest componentRequest, Exception e) throws ComponentException, ParameterException, ComponentNotInitializedException, ComponentInitializationException, ComponentNotFoundException, IOException {
+    componentRequest.getParams().put(PresConstants.TOOBS_EXCEPTION_ATTR_NAME, e);
+    this.renderComponent(componentRequest, getErrorComponent(componentRequest));
   }
-  
-  public void setComponentRequestManager(
-      ComponentRequestManager componentRequestManager) {
-    this.componentRequestManager = componentRequestManager;
+
+  protected void renderComponent(IRequest componentRequest, Component component) throws ComponentException, ParameterException, IOException, ComponentNotInitializedException {
+    component.renderStream(getOutputStream(componentRequest), componentRequest, componentRequest.getDispatchInfo().getContentType(), transformerHelper);
   }
 
   /**
-   * @return the transformerHelper
+   * Get the id of the error component to use based on information in the component request
+   * and return the associated component
+   * 
+   * Default method returns a constant value
+   * 
+   * @param request - the httpRequest
+   * @param response - the httpResponse
+   * @throws ComponentLayoutInitializationException 
+   * @throws ComponentLayoutNotFoundException 
    */
-  public IXMLTransformerHelper getTransformerHelper() {
-    return transformerHelper;
+  protected Component getErrorComponent(IRequest componentRequest) throws ComponentInitializationException, ComponentNotFoundException {
+    try {
+      return this.componentManager.getComponent(configuration.getErrorComponentName());
+    } catch (ComponentNotFoundException e) {
+      return this.getMissingComponent(componentRequest);
+    }
+  }
+
+  protected Component getNoAccessComponent(IRequest componentRequest) throws ComponentInitializationException, ComponentNotFoundException {
+    try {
+      String componentId = this.getResourceSecurityStrategy().resolveNoAccessLayout(componentRequest);
+      return this.componentManager.getComponent(componentId);
+    } catch (ComponentNotFoundException e) {
+      return this.getMissingComponent(componentRequest);
+    }
+  }
+
+  protected Component getMissingComponent(IRequest componentRequest) throws ComponentInitializationException, ComponentNotFoundException {
+    try {
+      String componentId = this.getMissingResourceStrategy().resolveMissingLayout(componentRequest);
+      return this.componentManager.getComponent(componentId);
+    } catch (ComponentNotFoundException e) {
+      throw e;
+    }
+  }
+
+  public void setComponentManager(IComponentManager componentManager) {
+    this.componentManager = componentManager;
+  }
+
+  public void setComponentRequestManager(ComponentRequestManager componentRequestManager) {
+    this.componentRequestManager = componentRequestManager;
   }
 
   /**
@@ -138,5 +172,5 @@ public class ComponentViewHandler implements IComponentViewHandler {
   public void setTransformerHelper(IXMLTransformerHelper transformerHelper) {
     this.transformerHelper = transformerHelper;
   }
-  
+
 }

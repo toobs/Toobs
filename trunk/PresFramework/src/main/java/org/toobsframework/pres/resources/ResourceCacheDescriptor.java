@@ -10,6 +10,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 //import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.util.ResourceUtils;
 
 /**
  * Organize and keep all the resources associated to a pattern.  
@@ -81,7 +82,9 @@ public class ResourceCacheDescriptor {
   public Resource[] checkIfModified() throws IOException {
     Resource[] resources = applicationContext.getResources(pattern);
     if (resources == null || resources.length == 0) {
-      log.warn("Configuration file spec " + pattern + "did not resolve to any resource");
+      if (log.isDebugEnabled()) {
+        log.debug("Configuration file spec " + pattern + " did not resolve to any resource");
+      }
       if (resources == null) {
         resources = new Resource[0];
       }
@@ -115,8 +118,10 @@ public class ResourceCacheDescriptor {
     } else {
       resources = inResources;
     }
-    if (resources == null || resources.length == 0) {
-      log.warn("Configuration file spec " + pattern + "did not resolve to any resource");
+    if (log.isDebugEnabled()) {
+      if (resources == null || resources.length == 0) {
+        log.debug("Configuration file spec " + pattern + " did not resolve to any resource");
+      }
     }
     count = resources.length;
     lastModified = new long[count];
@@ -128,7 +133,9 @@ public class ResourceCacheDescriptor {
         continue;
       }
       File configFile = new File(configFileURL.getFile());
-      if (checkModificationDates) {
+      // Dont check modification dates for jar resources
+      // They report 0 for the file and we dont care when the jar was modified (for now at least)
+      if (checkModificationDates && ! ResourceUtils.isJarURL(configFileURL)) {
         if (log.isDebugEnabled()) {
           log.debug("Config: " + resources[i].getFilename() + " File Mod: " + new Date(configFile.lastModified()) + " Last Mod: " + new Date(lastModified[i]));
         }

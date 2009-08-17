@@ -43,13 +43,13 @@ import org.toobsframework.pres.layout.ComponentLayoutInitializationException;
 import org.toobsframework.pres.layout.RuntimeLayout;
 import org.toobsframework.pres.layout.config.Layout;
 import org.toobsframework.pres.layout.config.Layouts;
+import org.toobsframework.pres.util.IComponentRequest;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
 import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 import org.toobsframework.transformpipeline.domain.XMLTransformerException;
 import org.toobsframework.transformpipeline.domain.XMLTransformerFactory;
 import org.toobsframework.transformpipeline.domain.XSLUriResolverImpl;
 import org.toobsframework.util.FilesystemFilter;
-import org.toobsframework.util.IRequest;
 
 public class AppManager extends ManagerBase implements AppReader {
 
@@ -389,11 +389,11 @@ public class AppManager extends ManagerBase implements AppReader {
     }
   }
 
-  public String renderView(AppRequest appRequest, IRequest request, IXMLTransformerHelper transformerHelper) throws AppNotFoundException, ComponentException, ParameterException, ComponentNotInitializedException {
+  public String renderView(AppRequest appRequest, IComponentRequest request, IXMLTransformerHelper transformerHelper) throws AppNotFoundException, ComponentException, ParameterException, ComponentNotInitializedException {
     try {
       if (appRequest.getRequestType() == AppRequestTypeEnum.COMPONENT) {
         Component component = getApp(appRequest.getAppName()).getComponents().get(appRequest.getViewName());
-        component.render(request, appRequest.getContentType(), request.getParams(), transformerHelper, request.getParams(), null);
+        component.render(request, appRequest.getContentType(), request.getParams(), transformerHelper, request.getParams());
 
         return null;
       } else {
@@ -405,6 +405,8 @@ public class AppManager extends ManagerBase implements AppReader {
     } catch (ComponentLayoutInitializationException e) {
       throw new ComponentException(e);
     } catch (XMLTransformerException e) {
+      throw new ComponentException(e);
+    } catch (IOException e) {
       throw new ComponentException(e);
     }
   }

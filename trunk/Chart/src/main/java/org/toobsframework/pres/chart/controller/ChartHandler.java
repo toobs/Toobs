@@ -5,46 +5,40 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Date;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.jfree.chart.ChartRenderingInfo;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.imagemap.ImageMapUtilities;
 import org.jfree.chart.imagemap.StandardURLTagFragmentGenerator;
 import org.jfree.chart.imagemap.URLTagFragmentGenerator;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.util.UrlPathHelper;
 import org.springframework.web.util.WebUtils;
+
+import org.toobsframework.pres.base.HandlerBase;
 import org.toobsframework.pres.chart.ChartBuilder;
 import org.toobsframework.pres.chart.ChartDefinition;
 import org.toobsframework.pres.chart.ChartException;
 import org.toobsframework.pres.chart.ChartNotFoundException;
 import org.toobsframework.pres.chart.manager.IChartManager;
+import org.toobsframework.pres.url.UrlDispatchInfo;
 import org.toobsframework.pres.util.ComponentRequestManager;
-import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.util.Configuration;
+import org.toobsframework.util.IRequest;
 
-@SuppressWarnings("unchecked")
-public class ChartHandler implements IChartHandler, BeanFactoryAware {
+public class ChartHandler extends HandlerBase implements IChartHandler, BeanFactoryAware {
 
-  private static Log log = LogFactory.getLog(ChartHandler.class);
-  
-  private UrlPathHelper urlPathHelper = new UrlPathHelper();
-  
   private IChartManager chartManager = null;
   private ChartBuilder chartBuilder = null;
   private ComponentRequestManager componentRequestManager = null;
   private BeanFactory beanFactory;
-  private Configuration configuration;
 
   
   /**
@@ -56,15 +50,16 @@ public class ChartHandler implements IChartHandler, BeanFactoryAware {
    * @see #getViewNameForUrlPath
    * 
    */
-  public ModelAndView handleRequestInternal(HttpServletRequest request, HttpServletResponse response) throws Exception {
+  @Override
+  protected ModelAndView handleRequestInternal(HttpServletRequest request, HttpServletResponse response, UrlDispatchInfo dispatchInfo) throws Exception {
 
-    String urlPath = this.urlPathHelper.getLookupPathForRequest(request);
-
-    String chartId = extractViewNameFromUrlPath(urlPath);
+    String chartId = dispatchInfo.getResourceId();
     if (log.isDebugEnabled()) {
-      log.debug("Rendering chart '" + chartId + "' for lookup path: " + urlPath);
+      log.debug("Rendering chart '" + chartId + "' for lookup path: " + dispatchInfo.getOriginalPath());
     }
-    
+
+    IRequest componentRequest = this.setupComponentRequest(dispatchInfo, request, response, true);
+
     Date startTime = null;
     if (log.isDebugEnabled()) {
       startTime = new Date();
@@ -83,10 +78,8 @@ public class ChartHandler implements IChartHandler, BeanFactoryAware {
         throw cnfe;
       }
       try {
-        Map params = ParameterUtil.buildParameterMap(request);
-        componentRequestManager.set(request, response, params);
 
-        chart = chartBuilder.build(chartDef, componentRequestManager.get());
+        chart = chartBuilder.build(chartDef, componentRequest);
         width = chartDef.getChartWidth();
         height = chartDef.getChartHeight();
         
@@ -188,10 +181,6 @@ public class ChartHandler implements IChartHandler, BeanFactoryAware {
 
   public void setChartBuilder(ChartBuilder chartBuilder) {
     this.chartBuilder = chartBuilder;
-  }
-
-  public void setConfiguration(Configuration configuration) {
-    this.configuration = configuration;
   }
 
   public void setBeanFactory(BeanFactory beanFactory) throws BeansException {

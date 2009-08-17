@@ -28,8 +28,7 @@ import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.pres.util.ParameterUtil;
 
 @SuppressWarnings("unchecked")
-public class MultipartController extends CommonsMultipartResolver
-implements MultipartResolver {
+public class MultipartController extends CommonsMultipartResolver implements MultipartResolver {
 
   private static final String DEFAULT_ENCODING = "utf8"; 
 
@@ -50,7 +49,8 @@ implements MultipartResolver {
       MultipartParsingResult parsingResult = parseFileItems(fileItems, encoding, 0);
 
       Map params = ParameterUtil.buildParameterMap(request);
-      requestManager.set(request, null, params);
+      // Set expectResponse to true so a multipartResolver can return params if needed
+      requestManager.set(null, request, null, params, true);
 
       MultipartHttpServletRequest multiPartReq = new DefaultMultipartHttpServletRequest(
           request, parsingResult.getMultipartFiles(), parsingResult.getMultipartParameters()); 

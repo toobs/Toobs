@@ -15,6 +15,7 @@ import org.apache.commons.jxpath.JXPathContext;
 import org.apache.commons.jxpath.JXPathException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.web.util.UrlPathHelper;
 import org.springframework.web.util.WebUtils;
 import org.toobsframework.pres.component.config.Parameter;
 import org.toobsframework.pres.component.dataprovider.api.IDataProviderObject;
@@ -79,17 +80,17 @@ public class ParameterUtil {
     return "";
   }
 
-  public static String resoveForwardPath(IRequest request, Forward forwardDef, Map parameters, String urlPath) {
+  public static String resoveForwardPath(IRequest componentRequest, Forward forwardDef, Map parameters) {
     String forwardPath = null;
-    forwardPath = ((String[])ParameterUtil.resolveParam(request, forwardDef.getUri(), parameters))[0];
+    forwardPath = ((String[])ParameterUtil.resolveParam(componentRequest, forwardDef.getUri(), parameters))[0];
     if (forwardPath != null && forwardDef.getUseContext()) {
-      String contextPath = ParameterUtil.extractContextPathFromUrlPath(urlPath);
+      String contextPath = new UrlPathHelper().getContextPath(componentRequest.getHttpRequest());
       forwardPath = (contextPath.length()>0 ? "/" + contextPath + "/" : "") + forwardPath; 
     }
     return forwardPath;
   }
 
-  public static Map buildParameterMap(HttpServletRequest request) {
+  public static Map<String,Object> buildParameterMap(HttpServletRequest request) {
     return buildParameterMap(request, false);
   }
   
@@ -156,118 +157,120 @@ public class ParameterUtil {
       Map outParams, 
       String scopeId, 
       List<IDataProviderObject> objects) throws ParameterException {
-    JXPathContext context = JXPathContext.newContext(inParams);
-    for(int j = 0; j < paramMap.length; j++){
-      Parameter thisParam = paramMap[j];
-      Object value = null;
-      String thisPath = null;
-      String thisName = null;
-      try {
-        if (thisParam.getScope() != null && 
-            !thisParam.getScope().equalsIgnoreCase("all") && 
-            !thisParam.getScope().equalsIgnoreCase(scopeId) ) {
-          continue;
-        }
-        if(!thisParam.getOverwriteExisting() && inParams.get(thisParam.getName()) != null) {
-          continue;
-        }
-        thisName = resolveParam(request, thisParam.getName(), inParams)[0];
-        thisPath = resolveParam(request, thisParam.getPath(), inParams)[0];
-        boolean condition = true;
-        if (thisParam.getCondition() != null) {
-          Object condObj = context.getValue(thisParam.getCondition());
-          if (log.isDebugEnabled()) {
-            log.debug("Condition Object: " + condObj);
+    if (paramMap != null) {
+      JXPathContext context = JXPathContext.newContext(inParams);
+      for(int j = 0; j < paramMap.length; j++){
+        Parameter thisParam = paramMap[j];
+        Object value = null;
+        String thisPath = null;
+        String thisName = null;
+        try {
+          if (thisParam.getScope() != null && 
+              !thisParam.getScope().equalsIgnoreCase("all") && 
+              !thisParam.getScope().equalsIgnoreCase(scopeId) ) {
+            continue;
           }
-          if (condObj != null && condObj instanceof Boolean) {
-            condition = (Boolean)condObj;
+          if(!thisParam.getOverwriteExisting() && inParams.get(thisParam.getName()) != null) {
+            continue;
           }
-        }
-        if (condition) {
-          if (thisParam.getIsStatic()) {
-            value = thisPath;
-          } else if (thisParam.getIsObject()) {
-            if((objects == null) || (objects != null && thisParam.getObjectIndex() >= objects.size())){
-              continue;
+          thisName = resolveParam(request, thisParam.getName(), inParams)[0];
+          thisPath = resolveParam(request, thisParam.getPath(), inParams)[0];
+          boolean condition = true;
+          if (thisParam.getCondition() != null) {
+            Object condObj = context.getValue(thisParam.getCondition());
+            if (log.isDebugEnabled()) {
+              log.debug("Condition Object: " + condObj);
             }
-            JXPathContext objContext = JXPathContext.newContext(objects.get(thisParam.getObjectIndex()));
-            if (thisParam.getIsList()) {
-              Iterator iter = objContext.iterate(thisPath);
-              value = new ArrayList();
-              while (iter.hasNext()) {
-                ((ArrayList)value).add(iter.next());
+            if (condObj != null && condObj instanceof Boolean) {
+              condition = (Boolean)condObj;
+            }
+          }
+          if (condition) {
+            if (thisParam.getIsStatic()) {
+              value = thisPath;
+            } else if (thisParam.getIsObject()) {
+              if((objects == null) || (objects != null && thisParam.getObjectIndex() >= objects.size())){
+                continue;
               }
-              if (((ArrayList)value).size() == 0 && thisParam.getDefault() != null) {
-                ((ArrayList)value).add(thisParam.getDefault());
-              }
-            } else {
-              value = objContext.getValue(thisPath);
-            }
-          } else if (thisParam.getIsList()) {
-            Object newList = inParams.get(thisName);
-            if (newList == null)
-              newList = outParams.get(thisName);
-            if (newList != null && !(newList instanceof ArrayList)) {
-              newList = new ArrayList();
-              ((ArrayList)newList).add(value);
-            }
-            if (newList == null)
-              newList = new ArrayList();
-  
-            value = context.getValue(thisPath);
-            if(value != null && value.getClass().isArray()){
-              Object[] valueArray = (Object[])value;
-              if (valueArray.length > 1) {
-                for (int i = 0; i < valueArray.length; i++) {
-                  if (valueArray[i] != null && ((String)valueArray[i]).length() > 0)
-                    ((ArrayList)newList).add(valueArray[i]);
+              JXPathContext objContext = JXPathContext.newContext(objects.get(thisParam.getObjectIndex()));
+              if (thisParam.getIsList()) {
+                Iterator iter = objContext.iterate(thisPath);
+                value = new ArrayList();
+                while (iter.hasNext()) {
+                  ((ArrayList)value).add(iter.next());
                 }
-                value = null;
+                if (((ArrayList)value).size() == 0 && thisParam.getDefault() != null) {
+                  ((ArrayList)value).add(thisParam.getDefault());
+                }
               } else {
-                value = valueArray[0];
+                value = objContext.getValue(thisPath);
+              }
+            } else if (thisParam.getIsList()) {
+              Object newList = inParams.get(thisName);
+              if (newList == null)
+                newList = outParams.get(thisName);
+              if (newList != null && !(newList instanceof ArrayList)) {
+                newList = new ArrayList();
+                ((ArrayList)newList).add(value);
+              }
+              if (newList == null)
+                newList = new ArrayList();
+    
+              value = context.getValue(thisPath);
+              if(value != null && value.getClass().isArray()){
+                Object[] valueArray = (Object[])value;
+                if (valueArray.length > 1) {
+                  for (int i = 0; i < valueArray.length; i++) {
+                    if (valueArray[i] != null && ((String)valueArray[i]).length() > 0)
+                      ((ArrayList)newList).add(valueArray[i]);
+                  }
+                  value = null;
+                } else {
+                  value = valueArray[0];
+                }
+              }
+              if (value != null && !"".equals(value))
+                ((ArrayList)newList).add(value);
+              
+              value = newList;
+            } else {
+              value = context.getValue(thisPath);
+              if(value != null && value.getClass().isArray()){
+                Object[] valueArray = (Object[])value;
+                if (valueArray.length > 1) {
+                  value = valueArray;
+                } else {
+                  value = valueArray[0];
+                }
+              } else if (value == null && thisParam.getSessionPath() != null) {
+                value = context.getValue(thisParam.getSessionPath());
               }
             }
-            if (value != null && !"".equals(value))
-              ((ArrayList)newList).add(value);
-            
-            value = newList;
-          } else {
-            value = context.getValue(thisPath);
-            if(value != null && value.getClass().isArray()){
-              Object[] valueArray = (Object[])value;
-              if (valueArray.length > 1) {
-                value = valueArray;
-              } else {
-                value = valueArray[0];
+            if (value != null && value.getClass().isArray() && thisParam.getIsList()) {
+              outParams.put(thisName, value);
+            } else if (value != null && value.getClass().isArray()) {
+              outParams.put(thisName, ((String[])value)[0]);
+            } else if (value != null && value instanceof ArrayList && ((ArrayList)value).size()>0) {
+              outParams.put(thisName, value);
+            } else if (value != null && value instanceof String) {
+              outParams.put(thisName, (String) value);
+            } else if (value != null && !(value instanceof ArrayList) && String.valueOf(value).length() > 0) {
+              outParams.put(thisName, String.valueOf(value));
+            } else if (thisParam.getDefault() != null) {
+              String [] defVal = resolveParam(request, thisParam.getDefault(), inParams);
+              if (defVal != null) {
+                outParams.put(thisName, defVal[0]);
               }
-            } else if (value == null && thisParam.getSessionPath() != null) {
-              value = context.getValue(thisParam.getSessionPath());
+            } else if (!thisParam.getIgnoreNull()) {
+              throw new ParameterException(callingContext, thisName, thisPath);
+            } else if (log.isDebugEnabled()){
+              log.debug("Param " + thisName + " evaluated to null");
             }
           }
-          if (value != null && value.getClass().isArray() && thisParam.getIsList()) {
-            outParams.put(thisName, value);
-          } else if (value != null && value.getClass().isArray()) {
-            outParams.put(thisName, ((String[])value)[0]);
-          } else if (value != null && value instanceof ArrayList && ((ArrayList)value).size()>0) {
-            outParams.put(thisName, value);
-          } else if (value != null && value instanceof String) {
-            outParams.put(thisName, (String) value);
-          } else if (value != null && !(value instanceof ArrayList) && String.valueOf(value).length() > 0) {
-            outParams.put(thisName, String.valueOf(value));
-          } else if (thisParam.getDefault() != null) {
-            String [] defVal = resolveParam(request, thisParam.getDefault(), inParams);
-            if (defVal != null) {
-              outParams.put(thisName, defVal[0]);
-            }
-          } else if (!thisParam.getIgnoreNull()) {
-            throw new ParameterException(callingContext, thisName, thisPath);
-          } else if (log.isDebugEnabled()){
-            log.debug("Param " + thisName + " evaluated to null");
-          }
+        } catch (Exception e) {
+          log.error("mapParameters - exception [name:" + thisName + " path:" + thisPath + " value:" + value + "]");
+          throw new ParameterException(callingContext, thisName, thisPath);
         }
-      } catch (Exception e) {
-        log.error("mapParameters - exception [name:" + thisName + " path:" + thisPath + " value:" + value + "]");
-        throw new ParameterException(callingContext, thisName, thisPath);
       }
     }
   }

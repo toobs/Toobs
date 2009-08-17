@@ -50,7 +50,7 @@
       <xsd:attribute name="indexParam" type="xsd:string"/>
       <xsd:attribute name="namespace" type="xsd:string" default=""/>
       <xsd:attribute name="validationErrorMode" type="xsd:boolean" default="true"/> 
-      <xsd:attribute name="extended" type="xsd:boolean" default="true"/>
+      <xsd:attribute name="extended" type="xsd:boolean" default="false"/>
     </xsd:complexType>
   </xsd:element>
   <xsd:element name="Forwards">

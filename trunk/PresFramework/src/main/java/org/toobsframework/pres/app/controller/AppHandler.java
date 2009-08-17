@@ -7,34 +7,30 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UrlPathHelper;
 import org.toobsframework.pres.app.AppManager;
-import org.toobsframework.doitref.IDoItRefQueue;
-import org.toobsframework.pres.security.IComponentSecurity;
+import org.toobsframework.pres.base.HandlerBase;
+import org.toobsframework.pres.url.UrlDispatchInfo;
 import org.toobsframework.pres.util.ComponentRequestManager;
+import org.toobsframework.pres.util.IComponentRequest;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 
-@SuppressWarnings("unchecked")
-public class AppHandler implements IAppHandler {
-  private static Log log = LogFactory.getLog(AppHandler.class);
+public class AppHandler extends HandlerBase implements IAppHandler {
 
   private UrlPathHelper urlPathHelper = new UrlPathHelper();
 
   private AppManager appManager = null;
   private ComponentRequestManager componentRequestManager = null;
-  private IDoItRefQueue doItRefQueue = null;
   private IXMLTransformerHelper transformerHelper = null;
-  private IComponentSecurity layoutSecurity;
   private URLResolver urlResolver; 
 
   /* (non-Javadoc)
    * @see org.toobsframework.pres.app.controller.IAppHandler#handleRequestInternal(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
    */
-  public ModelAndView handleRequestInternal(HttpServletRequest request, HttpServletResponse response) throws Exception {
+  @Override
+  protected ModelAndView handleRequestInternal(HttpServletRequest request, HttpServletResponse response, UrlDispatchInfo dispatchInfo) throws Exception {
 
     String output = "";
     String urlPath = this.urlPathHelper.getLookupPathForRequest(request);
@@ -55,10 +51,10 @@ public class AppHandler implements IAppHandler {
       startTime = new Date();
     }
 
-    Map params = ParameterUtil.buildParameterMap(request);
-    componentRequestManager.set(request, response, params);
+    Map<String,Object> params = ParameterUtil.buildParameterMap(request);
+    IComponentRequest componentRequest = componentRequestManager.set(dispatchInfo, request, response, params, false);
 
-    output = appManager.renderView(appRequest, componentRequestManager.get(), transformerHelper);
+    output = appManager.renderView(appRequest, componentRequest, transformerHelper);
 
     //Write out to the response.
     response.setContentType("text/html; charset=UTF-8");
@@ -82,14 +78,6 @@ public class AppHandler implements IAppHandler {
 
   public void setComponentRequestManager(ComponentRequestManager componentRequestManager) {
     this.componentRequestManager = componentRequestManager;
-  }
-
-  public void setDoItRefQueue(IDoItRefQueue doItRefQueue) {
-    this.doItRefQueue = doItRefQueue;
-  }
-
-  public void setLayoutSecurity(IComponentSecurity layoutSecurity) {
-    this.layoutSecurity = layoutSecurity;
   }
 
   public void setTransformerHelper(IXMLTransformerHelper transformerHelper) {

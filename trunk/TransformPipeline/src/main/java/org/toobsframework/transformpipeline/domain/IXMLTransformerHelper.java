@@ -1,6 +1,6 @@
 package org.toobsframework.transformpipeline.domain;
 
-import org.toobsframework.util.IRequest;
+import org.toobsframework.util.Configuration;
 
 /**
  * interface used to denote that certain data can be passed between transformations
@@ -16,5 +16,7 @@ import org.toobsframework.util.IRequest;
  */
 
 public interface IXMLTransformerHelper {
+
+  public abstract Configuration getConfiguration();
 
 }

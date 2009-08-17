@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Layouts xmlns="clc" 
+<Layouts xmlns="http://www.toobsframework.org/schema/layout" xmlns:cc="http://www.toobsframework.org/schema/component"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns:cc="http://www.toobsframework.org/schema/component"
-  xmlns:clc="http://www.toobsframework.org/schema/layout"
   xsi:schemaLocation="
   http://www.toobsframework.org/schema/layout http://www.toobsframework.org/schema/componentLayoutConfig-0.1.0.xsd
   http://www.toobsframework.org/schema/component http://www.toobsframework.org/schema/componentConfig-0.1.0.xsd">
-
-  <Layout id="home">
+  
+  <Layout id="main">
     <Section id="declarations" order="0">
       <ComponentRef componentId="declarations">
       </ComponentRef>
@@ -19,111 +17,56 @@
     <Section id="footer" order="9999">
       <ComponentRef componentId="footer"/>
     </Section>
-    <Section id="userInfo" order="1">
+    <cc:Pipeline>
+     <cc:ContentType contentType="xhtml">
+       <cc:Transform name="layout/html/main">
+       </cc:Transform>
+     </cc:ContentType>
+    </cc:Pipeline>
+  </Layout>
+
+  <Layout id="home" extend="main">
+    <Section id="leftCol" order="1" type="leftcol">
       <ComponentRef componentId="userInfo" />
-    </Section>
-    <Section id="browserInfo" order="1">
       <ComponentRef componentId="browserInfo" />
     </Section>
-    <Section order="1" type="wide">
+    <Section id="wide" order="1" type="wide">
       <ComponentRef componentId="postsByFriends" order="2" />
       <ComponentRef componentId="myPosts" order="1" />
     </Section>
-    <cc:Pipeline>
-     <cc:ContentType contentType="xhtml">
-       <cc:Transform name="layout/html/home">
-       </cc:Transform>
-     </cc:ContentType>
-    </cc:Pipeline>
+  </Layout>
+  
+  <Layout id="profile" extend="main">
+    <Section id="userInfo" order="1" type="leftcol">
+      <ComponentRef componentId="userInfo" />
+    </Section>
+    <!--Section id="postsForUser" order="1" type="wide">
+      <ComponentRef componentId="postsForUser" />
+    </Section-->
+  </Layout>
+  
+   <Layout id="friends" extend="main">
+     <!--Section id="pageHeader" order="1">
+       <ComponentRef componentId="searchForFriends" />
+     </Section-->
+     <Section id="userInfo" order="1" type="leftcol">
+      <ComponentRef componentId="userInfo" />
+    </Section>
+    <!--Section id="friendsForUser" order="1" type="wide">
+      <ComponentRef componentId="friendsForUser" />
+    </Section-->
+  </Layout>
+  
+   <Layout id="settings" extend="main">
+    <!--Section id="userInfoEdit" order="1" type="wide">
+      <ComponentRef componentId="userInfoEdit" />
+    </Section-->
   </Layout>
 
-   <Layout id="profile">
-    <Section id="header" order="0">
-      <ComponentRef componentId="header">
-      </ComponentRef>
-    </Section>
-    <Section id="footer" order="9999">
-      <ComponentRef componentId="footer"/>
-    </Section>
-    <Section id="userInfo" order="1">
-      <ComponentRef componentId="userInfo" />
-    </Section>
-    <Section id="postsForUser" order="1">
-      <ComponentRef componentId="postsForUser" />
-    </Section>
-    <cc:Pipeline>
-     <cc:ContentType contentType="xhtml">
-       <cc:Transform name="layout/html/profile">
-       </cc:Transform>
-     </cc:ContentType>
-    </cc:Pipeline>
-  </Layout>
-  
-   <Layout id="friends">
-    <Section id="header" order="0">
-      <ComponentRef componentId="header">
-      </ComponentRef>
-    </Section>
-    <Section id="footer" order="9999">
-      <ComponentRef componentId="footer"/>
-    </Section>
-    <Section id="userInfo" order="1">
-      <ComponentRef componentId="userInfo" />
-    </Section>
-    <Section id="searchFriends" order="1">
-      <ComponentRef componentId="searchForFriends" />
-    </Section>
-    <Section id="friendsForUser" order="1">
-      <ComponentRef componentId="friendsForUser" />
-    </Section>
-    <cc:Pipeline>
-     <cc:ContentType contentType="xhtml">
-       <cc:Transform name="layout/html/friends">
-       </cc:Transform>
-     </cc:ContentType>
-    </cc:Pipeline>
-  </Layout>
-  
-   <Layout id="settings">
-    <Section id="header" order="0">
-      <ComponentRef componentId="header">
-      </ComponentRef>
-    </Section>
-    <Section id="footer" order="9999">
-      <ComponentRef componentId="footer"/>
-    </Section>
-    <Section id="userInfoEdit" order="1">
-      <ComponentRef componentId="userInfoEdit" />
-    </Section>
-    <cc:Pipeline>
-     <cc:ContentType contentType="xhtml">
-       <cc:Transform name="layout/html/settings">
-       </cc:Transform>
-     </cc:ContentType>
-    </cc:Pipeline>
-  </Layout>
-  
-   <Layout id="login">
-    <Section id="declarations" order="0">
-      <ComponentRef componentId="declarations">
-      </ComponentRef>
-    </Section>
-    <Section id="header" order="0">
-      <ComponentRef componentId="headerLogin">
-      </ComponentRef>
-    </Section>
-    <Section id="footer" order="9999">
-      <ComponentRef componentId="footerLogin"/>
-    </Section>
-    <Section id="signUp" order="1">
+   <Layout id="login" extend="main">
+    <Section id="signUp" order="1" type="wide">
       <ComponentRef componentId="signUp" />
     </Section>
-    <cc:Pipeline>
-     <cc:ContentType contentType="xhtml">
-       <cc:Transform name="layout/html/login">
-       </cc:Transform>
-     </cc:ContentType>
-    </cc:Pipeline>
   </Layout>
-  
+
 </Layouts>

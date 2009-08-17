@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<DoItConfig xmlns="http://www.toobsframework.org/schema/component" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+<DoItConfig xmlns="http://www.toobsframework.org/schema/doIt" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
   xsi:schemaLocation="
   http://www.toobsframework.org/schema/doIt http://www.toobsframework.org/schema/doItConfig-0.1.0.xsd">
   <DoIt name="signUp">
     <Actions>
-      <Action actionType="objectAction" action="registerUser" serviceProvider="userService" />
+      <Action actionType="objectAction" action="registerUser" serviceProvider="userServic" />
     </Actions>
     <Forwards>
       <Forward name="success" uri="home.xhtml" />
