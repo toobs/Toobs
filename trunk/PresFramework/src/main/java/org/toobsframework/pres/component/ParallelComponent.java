@@ -10,6 +10,8 @@ import org.apache.commons.logging.LogFactory;
 import org.toobsframework.pres.layout.ComponentRef;
 import org.toobsframework.pres.util.IComponentRequest;
 import org.toobsframework.pres.util.ParameterUtil;
+import org.toobsframework.pres.util.PresConstants;
+import org.toobsframework.pres.xsl.ComponentTransformerHelper;
 import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 
 public class ParallelComponent implements Runnable {
@@ -42,9 +44,16 @@ public class ParallelComponent implements Runnable {
       component.renderStream(output, componentRequest, componentRequest.getDispatchInfo().getContentType(), transformerHelper);
       complete.set(true);
     } catch (Exception e) {
-      // TODO would like to just generate the error output here
-      //transformerHelper.getConfiguration().getErrorComponentName();
+
       log.error("Exception running parallel component: " + e.getMessage(), e);
+      try {
+        componentRequest.getParams().put(PresConstants.TOOBS_EXCEPTION_ATTR_NAME, e);
+        Component errorComponent = ((ComponentTransformerHelper)transformerHelper).getComponentManager().getComponent(transformerHelper.getConfiguration().getErrorComponentName());
+        errorComponent.renderStream(output, componentRequest, componentRequest.getDispatchInfo().getContentType(), transformerHelper);
+      } catch (Exception e1) {
+        log.error("Exception getting error for running parallel component: " + e.getMessage(), e);
+      }
+
       this.cause = e;
       this.failed.set(true);
     }

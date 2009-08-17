@@ -4,7 +4,7 @@
   http://www.toobsframework.org/schema/doIt http://www.toobsframework.org/schema/doItConfig-0.1.0.xsd">
   <DoIt name="signUp">
     <Actions>
-      <Action actionType="objectAction" action="registerUser" serviceProvider="userServic" />
+      <Action actionType="objectAction" action="registerUser" serviceProvider="userService" />
     </Actions>
     <Forwards>
       <Forward name="success" uri="home.xhtml" />
