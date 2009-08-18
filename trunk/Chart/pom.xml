@@ -26,7 +26,7 @@
             <configuration>
               <schema>${basedir}/src/main/castor/chartConfig.xsd</schema>
               <packaging>org.toobsframework.pres.chart.config</packaging>
-              <bindingfile>Chart/src/main/castor/compBinding.xml</bindingfile>
+              <bindingfile>${basedir}/src/main/castor/compBinding.xml</bindingfile>
             </configuration>
           </execution>
         </executions>

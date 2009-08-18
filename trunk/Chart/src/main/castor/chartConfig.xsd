@@ -4,7 +4,7 @@
   attributeFormDefault="unqualified"
   xmlns:chc="http://www.toobsframework.org/schema/chart"
   xmlns:cc="http://www.toobsframework.org/schema/component">
-  <xs:import namespace="http://www.toobsframework.org/schema/component" schemaLocation="http://www.toobsframework.org/schema/componentConfig-0.1.0.xsd"/>
+  <xs:import namespace="http://www.toobsframework.org/schema/component" schemaLocation="http://www.toobsframework.org/schema/componentConfig-3.1.0.xsd"/>
   
   <xs:element name="ChartConfig">
     <xs:annotation>
