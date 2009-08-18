@@ -2,13 +2,13 @@
   <parent>
     <artifactId>toobsframework</artifactId>
     <groupId>org.toobsframework</groupId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>3.1.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.toobsframework</groupId>
   <artifactId>toobsframework-mojo</artifactId>
   <packaging>maven-plugin</packaging>
-  <name>Maven plugins for building the framework</name>
+  <name>toobsframework-mojo</name>
   <version>${toobs.version}</version>
   <url>http://maven.apache.org</url>
   <dependencies>

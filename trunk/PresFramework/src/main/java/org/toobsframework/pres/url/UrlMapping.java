@@ -4,6 +4,8 @@ import java.util.StringTokenizer;
 
 public class UrlMapping {
 
+  public static final String ANYTHING = "*";
+  public static final String VARIABLE_PREFIX = ":";
   private String pattern;
   private String contentType;
   private String componentId;
@@ -11,12 +13,13 @@ public class UrlMapping {
   private String doItId;
   private boolean wildcardMatching = true;
   private String[] pathParts;
+  private String controllerBeanName;
 
   public void setPattern(String pattern) {
     this.pattern = pattern;
     this.pathParts = UrlMappingUtil.tokenizePath(pattern);
     
-    if (pathParts.length > 0 && pathParts[pathParts.length - 1].equals("*")) {
+    if (pathParts.length > 0 && pathParts[pathParts.length - 1].equals(ANYTHING)) {
       wildcardMatching = true;
     }
   }
@@ -48,7 +51,7 @@ public class UrlMapping {
    * @return
    */
   private boolean partMatches(String part, String requestPart) {
-    return part.startsWith(":") || part.equals("*") || part.equals(requestPart);
+    return part.startsWith(VARIABLE_PREFIX) || part.equals(ANYTHING) || part.equals(requestPart);
   }
   
   public String getPattern() {
@@ -93,6 +96,22 @@ public class UrlMapping {
 
   public void setWildcardMatching(boolean wildcardMatching) {
     this.wildcardMatching = wildcardMatching;
+  }
+
+  public String[] getPathParts() {
+    return pathParts;
+  }
+
+  public void setPathParts(String[] pathParts) {
+    this.pathParts = pathParts;
+  }
+
+  public String getControllerBeanName() {
+    return controllerBeanName;
+  }
+
+  public void setControllerBeanName(String controllerBeanName) {
+    this.controllerBeanName = controllerBeanName;
   }
 
   public void init() {

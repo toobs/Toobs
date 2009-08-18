@@ -8,11 +8,11 @@
   <span id="social-image-bottom-left-login"></span>
   <span id="social-image-med"></span>
   <span id="social-login-form">
-    <form method="post" action="logIn.xpost">
+    <form method="post" action="logIn.post">
       <table cellspacing="0" cellpadding="0">
         <tr>
-          <td><label for="email">Email</label></td>
-          <td><label for="password">Password</label></td>
+          <td class="login-label"><label for="email">Email</label></td>
+          <td class="login-label"><label for="password">Password</label></td>
         </tr>
         <tr>
           <td><input class="inputtext" type="text" name="email"/></td>

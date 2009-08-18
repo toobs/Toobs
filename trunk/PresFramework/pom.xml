@@ -8,7 +8,7 @@
   <parent>
     <artifactId>toobsframework</artifactId>
     <groupId>org.toobsframework</groupId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>3.1.0-SNAPSHOT</version>
   </parent>
   <build>
     <plugins>
@@ -53,7 +53,7 @@
           </configuration>
           </execution>
           <execution>
-            <id>generate::toobsUrls</id>
+            <id>generate::urlsConfig</id>
             <phase>generate-sources</phase>
             <goals>
               <goal>generate</goal>

@@ -8,6 +8,7 @@
 	<enableImports><![CDATA[false]]></enableImports>
 	<configs>
 		<config>Social/src/main/resources/social-context.xml</config>
+		<config>PresFramework/src/main/resources/toobs-default-context.xml</config>
 	</configs>
 	<configSets>
 	</configSets>

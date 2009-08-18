@@ -4,9 +4,7 @@
   <xsl:output method="html" omit-xml-declaration="yes"/>
 
   <xsl:template match="component">
-    <div style="background:grey">
-      FOOTER
-    </div>
+      <a href="http://www.toobsframework.org">Toobs Framework</a>
   </xsl:template>
 
   <xsl:template match="objects">

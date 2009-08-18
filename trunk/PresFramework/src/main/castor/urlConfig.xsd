@@ -22,10 +22,11 @@
         </xsd:sequence>
         <xsd:attribute name="pattern" type="xsd:string" use="required" />
         <xsd:attribute name="contentType" type="xsd:string" use="optional" default="xhtml" />
-        <xsd:attribute name="wildcardMatch" type="xsd:boolean" use="optional" default="true" />
+        <xsd:attribute name="wildcardMatch" type="xsd:boolean" use="optional" default="false" />
         <xsd:attribute name="layoutId" type="xsd:string" use="optional" />
         <xsd:attribute name="componentId" type="xsd:string" use="optional" />
         <xsd:attribute name="doItId" type="xsd:string" use="optional" />
+        <xsd:attribute name="controllerBeanName" type="xsd:string" use="optional"/>
       </xsd:complexType>
     </xsd:element>
 </xsd:schema>

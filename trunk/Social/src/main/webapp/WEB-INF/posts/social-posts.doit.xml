@@ -1,22 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <DoItConfig xmlns="http://www.toobsframework.org/schema/doIt" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
   xsi:schemaLocation="
-  http://www.toobsframework.org/schema/doIt http://www.toobsframework.org/schema/doItConfig-0.1.0.xsd">
+  http://www.toobsframework.org/schema/doIt http://www.toobsframework.org/schema/doItConfig-3.1.0.xsd">
   <DoIt name="signUp">
     <Actions>
       <Action actionType="objectAction" action="registerUser" serviceProvider="userService" />
     </Actions>
     <Forwards>
-      <Forward name="success" uri="home.xhtml" />
+      <Forward name="success" uri="/" />
     </Forwards>
   </DoIt>
 
   <DoIt name="logIn">
     <Actions>
-      <Action actionType="objectAction" action="logInUser" serviceProvider="userService" />
+      <Action actionType="objectAction" action="logInUser" serviceProvider="userService" extended="true"/>
     </Actions>
     <Forwards>
-      <Forward name="success" uri="home.xhtml" />
+      <Forward name="success" uri="/" />
+    </Forwards>
+  </DoIt>
+
+  <DoIt name="logOut">
+    <Actions>
+      <Action actionType="objectAction" action="logOutUser" serviceProvider="userService" extended="true"/>
+    </Actions>
+    <Forwards>
+      <Forward name="success" uri="/login" />
     </Forwards>
   </DoIt>
 </DoItConfig>

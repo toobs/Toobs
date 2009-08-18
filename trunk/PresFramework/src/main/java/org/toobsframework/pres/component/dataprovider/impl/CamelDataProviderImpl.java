@@ -77,7 +77,7 @@ public class CamelDataProviderImpl implements IDataProvider, ApplicationContextA
     returnObj = camelContext.createProducerTemplate().sendBody("direct:" + action, ExchangePattern.InOut, dispatchContext);
     
     if (returnObj != null && returnObj instanceof DispatchContextEx) {
-      returnObj = ((DispatchContext) returnObj).getContextObject();
+      returnObj = ((DispatchContextEx) returnObj).getContextObject();
     }
     
     return returnObj;

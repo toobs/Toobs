@@ -18,7 +18,11 @@
     <property name="dao" ref="socialDao" />
   </bean>
 
+  <bean name="getUserInfoByParameter" class="org.toobsframework.social.session.user.GetUserByParameter">
+    <property name="dao" ref="socialDao" />
+  </bean>
   <bean name="getLoggedInUserInfo" class="org.toobsframework.social.session.user.GetLoggedInUser" />
+  <bean name="logOutUser" class="org.toobsframework.social.session.login.LogOut"/>
   <bean name="logInUser" class="org.toobsframework.social.session.login.LogIn">
     <property name="dao" ref="socialDao" />
   </bean>
@@ -36,12 +40,22 @@
     </route>
 
     <route>
+      <from uri="direct:logOutUser" />
+      <to uri="bean:logOutUser" />
+    </route>
+
+    <route>
       <from uri="direct:logInUser" />
       <to uri="bean:logInUser" />
     </route>
 
     <route>
-      <from uri="direct:getUserInfo" />
+      <from uri="direct:getUserInfoByParameter" />
+      <to uri="bean:getUserInfoByParameter" />
+    </route>
+
+    <route>
+      <from uri="direct:getLoggedInUserInfo" />
       <to uri="bean:getLoggedInUserInfo" />
     </route>
 

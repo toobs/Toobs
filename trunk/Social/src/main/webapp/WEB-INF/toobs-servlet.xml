@@ -7,17 +7,29 @@
     <property name="basename" value="messages"/>
   </bean>
   
-  <bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+
+  <!-- For the sake of showing an example, this application does posts mostly through simple urls, but it has
+       a couple of mapped urls for them.
+       To achieve this, we setup to mappers by setting the order property on them.
+  -->
+  <bean id="restUrlMapping" class="org.toobsframework.pres.url.mapping.RestHandlerMapping">
+    <property name="componentLayoutController" ref="componentLayoutController"/>
+    <property name="componentController" ref="componentController"/>
+    <property name="doItController" ref="updateController"/>
+    <property name="urlManager" ref="urlManager"/>
+    <property name="order" value="1"/>
+  </bean>
+  
+  <bean id="postUrlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
     <property name="alwaysUseFullPath" value="true"/>
+    <property name="order" value="2"/>
     <property name="mappings">
       <props>
-          <prop key="/**/*.xhtml">componentLayoutController</prop>
-          <prop key="/**/*.xcomp">componentController</prop>
-          <prop key="/**/*.xpost">updateController</prop>
+        <prop key="/**/*.post">updateController</prop>
       </props>
     </property>
   </bean>
-  
+
   <bean id="componentLayoutController" class="org.toobsframework.pres.layout.controller.ComponentLayoutController">
     <property name="componentLayoutHandler" ref="componentLayoutHandler"/>
   </bean>

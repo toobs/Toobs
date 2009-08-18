@@ -2,8 +2,10 @@ package org.toobsframework.social.session.login;
 
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.camel.Handler;
-import org.toobsframework.pres.component.dataprovider.api.DispatchContext;
+import org.toobsframework.pres.component.dataprovider.api.DispatchContextEx;
 import org.toobsframework.social.persistence.dao.SocialDao;
 import org.toobsframework.social.persistence.model.User;
 
@@ -12,9 +14,10 @@ public class LogIn {
   SocialDao dao;
 
   @Handler
-  public DispatchContext logIn(DispatchContext context) {
+  public DispatchContextEx logIn(DispatchContextEx context) {
     User user = dao.getUser(getParameter(context.getInputParameters(), "email"));
-    context.getOutputParameters().put("->session:loggedInUser", user);
+    HttpServletRequest request = context.getHttpServletRequest();
+    request.getSession().setAttribute("loggedInUser", user);
     return context;
   }
 

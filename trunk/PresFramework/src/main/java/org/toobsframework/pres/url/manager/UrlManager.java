@@ -60,11 +60,12 @@ public class UrlManager extends ManagerBase implements IUrlManager {
     realizedUrl.setLayoutId(url.getLayoutId());
     realizedUrl.setComponentId(url.getComponentId());
     realizedUrl.setWildcardMatching(url.getWildcardMatch());
+    realizedUrl.setControllerBeanName(url.getControllerBeanName());
     realizedUrl.init();
     registry.put(url.getPattern(), realizedUrl);
   }
   
-  public UrlMapping getUrlMapping(String pattern) throws Exception {
+  public UrlMapping getUrlMapping(String[] paths) throws Exception {
     if (isDoReload()) {
       //Date initStart = new Date();
       this.afterPropertiesSet();
@@ -72,7 +73,6 @@ public class UrlManager extends ManagerBase implements IUrlManager {
       //log.info("Init Time: " + (initEnd.getTime() - initStart.getTime()));
     }
 
-    String[] paths = UrlMappingUtil.tokenizePath(pattern);
     
     for (UrlMapping urlMapping : registry.values()) {
       if (urlMapping.matches(paths)) {

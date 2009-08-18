@@ -8,14 +8,14 @@
   <span id="social-image-bottom-left"></span>
   <span id="social-image-small"></span>
   <span id="social-menu-main-options">
-    <a id="home-menu-entry" href="home.xhtml">Home</a>
-    <a id="profile-menu-entry" href="profile.xhtml">Profile</a>
-    <a id="friends-menu-entry" href="friends.xhtml">Friends</a>
+    <a id="home-menu-entry" href="/">Home</a>
+    <a id="profile-menu-entry" href="/profile">Profile</a>
+    <a id="friends-menu-entry" href="/friends">Friends</a>
   </span>
   <span id="social-menu-break"></span>
   <span id="social-menu-secondary-options">
-    <a id="settings-menu-entry" href="settings.xhtml">Settings</a>
-    <a id="logout-menu-entry" href="#">Logout</a>
+    <a id="settings-menu-entry" href="/settings">Settings</a>
+    <a id="logout-menu-entry" href="/logout">Logout</a>
   </span>
   <span id="social-image-bottom-right"></span>
 </div>

@@ -2,8 +2,8 @@
 <Layouts xmlns="http://www.toobsframework.org/schema/layout" xmlns:cc="http://www.toobsframework.org/schema/component"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="
-  http://www.toobsframework.org/schema/layout http://www.toobsframework.org/schema/componentLayoutConfig-0.1.0.xsd
-  http://www.toobsframework.org/schema/component http://www.toobsframework.org/schema/componentConfig-0.1.0.xsd">
+  http://www.toobsframework.org/schema/layout http://www.toobsframework.org/schema/componentLayoutConfig-3.1.0.xsd
+  http://www.toobsframework.org/schema/component http://www.toobsframework.org/schema/componentConfig-3.1.0.xsd">
   
   <Layout id="main">
     <Section id="declarations" order="0">
@@ -27,7 +27,7 @@
 
   <Layout id="home" extend="main">
     <Section id="leftCol" order="1" type="leftcol">
-      <ComponentRef componentId="userInfo" />
+      <ComponentRef componentId="loggedInUserInfo" />
       <ComponentRef componentId="browserInfo" />
     </Section>
     <Section id="wide" order="1" type="wide">
@@ -38,7 +38,7 @@
   
   <Layout id="profile" extend="main">
     <Section id="userInfo" order="1" type="leftcol">
-      <ComponentRef componentId="userInfo" />
+      <ComponentRef componentId="loggedInUserInfo" />
     </Section>
     <!--Section id="postsForUser" order="1" type="wide">
       <ComponentRef componentId="postsForUser" />
@@ -50,11 +50,23 @@
        <ComponentRef componentId="searchForFriends" />
      </Section-->
      <Section id="userInfo" order="1" type="leftcol">
-      <ComponentRef componentId="userInfo" />
+      <ComponentRef componentId="loggedInUserInfo" />
     </Section>
     <!--Section id="friendsForUser" order="1" type="wide">
       <ComponentRef componentId="friendsForUser" />
     </Section-->
+  </Layout>
+  
+  <Layout id="userProfile" extend="profile">
+    <Section id="userInfo" order="1" type="leftcol">
+      <ComponentRef componentId="userInfo"/>
+    </Section>
+  </Layout>
+
+  <Layout id="userFriends" extend="profile">
+    <Section id="userInfo" order="1" type="leftcol">
+      <ComponentRef componentId="userInfo"/>
+    </Section>
   </Layout>
   
    <Layout id="settings" extend="main">
@@ -63,10 +75,14 @@
     </Section-->
   </Layout>
 
-   <Layout id="login" extend="main">
+  <Layout id="login" extend="main">
+    <Section id="header" order="0">
+      <ComponentRef componentId="headerLogin">
+      </ComponentRef>
+    </Section>
     <Section id="signUp" order="1" type="wide">
       <ComponentRef componentId="signUp" />
     </Section>
   </Layout>
-
+  
 </Layouts>

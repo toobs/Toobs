@@ -23,19 +23,18 @@
     <load-on-startup>1</load-on-startup>
   </servlet>
 
+  <servlet> 
+     <servlet-name>static</servlet-name> 
+     <servlet-class>org.mortbay.jetty.servlet.DefaultServlet</servlet-class> 
+  </servlet> 
+
   <servlet-mapping>
     <servlet-name>toobs</servlet-name>
-    <url-pattern>*.xhtml</url-pattern>
+    <url-pattern>/*</url-pattern>
   </servlet-mapping>
   
-  <servlet-mapping>
-    <servlet-name>toobs</servlet-name>
-    <url-pattern>*.xcomp</url-pattern>
+  <servlet-mapping> 
+     <servlet-name>static</servlet-name> 
+     <url-pattern>/static/*</url-pattern> 
   </servlet-mapping>
-  
-  <servlet-mapping>
-    <servlet-name>toobs</servlet-name>
-    <url-pattern>*.xpost</url-pattern>
-  </servlet-mapping>
-  
 </web-app>

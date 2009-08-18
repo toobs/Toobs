@@ -105,6 +105,16 @@
     <property name="configuration" ref="toobsConfiguration"/>
   </bean>
 
+  <bean id="urlManager" class="org.toobsframework.pres.url.manager.UrlManager" lazy-init="true">
+    <property name="configFiles">
+      <list>
+        <value>/WEB-INF/**/*.url.xml</value>
+        <value>classpath:**/*.url.xml</value>
+      </list>
+    </property>
+    <property name="configuration" ref="toobsConfiguration"/>
+  </bean>
+
   <bean id="doItRunner" class="org.toobsframework.pres.doit.DoItRunner" lazy-init="true">
     <property name="dataProvider" ref="toobsDataProvider" />
     <property name="componentRequestManager" ref="componentRequestManager"/>

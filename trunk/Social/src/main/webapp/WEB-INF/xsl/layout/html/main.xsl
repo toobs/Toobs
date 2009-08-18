@@ -23,7 +23,7 @@
         <div id="soc-maincol">
           <xsl:apply-templates select="./Section[@type='wide']"/>
         </div>
-        <div id="soc-footer">
+        <div id="social-footer">
           <xsl:apply-templates select="./Section[@id='footer']"/>
         </div>
       </body>

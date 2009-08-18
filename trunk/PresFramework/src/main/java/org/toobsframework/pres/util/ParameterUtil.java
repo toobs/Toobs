@@ -20,6 +20,7 @@ import org.springframework.web.util.WebUtils;
 import org.toobsframework.pres.component.config.Parameter;
 import org.toobsframework.pres.component.dataprovider.api.IDataProviderObject;
 import org.toobsframework.pres.doit.config.Forward;
+import org.toobsframework.pres.url.mapping.strategy.DispatchStrategy;
 import org.toobsframework.util.IRequest;
 import org.toobsframework.exception.ParameterException;
 
@@ -40,6 +41,9 @@ public class ParameterUtil {
     excludedParameters.add("org.springframework.web.servlet.DispatcherServlet.LOCALE");
     excludedParameters.add("org.springframework.web.servlet.DispatcherServlet.LOCALE_RESOLVER");
     excludedParameters.add("org.springframework.web.servlet.HandlerMapping.pathWithinHandlerMapping");
+    excludedParameters.add(DispatchStrategy.DISPATCH_CONTENT_TYPE_ATTRIBUTE);
+    excludedParameters.add(DispatchStrategy.DISPATCH_PATTERN_ATTRIBUTE);
+    excludedParameters.add(DispatchStrategy.DISPATCH_RESOURCE_ID_ATTRIBUTE);
     
     excludedParameters.add("hibernateFilter.FILTERED");
     

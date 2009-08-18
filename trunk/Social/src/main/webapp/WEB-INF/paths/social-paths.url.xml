@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Urls xmlns="http://www.toobsframework.org/schema/url" 
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+      xsi:schemaLocation="
+      http://www.toobsframework.org/schema/url http://www.toobsframework.org/schema/urlConfig-3.1.0.xsd ">
+  <Url pattern="/login" layoutId="login" />
+  <Url pattern="/logout" doItId="logOut" />
+
+  <Url pattern="/" layoutId="home"/>
+  <Url pattern="/profile/" layoutId="profile" />
+  <Url pattern="/friends/" layoutId="friends" />
+  <Url pattern="/settings/" layoutId="settings"/>
+
+  <Url pattern="/user/:userId" layoutId="userProfile" />
+  <Url pattern="/user/:userId/friends" layoutId="userFriends"/>
+</Urls>

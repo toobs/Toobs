@@ -14,6 +14,7 @@ body {
 span.label {
   display:block;
 }
+
 span.data {
   display:block;
   float:left;
@@ -149,6 +150,14 @@ span.data {
   background-position: right bottom;
 }
 
+#social-footer {
+  vertical-align:bottom;
+  margin-top:20px;
+  padding:4px;
+  background:#eee;
+  font-size:10px;
+}
+
 #social-image-bottom-left-login {
   position:absolute;
   left:0;
@@ -204,6 +213,10 @@ span.data {
   padding-left: 180px;
   padding-top: 40px;
   width:500px;
+}
+
+.login-label {
+  padding-bottom:2px;
 }
 
 .inputtext {
@@ -276,7 +289,6 @@ span.data {
   font-size:24px;
   padding-top:30px;
   padding-bottom:20px;
-  padding-left:280px;
 }
 
 #sign-up-form TABLE {

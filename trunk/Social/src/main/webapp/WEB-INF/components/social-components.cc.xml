@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Components xmlns="http://www.toobsframework.org/schema/component" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="
-  http://www.toobsframework.org/schema/component http://www.toobsframework.org/schema/componentConfig-0.1.0.xsd">
+  http://www.toobsframework.org/schema/component http://www.toobsframework.org/schema/componentConfig-3.1.0.xsd">
 
   <Component id="header">
     <Pipeline>
@@ -52,7 +52,16 @@
   </Component>
   
   <Component id="userInfo">
-    <GetObject action="getUserInfo" serviceProvider="userService" />
+    <GetObject action="getUserInfoByParameter" serviceProvider="userService" />
+    <Pipeline>
+      <ContentType contentType="xhtml">
+        <Transform name="components/html/userInfo"></Transform>
+      </ContentType>
+    </Pipeline>
+  </Component>
+
+  <Component id="loggedInUserInfo">
+    <GetObject action="getLoggedInUserInfo" serviceProvider="userService" />
     <Pipeline>
       <ContentType contentType="xhtml">
         <Transform name="components/html/userInfo"></Transform>
