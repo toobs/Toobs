@@ -14,15 +14,23 @@
       </head>
 
       <body>
-        <div id="soc-header">
+        <div id="social-header">
           <xsl:apply-templates select="./Section[@id='header']"/>
         </div>
-        <div id="soc-leftcol">
-          <xsl:apply-templates select="./Section[@type='leftcol']"/>
-        </div>
-        <div id="soc-maincol">
-          <xsl:apply-templates select="./Section[@type='wide']"/>
-        </div>
+        <table id="contents">
+          <tr>
+            <td>
+              <div id="social-leftcol">
+                <xsl:apply-templates select="./Section[@type='leftcol']"/>
+              </div>
+            </td>
+            <td>
+              <div id="social-maincol">
+                <xsl:apply-templates select="./Section[@type='wide']"/>
+              </div>
+            </td>
+          </tr>
+        </table>
         <div id="social-footer">
           <xsl:apply-templates select="./Section[@id='footer']"/>
         </div>

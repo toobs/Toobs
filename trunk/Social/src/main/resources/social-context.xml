@@ -10,6 +10,7 @@
     <property name="dataFile" value="data/directory.xml"/>
   </bean>
   
+  <!-- Registration -->
   <bean name="createUserContext" class="org.toobsframework.social.session.common.CreateUserContext" />
   <bean name="validateRegistration" class="org.toobsframework.social.session.registration.ValidateRegistration">
     <property name="dao" ref="socialDao" />
@@ -18,15 +19,30 @@
     <property name="dao" ref="socialDao" />
   </bean>
 
+  <!-- GetUser from Url or session -->
   <bean name="getUserInfoByParameter" class="org.toobsframework.social.session.user.GetUserByParameter">
     <property name="dao" ref="socialDao" />
   </bean>
   <bean name="getLoggedInUserInfo" class="org.toobsframework.social.session.user.GetLoggedInUser" />
+  
+  <!-- LogIn/LogOut -->
   <bean name="logOutUser" class="org.toobsframework.social.session.login.LogOut"/>
   <bean name="logInUser" class="org.toobsframework.social.session.login.LogIn">
     <property name="dao" ref="socialDao" />
   </bean>
 
+  <!-- Posts (require to get a user first) -->
+  <bean name="getFriendsPosts" class="org.toobsframework.social.session.posts.GetFriendsPosts">
+    <property name="dao" ref="socialDao" />
+  </bean>
+  <bean name="getUserPosts" class="org.toobsframework.social.session.posts.GetUserPosts">
+    <property name="dao" ref="socialDao" />
+  </bean>
+  <bean name="addPostToUser" class="org.toobsframework.social.session.posts.AddPostToUser">
+    <property name="dao" ref="socialDao" />
+  </bean>
+
+  <!-- Utilities -->
   <bean name="createBrowsingContext" class="org.toobsframework.social.session.common.CreateBrowsingContext" />
 
   <camelContext id="userService" xmlns="http://camel.apache.org/schema/spring">
@@ -50,7 +66,7 @@
     </route>
 
     <route>
-      <from uri="direct:getUserInfoByParameter" />
+      <from uri="direct:getAnyUserInfo" />
       <to uri="bean:getUserInfoByParameter" />
     </route>
 
@@ -69,4 +85,38 @@
     </route>
 
   </camelContext>
+  
+  <camelContext id="postsService" trace="true" xmlns="http://camel.apache.org/schema/spring">
+
+    <route>
+      <from uri="direct:getLoggedInUsersFriendsPosts" />
+      <to uri="bean:getLoggedInUserInfo" /> <!-- :User -->
+      <to uri="bean:getFriendsPosts" /> <!-- :List<Post> -->
+    </route>
+
+    <route>
+      <from uri="direct:getAnyUserFriendsPosts" />
+      <to uri="bean:getUserInfoByParameter" /> <!-- :User -->
+      <to uri="bean:getFriendsPosts" /> <!-- :List<Post> -->
+    </route>
+
+    <route>
+      <from uri="direct:getLoggedInUserPosts" />
+      <to uri="bean:getLoggedInUserInfo" /> <!-- :User -->
+      <to uri="bean:getUserPosts" /> <!-- :List<Post> -->
+    </route>
+
+    <route>
+      <from uri="direct:getAnyUserPosts" />
+      <to uri="bean:getUserInfoByParameter" /> <!-- :User -->
+      <to uri="bean:getUserPosts" /> <!-- :List<Post> -->
+    </route>
+
+    <route>
+      <from uri="direct:addPostForProfile" />
+      <to uri="bean:addPostToUser" />
+    </route>
+
+  </camelContext>
+  
 </beans>

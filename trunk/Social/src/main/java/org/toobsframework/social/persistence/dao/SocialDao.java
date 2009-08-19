@@ -4,6 +4,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -102,8 +103,8 @@ public class SocialDao {
   /**
    * @return all the posts for a user
    */
-  public List<Post> getUserPosts(String userId) {
-    List<Post> posts = new LinkedList<Post>();
+  public List<Post> getPostsForAUser(String userId) {
+    List<Post> posts = new ArrayList<Post>();
     Post[] allPosts = directory.getPost();
     for (Post post : allPosts) {
       if (post.getTo().equals(userId)) {
@@ -112,16 +113,49 @@ public class SocialDao {
     }
     return posts;
   }
+
+  /**
+   * @return all the posts for all user's friends
+   */
+  public List<Post> getPostsForAUserFriends(String userId) {
+    List<Post> posts = new ArrayList<Post>();
+    User user = getUser(userId);
+    
+    if (user == null) {
+      return posts;
+    }
+    
+    Friend[] friends = user.getFriend();
+    
+    if (friends == null) {
+      return posts;
+    }
+    
+    Post[] allPosts = directory.getPost();
+    for (Post post : allPosts) {
+      for (Friend friend : friends) {
+        if (post.getFrom().equals(friend.getUserId()) ||
+            post.getFrom().equals(userId) ||
+            post.getTo().equals(userId)) {
+          posts.add(post);
+          break;
+        }
+      }
+    }
+    return posts;
+  }
   
   /**
    * add a post to the list
    */
+  
   public void addPost(String fromUserId, String toUserId, String comment) {
     Post post = new Post();
     post.setFrom(fromUserId);
     post.setTo(toUserId);
     post.setComment(comment);
     post.setOn(new Date());
+    directory.addPost(post);
     save();
   }
 

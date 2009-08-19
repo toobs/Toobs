@@ -52,7 +52,7 @@
   </Component>
   
   <Component id="userInfo">
-    <GetObject action="getUserInfoByParameter" serviceProvider="userService" />
+    <GetObject action="getAnyUserInfo" serviceProvider="userService" />
     <Pipeline>
       <ContentType contentType="xhtml">
         <Transform name="components/html/userInfo"></Transform>
@@ -65,6 +65,24 @@
     <Pipeline>
       <ContentType contentType="xhtml">
         <Transform name="components/html/userInfo"></Transform>
+      </ContentType>
+    </Pipeline>
+  </Component>
+
+  <Component id="loggedInProfileTitle">
+    <GetObject action="getLoggedInUserInfo" serviceProvider="userService" />
+    <Pipeline>
+      <ContentType contentType="xhtml">
+        <Transform name="components/html/profileHeader"></Transform>
+      </ContentType>
+    </Pipeline>
+  </Component>
+
+  <Component id="anyUserProfileTitle">
+    <GetObject action="getAnyUserInfo" serviceProvider="userService" />
+    <Pipeline>
+      <ContentType contentType="xhtml">
+        <Transform name="components/html/profileHeader"></Transform>
       </ContentType>
     </Pipeline>
   </Component>
@@ -83,20 +101,39 @@
   </Component>
 
   <Component id="postsByFriends">
+    <GetObject action="getAnyUserFriendsPosts" serviceProvider="postsService" />
     <Pipeline>
       <ContentType contentType="xhtml">
-        <Transform name="components/html/postsByFriends"/>
+        <Transform name="components/html/posts"/>
       </ContentType>
     </Pipeline>
   </Component>
 
-  <Component id="myPosts">
+  <Component id="loggedInPostsByFriends">
+    <GetObject action="getLoggedInUsersFriendsPosts" serviceProvider="postsService" />
     <Pipeline>
       <ContentType contentType="xhtml">
-        <Transform name="components/html/myPosts"/>
+        <Transform name="components/html/posts"/>
       </ContentType>
     </Pipeline>
   </Component>
 
+  <Component id="posts">
+    <GetObject action="getAnyUserPosts" serviceProvider="postsService" />
+    <Pipeline>
+      <ContentType contentType="xhtml">
+        <Transform name="components/html/posts"/>
+      </ContentType>
+    </Pipeline>
+  </Component>
+
+  <Component id="loggedInPosts">
+    <GetObject action="getLoggedInUserPosts" serviceProvider="postsService" />
+    <Pipeline>
+      <ContentType contentType="xhtml">
+        <Transform name="components/html/posts"/>
+      </ContentType>
+    </Pipeline>
+  </Component>
 
 </Components>

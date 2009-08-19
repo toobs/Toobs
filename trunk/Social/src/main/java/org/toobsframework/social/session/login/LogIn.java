@@ -1,15 +1,14 @@
 package org.toobsframework.social.session.login;
 
-import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.camel.Handler;
 import org.toobsframework.pres.component.dataprovider.api.DispatchContextEx;
 import org.toobsframework.social.persistence.dao.SocialDao;
 import org.toobsframework.social.persistence.model.User;
+import org.toobsframework.social.session.SessionBase;
 
-public class LogIn {
+public class LogIn extends SessionBase {
 
   SocialDao dao;
 
@@ -21,25 +20,6 @@ public class LogIn {
     return context;
   }
 
-  private String getParameter(Map<String, Object>map, String key) {
-    Object o = map.get(key);
-    
-    if (o == null) {
-      return null;
-    }
-    
-    if (o.getClass().isArray()) {
-      Object[] oa = (Object[]) o;
-      if (oa.length == 0) {
-        return null;
-      }
-      return oa[0].toString();
-    } else {
-      return o.toString();
-    }
-  }
-  
-  
   /**
    * @return the dao
    */

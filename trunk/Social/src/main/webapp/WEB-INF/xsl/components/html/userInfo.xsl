@@ -7,11 +7,11 @@
 
   
   <xsl:template match="component">
-    <div>
-      <span class="label">First Name</span><span class="data"><xsl:value-of select="./objects/User/firstName"/></span>
-      <span class="label">Last Name</span><span class="data"><xsl:value-of select="./objects/User/lastName"/></span>
-      <span class="label">Email</span><span class="data"><xsl:value-of select="./objects/User/userId"/></span>
-    </div>
+    <table>
+      <tr><td class="label">First Name</td><td class="data"><xsl:value-of select="./objects/User/firstName"/></td></tr>
+      <tr><td class="label">Last Name</td><td class="data"><xsl:value-of select="./objects/User/lastName"/></td></tr>
+      <tr><td class="label">User Id</td><td class="data"><xsl:value-of select="./objects/User/userId"/></td></tr>
+    </table>
   </xsl:template>
   
 </xsl:stylesheet>

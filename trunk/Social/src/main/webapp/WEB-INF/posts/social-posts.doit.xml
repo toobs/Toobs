@@ -11,6 +11,15 @@
     </Forwards>
   </DoIt>
 
+  <DoIt name="addPost">
+    <Actions>
+      <Action actionType="objectAction" action="addPostForProfile" serviceProvider="postsService" />
+    </Actions>
+    <Forwards>
+      <Forward name="success" uri="!header:REFERER" />
+    </Forwards>
+  </DoIt>
+
   <DoIt name="logIn">
     <Actions>
       <Action actionType="objectAction" action="logInUser" serviceProvider="userService" extended="true"/>

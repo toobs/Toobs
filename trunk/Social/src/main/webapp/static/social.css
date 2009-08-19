@@ -20,6 +20,132 @@ span.data {
   float:left;
 }
 
+#contents {
+  position:relative;
+  left:90px;
+  width:840px;
+}
+
+#contents td {
+  vertical-align:top;
+}
+
+#social-leftcol {
+  margin-top:10px;
+  margin-bottom:20px;
+}
+
+#social-maincol {
+  margin-left:20px;
+  margin-top:10px;
+  margin-bottom:20px;
+  width:590px;
+}
+
+#social-leftcol table {
+  border-collapse:collapse;
+  margin-bottom:4px;
+}
+
+#social-leftcol td {
+  font-size: 10px;
+  padding: 4px;
+  margin:4px;
+  border: 1px solid #CCC;
+  width: 60px;
+}
+
+span.from {
+  font-size: 14px;
+  font-weight:bold;
+  color:navy;
+}
+
+span.from A:link {
+  text-decoration:none;
+  color:navy;
+}
+
+span.from A:visited {
+  text-decoration:none;
+  color:navy;
+}
+
+span.from A:active {
+  text-decoration:none;
+  color:navy;
+}
+
+span.from A:hover {
+  text-decoration:none;
+  color:blue;
+}
+
+span.to {
+  font-size: 14px;
+  font-weight:bold;
+  color:navy;
+}
+
+span.to A:link {
+  text-decoration:none;
+  color:navy;
+}
+
+span.to A:visited {
+  text-decoration:none;
+  color:navy;
+}
+
+span.to A:active {
+  text-decoration:none;
+  color:navy;
+}
+
+span.to A:hover {
+  text-decoration:none;
+  color:blue;
+}
+
+span.comment {
+  margin-left:6px;
+  font-style:italic;
+  font-size: 14px;
+}
+
+span.time {
+  font-size: 10px;
+}
+
+#post-area {
+  vertical-align:top;
+}
+
+div.post {
+  border-bottom:1px solid #ccc;
+  margin-bottom:15px;
+}
+
+#social-leftcol td.data {
+  width:90px;
+  max-width:90px;
+}
+
+#profile-title {
+  font-size:16px;
+  color:navy;
+  padding:4px;
+  margin-bottom:14px;
+  background:#eee;
+  border:1px solid #ccc;
+}
+
+.title {
+  font-size: 12px;
+  font-weight:bold;
+  margin-bottom:2px;
+}
+
 .menubar-container {
   text-align: left;
   background-color: #AC5d36;
@@ -234,6 +360,19 @@ span.data {
   height: 22px;
 }
 
+.inputpost {
+  border: #1d2a5b 1px solid;
+  color:#333;
+  font-family: "lucida grande",tahoma,verdana,arial,sans-serif;
+  font-size:11px;
+  display:inline-block;
+  width: 500px;
+  height: 70px;
+  float:left;
+  margin-bottom:10px;
+  margin-right:5px;
+}
+
 .inputcheck {
   color: #98a9ca;
 }
@@ -253,6 +392,7 @@ span.data {
   padding-left:5px;
   padding-right:3px;
   padding-top:2px;
+  float:left;
 }
 
 .buttoncall {

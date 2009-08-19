@@ -28,21 +28,20 @@
   <Layout id="home" extend="main">
     <Section id="leftCol" order="1" type="leftcol">
       <ComponentRef componentId="loggedInUserInfo" />
-      <ComponentRef componentId="browserInfo" />
     </Section>
     <Section id="wide" order="1" type="wide">
-      <ComponentRef componentId="postsByFriends" order="2" />
-      <ComponentRef componentId="myPosts" order="1" />
+      <ComponentRef componentId="loggedInPostsByFriends" order="1" />
     </Section>
   </Layout>
   
   <Layout id="profile" extend="main">
-    <Section id="userInfo" order="1" type="leftcol">
+    <Section id="leftCol" order="1" type="leftcol">
       <ComponentRef componentId="loggedInUserInfo" />
     </Section>
-    <!--Section id="postsForUser" order="1" type="wide">
-      <ComponentRef componentId="postsForUser" />
-    </Section-->
+    <Section id="wide" order="1" type="wide">
+      <ComponentRef componentId="loggedInProfileTitle" order="1"/>
+      <ComponentRef componentId="loggedInPosts" order="2"/>
+    </Section>
   </Layout>
   
    <Layout id="friends" extend="main">
@@ -58,8 +57,12 @@
   </Layout>
   
   <Layout id="userProfile" extend="profile">
-    <Section id="userInfo" order="1" type="leftcol">
+    <Section id="leftCol" order="1" type="leftcol">
       <ComponentRef componentId="userInfo"/>
+    </Section>
+    <Section id="wide" order="1" type="wide">
+      <ComponentRef componentId="anyUserProfileTitle" order="1"/>
+      <ComponentRef componentId="posts" order="2" />
     </Section>
   </Layout>
 
@@ -70,6 +73,10 @@
   </Layout>
   
    <Layout id="settings" extend="main">
+    <Section id="leftCol" order="1" type="leftcol">
+      <ComponentRef componentId="loggedInUserInfo" />
+      <ComponentRef componentId="browserInfo" />
+    </Section>
     <!--Section id="userInfoEdit" order="1" type="wide">
       <ComponentRef componentId="userInfoEdit" />
     </Section-->

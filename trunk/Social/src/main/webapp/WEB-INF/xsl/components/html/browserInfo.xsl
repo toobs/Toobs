@@ -8,7 +8,7 @@
   
   <xsl:template match="component">
     <table>
-      <tr><td><label for="firstName">USER_AGENT</label></td><td class="sign-up-input"><xsl:value-of select="./objects/BrowsingContext/userAgent"/></td></tr>
+      <tr><td class="label">browser</td><td class="data"><xsl:value-of select="./objects/BrowsingContext/userAgent"/></td></tr>
     </table>
   </xsl:template>
   

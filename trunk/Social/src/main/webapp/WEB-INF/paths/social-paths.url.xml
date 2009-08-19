@@ -13,4 +13,6 @@
 
   <Url pattern="/user/:userId" layoutId="userProfile" />
   <Url pattern="/user/:userId/friends" layoutId="userFriends"/>
+  
+  <Url pattern="/addPost" doItId="addPost" />
 </Urls>
