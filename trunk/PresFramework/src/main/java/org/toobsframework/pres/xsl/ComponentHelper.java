@@ -128,7 +128,7 @@ public class ComponentHelper extends TagBase {
         ParallelComponent pc = null;
         if ( (pc = request.getParallelComponent(componentId)) !=null ) {
           appendStyle(sb, pc.getComponent());
-          sb.append(new String(pc.getOutput().toByteArray()));
+          sb.append(new String(pc.getOutput().toByteArray(), "UTF-8"));
           appendControllers(sb, pc.getComponent());
         } else {
           Map<String, Object> inParams = getRequestParameters(request, "Component:", componentId, request.getParams(), parameterList);
@@ -138,7 +138,9 @@ public class ComponentHelper extends TagBase {
           if(transformerHelper.getConfiguration().isDebug() && !component.getId().equalsIgnoreCase("componentFrame")) {
             prependDebug(sb, component, randId, contentType);
           }
-          sb.append(transformerHelper.getComponentManager().renderComponent(request, component, contentType, inParams, request.getParams(), transformerHelper, false));
+
+          sb.append(component.render(request, contentType, inParams, transformerHelper, request.getParams()));
+
           if(transformerHelper.getConfiguration().isDebug() && !component.getId().equalsIgnoreCase("componentFrame")) {
             appendDebug(sb, component, randId, contentType);
           }
@@ -147,6 +149,9 @@ public class ComponentHelper extends TagBase {
       } else if (loader.equalsIgnoreCase("lazy")) {
         Map inParams = getRequestParameters(request, "Component:", componentId, new HashMap(), parameterList);
         appendLazyAJAXCall(transformerHelper, sb, componentId, inParams);
+      }
+      if (log.isDebugEnabled()) {
+        log.debug("Component output:\n" + sb.toString());
       }
       serialize(processorContext, extensionElement, sb.toString(), false);
     } catch (Exception e) {

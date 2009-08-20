@@ -57,7 +57,6 @@ public abstract class HandlerBase extends AbstractController implements Initiali
       dispatchStrategy = new DefaultDispatchStrategy();
       log.info("Using default DispatchStrategy " + dispatchStrategy.getClass().getName());
     }
-    this.setCacheSeconds(0);
   }
 
   @Override

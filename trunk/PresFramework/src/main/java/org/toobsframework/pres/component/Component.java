@@ -263,7 +263,7 @@ public class Component extends Transformable {
 
     this.renderStream(renderedOutput, request, contentType, transformerHelper);
 
-    return new String(renderedOutput.toByteArray());
+    return new String(renderedOutput.toByteArray(), "UTF-8");
   }
 
   public void renderStream(OutputStream outputStream, IRequest componentRequest, String outputFormat, IXMLTransformerHelper transformerHelper) throws ComponentException, ParameterException, ComponentNotInitializedException, IOException {

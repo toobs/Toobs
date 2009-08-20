@@ -90,6 +90,7 @@ public class ComponentLayoutHandler extends HandlerBase implements IComponentLay
       try {
         //Set the output format for the layout
         request.setAttribute("outputFormat", dispatchInfo.getContentType());
+        response.setContentType("text/html; charset=UTF-8");
 
         layout = this.componentLayoutManager.getLayout(layoutId);
         this.renderSecureLayout(componentRequest, layout);

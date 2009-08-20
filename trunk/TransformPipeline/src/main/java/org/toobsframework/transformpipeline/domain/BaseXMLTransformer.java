@@ -73,7 +73,9 @@ public abstract class BaseXMLTransformer implements IXMLTransformer {
       // Cast the TransformerFactory to SAXTransformerFactory.
       saxTFactory = ( (SAXTransformerFactory) tFactory);
     }
-    outputProperties = OutputPropertiesFactory.getDefaultMethodProperties("html");
+    if (outputProperties == null) {
+      outputProperties = OutputPropertiesFactory.getDefaultMethodProperties("html");
+    }
     templateCache = new ConcurrentHashMap<String, Templates>();
 
   }

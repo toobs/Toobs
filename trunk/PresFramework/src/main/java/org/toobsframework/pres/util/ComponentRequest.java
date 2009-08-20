@@ -43,6 +43,9 @@ public class ComponentRequest extends BaseRequest implements IComponentRequest {
   }
 
   public ParallelComponent getParallelComponent(String id) {
+    if (parallelComponents == null) {
+      return null;
+    }
     return parallelComponents.get(id);
   }
 

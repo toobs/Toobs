@@ -87,6 +87,7 @@ public class ComponentViewHandler extends HandlerBase implements IComponentViewH
       try {
         //Set the output format for the layout
         request.setAttribute("outputFormat", dispatchInfo.getContentType());
+        response.setContentType("text/html; charset=UTF-8");
 
         component = this.componentManager.getComponent(componentId);
         this.renderSecureComponent(componentRequest, component);

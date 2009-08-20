@@ -61,6 +61,13 @@ public class XMLTransformerFactory implements Serializable {
     this.outputPropertiesMap.put("xml", xmlProps);
 
     Properties htmlProps = OutputPropertiesFactory.getDefaultMethodProperties("html");
+    htmlProps.setProperty("doctype-public", "-//W3C//DTD HTML 4.01//EN");
+    htmlProps.setProperty("doctype-system", "http://www.w3.org/TR/html4/strict.dtd");
+    /*
+    htmlProps.setProperty("doctype-public", "-//W3C//DTD XHTML 1.0 Strict//EN");
+    htmlProps.setProperty("doctype-system", "DTD/xhtml1-strict.dtd");
+    */
+
     this.outputPropertiesMap.put("html", htmlProps);
 
   }

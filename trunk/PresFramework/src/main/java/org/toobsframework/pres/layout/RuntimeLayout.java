@@ -100,16 +100,16 @@ public class RuntimeLayout extends Transformable {
     this.layoutXml = layoutXml;
   }
 
-  public String render(IComponentRequest request, IXMLTransformerHelper transformerHelper) throws ComponentException, ParameterException {
+  public String render(IComponentRequest request, IXMLTransformerHelper transformerHelper) throws ComponentException, ParameterException, IOException {
     return this.render(request, "xhtml", transformerHelper);  
   }
 
-  public String render(IComponentRequest request, String contentType, IXMLTransformerHelper transformerHelper) throws ComponentException, ParameterException {
+  public String render(IComponentRequest request, String contentType, IXMLTransformerHelper transformerHelper) throws ComponentException, ParameterException, IOException {
     ByteArrayOutputStream renderedOutput = new ByteArrayOutputStream();
 
     this.renderStream(renderedOutput, request, contentType, transformerHelper);
 
-    return new String(renderedOutput.toByteArray());
+    return new String(renderedOutput.toByteArray(), "UTF-8");
   }
 
   public void renderStream(OutputStream stream, IComponentRequest request, String contentType, IXMLTransformerHelper transformerHelper) throws ComponentException, ParameterException {

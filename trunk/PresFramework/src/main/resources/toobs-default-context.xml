@@ -19,7 +19,7 @@
   <bean id="toobsConfiguration" class="org.toobsframework.util.Configuration" lazy-init="true">
     <property name="properties">
       <props>
-        <prop key="toobs.doReload">${toobs.enableParallel}</prop>
+        <prop key="toobs.enableParallel">${toobs.enableParallel}</prop>
         <prop key="toobs.doReload">${toobs.doReload}</prop>
         <prop key="toobs.useChain">${toobs.useChain}</prop>
       </props>
