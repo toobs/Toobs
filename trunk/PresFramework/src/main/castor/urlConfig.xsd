@@ -20,6 +20,7 @@
       <xsd:complexType>
         <xsd:sequence>
         </xsd:sequence>
+        <xsd:attribute name="urlId" type="xsd:string" use="required" />
         <xsd:attribute name="pattern" type="xsd:string" use="required" />
         <xsd:attribute name="contentType" type="xsd:string" use="optional" default="xhtml" />
         <xsd:attribute name="wildcardMatch" type="xsd:boolean" use="optional" default="false" />

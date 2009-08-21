@@ -21,6 +21,8 @@ import java.util.Map;
 
 import org.apache.camel.CamelContext;
 import org.apache.camel.ExchangePattern;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -32,6 +34,8 @@ import org.toobsframework.pres.component.dataprovider.api.ObjectNotFoundExceptio
 import org.toobsframework.util.IRequest;
 
 public class CamelDataProviderImpl implements IDataProvider, ApplicationContextAware {
+  protected final static Log log = LogFactory.getLog(CamelDataProviderImpl.class);
+  
   private ApplicationContext applicationContext;
 
   public void setApplicationContext(ApplicationContext context) throws BeansException {
@@ -62,7 +66,13 @@ public class CamelDataProviderImpl implements IDataProvider, ApplicationContextA
 
     CamelContext camelContext = (CamelContext) getBean(camelContextName);
     DispatchContext dispatchContext = DispatchContextFactory.createDispatchContext(action, guid, permissionContext, namespace, params, outParams);
+    if (log.isTraceEnabled()) {
+      log.trace("+++ calling camel action " + action + " for " + camelContextName);
+    }
     returnObj = camelContext.createProducerTemplate().sendBody("direct:" + action, ExchangePattern.InOut, dispatchContext);
+    if (log.isTraceEnabled()) {
+      log.trace("+++ camel returned object " + returnObj);
+    }
     
     if (returnObj != null && returnObj instanceof DispatchContext) {
       returnObj = ((DispatchContext) returnObj).getContextObject();
@@ -91,7 +101,13 @@ public class CamelDataProviderImpl implements IDataProvider, ApplicationContextA
 
     CamelContext camelContext = (CamelContext) getBean(camelContextName);
     DispatchContextEx dispatchContext = DispatchContextFactory.createDispatchContextEx(request, action, guid, permissionContext, namespace, params, outParams);
+    if (log.isTraceEnabled()) {
+      log.trace("+++ calling extended camel action " + action + " for " + camelContextName);
+    }
     returnObj = camelContext.createProducerTemplate().sendBody("direct:" + action, ExchangePattern.InOut, dispatchContext);
+    if (log.isTraceEnabled()) {
+      log.trace("+++ camel returned object " + returnObj);
+    }
     
     if (returnObj != null && returnObj instanceof DispatchContextEx) {
       returnObj = ((DispatchContextEx) returnObj).getContextObject();

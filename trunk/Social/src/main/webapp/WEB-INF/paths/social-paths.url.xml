@@ -2,17 +2,20 @@
 <Urls xmlns="http://www.toobsframework.org/schema/url" 
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
       xsi:schemaLocation="
-      http://www.toobsframework.org/schema/url http://www.toobsframework.org/schema/urlConfig-3.1.0.xsd ">
-  <Url pattern="/login" layoutId="login" />
-  <Url pattern="/logout" doItId="logOut" />
-
-  <Url pattern="/" layoutId="home"/>
-  <Url pattern="/profile/" layoutId="profile" />
-  <Url pattern="/friends/" layoutId="friends" />
-  <Url pattern="/settings/" layoutId="settings"/>
-
-  <Url pattern="/user/:userId" layoutId="userProfile" />
-  <Url pattern="/user/:userId/friends" layoutId="userFriends"/>
+      http://www.toobsframework.org/schema/url http://www.toobsframework.org/schema/urlConfig-3.1.0.xsd">
+  <Url urlId="root" pattern="/" layoutId="redirect" />
   
-  <Url pattern="/addPost" doItId="addPost" />
+  <Url urlId="login" pattern="/login/form" layoutId="login" />
+  <Url urlId="logout" pattern="/login/exit" doItId="logOut" />
+  <Url urlId="doLogin" pattern="/login/do" doItId="logIn" />
+
+  <Url urlId="home" pattern="/home" layoutId="home"/>
+  <Url urlId="profile" pattern="/profile/" layoutId="profile" />
+  <Url urlId="friends" pattern="/friends/" layoutId="friends" />
+  <Url urlId="settings" pattern="/settings/" layoutId="settings"/>
+
+  <Url urlId="friendProfile" pattern="/user/:userId" layoutId="userProfile" />
+  <Url urlId="friendFriends" pattern="/user/:userId/friends" layoutId="userFriends"/>
+  
+  <Url urlId="doPost" pattern="/post/addPost" doItId="addPost" />
 </Urls>

@@ -10,7 +10,7 @@
   <xsl:template match="component">
 <div id="sign-up-form">
   <div id="sign-up-header">Sign Up</div>
-  <form method="post" action="signUp.post">
+  <form method="post" action="/signUp.post">
     <table>
       <tr><td class="sign-up-label"><label for="firstName"><fmt:message key="signup.firstName"/></label></td><td class="sign-up-input"><input class="inputtext" type="text" name="firstName" vaule="" /></td></tr>
       <tr><td class="sign-up-label"><label for="lastName">Last Name</label></td><td class="sign-up-input"><input class="inputtext" type="text" name="lastName" vaule="" /></td></tr>

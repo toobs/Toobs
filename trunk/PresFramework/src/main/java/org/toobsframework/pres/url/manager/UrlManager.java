@@ -71,6 +71,7 @@ public class UrlManager extends ManagerBase implements IUrlManager {
     } else if (url.getLayoutId() != null && url.getDoItId() != null) {
       throw new IOException("Ambiguous: Url with pattern " + url.getPattern() + " has both layoutId and doItId set");
     }
+    realizedUrl.setUrlId(url.getUrlId());
     realizedUrl.setPattern(url.getPattern());
     realizedUrl.setContentType(url.getContentType());
     realizedUrl.setDoItId(url.getDoItId());
@@ -93,6 +94,23 @@ public class UrlManager extends ManagerBase implements IUrlManager {
     
     for (UrlMapping urlMapping : registry.values()) {
       if (urlMapping.matches(paths)) {
+        return urlMapping;
+      }
+    }
+    return null;
+  }
+
+  public UrlMapping getUrlMapping(String urlId) throws Exception {
+    if (isDoReload()) {
+      //Date initStart = new Date();
+      this.afterPropertiesSet();
+      //Date initEnd = new Date();
+      //log.info("Init Time: " + (initEnd.getTime() - initStart.getTime()));
+    }
+
+    
+    for (UrlMapping urlMapping : registry.values()) {
+      if (urlMapping.getUrlId().equals(urlId)) {
         return urlMapping;
       }
     }

@@ -12,6 +12,7 @@
   </Component>
 
   <Component id="headerLogin">
+    <GetObject action="getCredentials" serviceProvider="userService"></GetObject>
     <Pipeline>
       <ContentType contentType="xhtml">
         <Transform name="common/html/headerLogin"/>

@@ -23,6 +23,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.toobsframework.pres.component.dataprovider.api.IDataProvider;
 import org.toobsframework.pres.component.manager.IComponentManager;
 import org.toobsframework.pres.layout.manager.IComponentLayoutManager;
+import org.toobsframework.pres.url.manager.IUrlManager;
 import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 import org.toobsframework.util.Configuration;
@@ -32,6 +33,7 @@ public class ComponentTransformerHelper implements IXMLTransformerHelper, Applic
   protected ComponentRequestManager componentRequestManager = null;
   protected IComponentManager componentManager = null;
   protected IComponentLayoutManager componentLayoutManager = null;
+  protected IUrlManager urlManager = null;
   protected IDataProvider dataProvider;
   protected ApplicationContext applicationContext;
 
@@ -100,6 +102,20 @@ public class ComponentTransformerHelper implements IXMLTransformerHelper, Applic
    */
   public void setConfiguration(Configuration configuration) {
     this.configuration = configuration;
+  }
+
+  /**
+   * @return the urlManager
+   */
+  public IUrlManager getUrlManager() {
+    return urlManager;
+  }
+
+  /**
+   * @param urlManager the urlManager to set
+   */
+  public void setUrlManager(IUrlManager urlManager) {
+    this.urlManager = urlManager;
   }
 
   public ApplicationContext getApplicationContext() {

@@ -345,6 +345,13 @@ div.post {
   padding-bottom:2px;
 }
 
+.login-error {
+  margin-left:18px;
+  padding-bottom:6px;
+  font-size:14px;
+  font-weight:bold;
+}
+
 .inputtext {
   border-bottom: #1d2a5b 1px solid;
   border-left: #1d2a5b 1px solid;

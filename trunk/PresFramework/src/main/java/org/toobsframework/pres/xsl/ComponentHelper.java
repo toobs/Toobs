@@ -30,13 +30,18 @@ import javax.xml.transform.TransformerException;
 
 import org.apache.xalan.extensions.XSLProcessorContext;
 import org.apache.xalan.templates.ElemExtensionCall;
+import org.apache.xalan.templates.StylesheetRoot;
 import org.apache.xalan.transformer.TransformerImpl;
 import org.apache.xml.serializer.SerializationHandler;
+import org.apache.xpath.objects.XObject;
+import org.apache.xpath.objects.XObjectFactory;
 import org.toobsframework.data.beanutil.BeanMonkey;
 import org.toobsframework.pres.component.Component;
 import org.toobsframework.pres.component.ParallelComponent;
 import org.toobsframework.pres.component.Transform;
 import org.toobsframework.pres.component.config.Parameter;
+import org.toobsframework.pres.url.UrlMapping;
+import org.toobsframework.pres.url.manager.UrlManager;
 import org.toobsframework.pres.util.IComponentRequest;
 import org.toobsframework.pres.util.ParameterUtil;
 import org.toobsframework.pres.util.PresConstants;
@@ -44,12 +49,13 @@ import org.toobsframework.tags.TagBase;
 import org.toobsframework.transformpipeline.domain.IXMLTransformer;
 import org.toobsframework.transformpipeline.domain.XMLTransformerException;
 import org.toobsframework.util.IRequest;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
 
 public class ComponentHelper extends TagBase {
 
-  private static final String COMPONENT_HELPER_PARAMETERS = "componentHelperParameters";
+  public static final String COMPONENT_HELPER_PARAMETERS = "componentHelperParameters";
 
   public ComponentHelper() {
   }
@@ -495,6 +501,81 @@ public class ComponentHelper extends TagBase {
     }
   }*/
   
+  /**
+   * Public tag - url - insert an anchor in the result stream
+   * <p>
+   * <pre><code>
+   *   &lt;toobs:url urlId="<i>id</i>"&gt;
+   *   &lt;/toobs:url>
+   * </code></pre>
+   * 
+   * implicit DTD for url
+   * 
+   * <pre><code>
+   * &lt;!ELEMENT toobs:url (toobs:parameter*)&gt
+   * &lt;!ATTLIST toobs:url
+   * urlId CDATA #REQUIRED&gt;
+   * </code></pre>
+   * 
+   * Where
+   * <p>
+   * <ul>
+   * <li>urlId - is the Id of the url, as specified in the .url.xml file
+   * </ul>
+   */
+  public void url(XSLProcessorContext processorContext, ElemExtensionCall extensionElement) throws TransformerException {
+    // initialize
+    TransformerImpl transformer = processorContext.getTransformer();
+    ComponentTransformerHelper transformerHelper = getTransformerHelper(processorContext);
+    
+    String urlId = getRequiredStringProperty("urlId", "the url tag requires a urlId attribute", processorContext, extensionElement);
+
+    // Obtain parameters
+    List parameterList = new ArrayList();
+    transformer.setParameter(ComponentHelper.COMPONENT_HELPER_PARAMETERS, parameterList);
+    transformer.executeChildTemplates(extensionElement, true);
+    transformer.setParameter(ComponentHelper.COMPONENT_HELPER_PARAMETERS, new Boolean(false));
+    
+    IRequest request = getComponentRequest(processorContext);
+    if (request == null) {
+      throw new TransformerException("Internal error: Invalid request passed to the layout through the " + IXMLTransformer.TRANSFORMER_HELPER);
+    }
+    
+    try {
+      String result = "";
+      Map<String, Object> inParams = getRequestParameters(request, "Url:", urlId, request.getParams(), parameterList);
+      UrlMapping url = transformerHelper.getUrlManager().getUrlMapping(urlId);
+      if (url != null) {
+        result = url.formUrl(inParams);
+      }
+    /*
+    sb.append("<a href=\"");
+    sb.append(urlId);
+    sb.append("\" ");
+    
+    // Get tag attributes
+    NamedNodeMap attributeNames = extensionElement.getAttributes();
+    int n = attributeNames.getLength();
+    for (int i = 0; i < n; i++) {
+      Node node = attributeNames.item(i);
+      String name = node.getLocalName();
+      if (!name.equals("urlId")) {
+        String value = node.getNodeValue();
+        sb.append(name);
+        sb.append("=\"");
+        sb.append(value);
+        sb.append("\" ");
+      }
+    }
+    sb.append(">");
+    sb.append("</a>");
+    */
+      serialize(processorContext, extensionElement, result, false);
+    } catch (Exception e) {
+      throw new TransformerException("Error executing toobs component insertion: " + e.getMessage(), e);
+    }
+  }
+
   // ----------------------------------- END Public Tag Definitions --------------------------------------- //
 
   protected void appendLazyAJAXCall(ComponentTransformerHelper transformerHelper, StringBuffer sb, String componentId, Map<String,Object> parameters) {

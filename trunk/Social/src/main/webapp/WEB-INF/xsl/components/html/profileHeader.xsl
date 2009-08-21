@@ -10,7 +10,7 @@
     Post a comment
     </div>
     <div id="post-area">
-    <form method="post" action="/addPost">
+    <form method="post" action="/s/addPost">
     <input type="hidden" name="userId" value="{./objects/User/userId}" />
     <textarea class="inputpost" name="comment" rows="4" cols="50"></textarea>
     <input class="inputbutton" type="submit" value="Post"/>

@@ -138,6 +138,7 @@
     <property name="componentManager" ref="componentManager"/>
     <property name="componentLayoutManager" ref="componentLayoutManager"/>
     <property name="componentRequestManager" ref="componentRequestManager"/>
+    <property name="urlManager" ref="urlManager"/>
     <property name="dataProvider" ref="toobsDataProvider" />
   </bean>
 

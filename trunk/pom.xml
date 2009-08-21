@@ -339,11 +339,33 @@
         <type>jar</type>
         <scope>compile</scope>
       </dependency>
+      <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-core</artifactId>
+        <version>${spring.security.version}</version>
+        <type>jar</type>
+        <scope>compile</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-core-tiger</artifactId>
+        <version>${spring.security.version}</version>
+        <type>jar</type>
+        <scope>compile</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-acl</artifactId>
+        <version>${spring.security.version}</version>
+        <type>jar</type>
+        <scope>compile</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
   <properties>
     <toobs.version>3.1.0-SNAPSHOT</toobs.version>
     <toobs.schema.version>3.1.0</toobs.schema.version>
     <spring.version>2.5.5</spring.version>
+    <spring.security.version>2.0.5.RELEASE</spring.security.version>
   </properties>
 </project>

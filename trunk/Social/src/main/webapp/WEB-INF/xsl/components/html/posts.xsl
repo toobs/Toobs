@@ -16,7 +16,7 @@
     <xsl:variable name="to" select="./to"/>
     <div class="post">
     <div>
-    <span class="from"><a href="/user/{$from}"><xsl:value-of select='from' /></a></span>&#160;to&#160;<span class="to"><a href="/user/{$to}"><xsl:value-of select="./to" /></a></span><span class="comment"><xsl:value-of select="./comment"/></span>
+    <span class="from"><a href="/s/user/{$from}"><xsl:value-of select='from' /></a></span>&#160;to&#160;<span class="to"><a href="/s/user/{$to}"><xsl:value-of select="./to" /></a></span><span class="comment"><xsl:value-of select="./comment"/></span>
     </div>
     <div>
     <span class="time"><xsl:value-of select="date:getFormattedDate(./on, 'MMM d, yyyy h:mm a')" /></span>

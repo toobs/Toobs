@@ -5,6 +5,15 @@
   http://www.toobsframework.org/schema/layout http://www.toobsframework.org/schema/componentLayoutConfig-3.1.0.xsd
   http://www.toobsframework.org/schema/component http://www.toobsframework.org/schema/componentConfig-3.1.0.xsd">
   
+  <Layout id="redirect">
+    <cc:Pipeline>
+     <cc:ContentType contentType="xhtml">
+       <cc:Transform name="layout/html/redirect">
+       </cc:Transform>
+     </cc:ContentType>
+    </cc:Pipeline>
+  </Layout>
+
   <Layout id="main">
     <Section id="declarations" order="0">
       <ComponentRef componentId="declarations">
@@ -33,6 +42,7 @@
       <ComponentRef componentId="loggedInPostsByFriends" order="1" />
     </Section>
   </Layout>
+  
   
   <Layout id="profile" extend="main">
     <Section id="leftCol" order="1" type="leftcol">

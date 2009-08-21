@@ -17,12 +17,13 @@
  */
 package org.toobsframework.pres.url;
 
-import java.util.StringTokenizer;
+import java.util.Map;
 
 public class UrlMapping {
 
   public static final String ANYTHING = "*";
   public static final String VARIABLE_PREFIX = ":";
+  private String urlId;
   private String pattern;
   private String contentType;
   private String componentId;
@@ -32,15 +33,6 @@ public class UrlMapping {
   private String[] pathParts;
   private String controllerBeanName;
 
-  public void setPattern(String pattern) {
-    this.pattern = pattern;
-    this.pathParts = UrlMappingUtil.tokenizePath(pattern);
-    
-    if (pathParts.length > 0 && pathParts[pathParts.length - 1].equals(ANYTHING)) {
-      wildcardMatching = true;
-    }
-  }
-  
   /**
    * Returns true if the request path parts matches the path parts
    * for this mapping (i.e., the request should be dispatched to the
@@ -69,6 +61,44 @@ public class UrlMapping {
    */
   private boolean partMatches(String part, String requestPart) {
     return part.startsWith(VARIABLE_PREFIX) || part.equals(ANYTHING) || part.equals(requestPart);
+  }
+
+  /**
+   * Creates a proper URL by appending the parts and adding the parameters as needed
+   * @param inParams the parameters
+   * @return the properly formed URL
+   */
+  public String formUrl(Map<String, Object> inParams) {
+    StringBuffer sb = new StringBuffer();
+    for (int i = 0; i < pathParts.length; i++) {
+      if (pathParts[i].startsWith(VARIABLE_PREFIX)) {
+        Object value = inParams.get(pathParts[i].substring(1));
+        if (value != null && value.toString().length() > 0) {
+          sb.append('/');
+          sb.append(value.toString());
+        }
+      } else if (!pathParts[i].equals(ANYTHING)) {
+        sb.append('/');
+        sb.append(pathParts[i]);
+      }
+    }
+    return sb.toString();
+  }
+  public String getUrlId() {
+    return urlId;
+  }
+
+  public void setUrlId(String urlId) {
+    this.urlId = urlId;
+  }
+
+  public void setPattern(String pattern) {
+    this.pattern = pattern;
+    this.pathParts = UrlMappingUtil.tokenizePath(pattern);
+    
+    if (pathParts.length > 0 && pathParts[pathParts.length - 1].equals(ANYTHING)) {
+      wildcardMatching = true;
+    }
   }
   
   public String getPattern() {
@@ -134,5 +164,6 @@ public class UrlMapping {
   public void init() {
     
   }
+
 
 }

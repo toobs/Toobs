@@ -8,7 +8,8 @@
   <span id="social-image-bottom-left-login"></span>
   <span id="social-image-med"></span>
   <span id="social-login-form">
-    <form method="post" action="logIn.post">
+    <div class="login-error"><xsl:value-of select="./objects/CredentialsInfo/errorMessage"/></div>
+    <form method="post" action="/logIn.post">
       <table cellspacing="0" cellpadding="0">
         <tr>
           <td class="login-label"><label for="email">Email</label></td>

@@ -15,17 +15,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.toobsframework.pres.url.manager;
+package org.toobsframework.social.session.login;
 
-import java.util.List;
+public class CredentialsInfo {
+  String username;
+  String errorMessage;
 
-import org.toobsframework.pres.url.UrlMapping;
+  public CredentialsInfo() {
+    username = "";
+    errorMessage = "";
+  }
 
-public interface IUrlManager {
+  /**
+   * @return the username
+   */
+  public String getUsername() {
+    return username;
+  }
 
-  public abstract UrlMapping getUrlMapping(String[] paths) throws Exception;
-  public abstract UrlMapping getUrlMapping(String urlId) throws Exception;
+  /**
+   * @param username
+   *          the username to set
+   */
+  public void setUsername(String username) {
+    this.username = username;
+  }
 
-  public void addConfigFiles(List<String> configFiles);
+  /**
+   * @return the errorMessage
+   */
+  public String getErrorMessage() {
+    return errorMessage;
+  }
+
+  /**
+   * @param errorMessage
+   *          the errorMessage to set
+   */
+  public void setErrorMessage(String errorMessage) {
+    this.errorMessage = errorMessage;
+  }
   
+  public String toString() {
+    return "{username:\"" + username + "\",errorMessage:\"" + errorMessage + "\"}";
+  }
 }

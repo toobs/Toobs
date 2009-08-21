@@ -32,6 +32,7 @@
   
   <!-- LogIn/LogOut -->
   <bean name="logOutUser" class="org.toobsframework.social.session.login.LogOut"/>
+  <bean name="getCredentialsInfo" class="org.toobsframework.social.session.login.GetCredentialsInfo"/>
   <bean name="logInUser" class="org.toobsframework.social.session.login.LogIn">
     <property name="dao" ref="socialDao" />
   </bean>
@@ -78,6 +79,11 @@
     <route>
       <from uri="direct:getLoggedInUserInfo" />
       <to uri="bean:getLoggedInUserInfo" />
+    </route>
+
+    <route>
+      <from uri="direct:getCredentials" />
+      <to uri="bean:getCredentialsInfo" />
     </route>
 
   </camelContext>

@@ -168,6 +168,6 @@
   </dependencies>
   
   <properties>
-    <camel.version>2.0-M2</camel.version>
+    <camel.version>2.0-M3</camel.version>
   </properties>
 </project>
