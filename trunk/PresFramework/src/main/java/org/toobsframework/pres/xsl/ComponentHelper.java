@@ -25,7 +25,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Vector;
 
 import javax.xml.transform.TransformerException;
 
@@ -48,7 +47,6 @@ import org.toobsframework.util.IRequest;
 import org.w3c.dom.Node;
 
 
-@SuppressWarnings("unchecked")
 public class ComponentHelper extends TagBase {
 
   private static final String COMPONENT_HELPER_PARAMETERS = "componentHelperParameters";
@@ -107,9 +105,9 @@ public class ComponentHelper extends TagBase {
     String componentId = getRequiredStringProperty("componentId", "component tag requires a componentId attribute", processorContext, extensionElement);
     String contentType = getStringProperty("contentType", "xhtml", processorContext, extensionElement);
     String loader = getStringProperty("loader", "direct", processorContext, extensionElement);
-    
+
     // Obtain parameters
-    List parameterList = new ArrayList();
+    List<String> parameterList = new ArrayList<String>();
     transformer.setParameter(COMPONENT_HELPER_PARAMETERS, parameterList);
     transformer.executeChildTemplates(extensionElement, true);
     transformer.setParameter(COMPONENT_HELPER_PARAMETERS, new Boolean(false));
@@ -147,7 +145,7 @@ public class ComponentHelper extends TagBase {
           appendControllers(sb, component);
         }
       } else if (loader.equalsIgnoreCase("lazy")) {
-        Map inParams = getRequestParameters(request, "Component:", componentId, new HashMap(), parameterList);
+        Map<String,Object> inParams = getRequestParameters(request, "Component:", componentId, request.getParams(), parameterList);
         appendLazyAJAXCall(transformerHelper, sb, componentId, inParams);
       }
       if (log.isDebugEnabled()) {
@@ -181,6 +179,7 @@ public class ComponentHelper extends TagBase {
    *   the current path in the xslt.  If true, the node is obtained and passed to the surrounding component or layour tags
    * </ul>
    */
+  @SuppressWarnings("unchecked")
   public void parameter(XSLProcessorContext processorContext, ElemExtensionCall extensionElement) throws TransformerException {
     TransformerImpl transformer = processorContext.getTransformer();
     Object p = transformer.getParameter(COMPONENT_HELPER_PARAMETERS);
@@ -188,7 +187,7 @@ public class ComponentHelper extends TagBase {
     if (p == null || !(p instanceof List)) {
       throw new TransformerException("toobs parameter declarartion needs to be nested inside of a toobs component");
     }
-    List parameterList = (List) p;
+    List<Object> parameterList = (List) p;
 
     String useContext = getStringProperty("use-context", processorContext, extensionElement);
     if (useContext != null && (useContext.equalsIgnoreCase("true") || useContext.equalsIgnoreCase("yes") || useContext.equalsIgnoreCase("1"))) {
@@ -263,7 +262,7 @@ public class ComponentHelper extends TagBase {
     String layoutId = getRequiredStringProperty("layoutId", "the tag layout needs the attribute layoutId", processorContext, extensionElement);
   
     // Obtain parameters
-    List parameterList = new ArrayList<Node>();
+    List<Parameter> parameterList = new ArrayList<Parameter>();
     transformer.setParameter(COMPONENT_HELPER_PARAMETERS, parameterList);
     transformer.executeChildTemplates(extensionElement, true);
     transformer.setParameter(COMPONENT_HELPER_PARAMETERS, new Boolean(false));
@@ -323,7 +322,7 @@ public class ComponentHelper extends TagBase {
     }
     try {
       StringBuffer sb = new StringBuffer(); 
-      Map inParams = new HashMap(request.getParams());
+      Map<String,Object> inParams = new HashMap<String,Object>(request.getParams());
       String componentId = parseUrl(transformerHelper, "Component:", componentUrl, request, inParams);
       if (componentId.indexOf(transformerHelper.getConfiguration().getLayoutExtension()) != -1) {
         sb.append(transformerHelper.getComponentLayoutManager().getLayout(ParameterUtil.resolveParam(request, componentId.replace(transformerHelper.getConfiguration().getLayoutExtension(), ""), request.getParams())[0]).render(request, transformerHelper));
@@ -390,7 +389,7 @@ public class ComponentHelper extends TagBase {
     
 
     // Obtain parameters
-    List parameterList = new ArrayList();
+    List<Parameter> parameterList = new ArrayList<Parameter>();
     transformer.setParameter(COMPONENT_HELPER_PARAMETERS, parameterList);
     transformer.executeChildTemplates(extensionElement, true);
     transformer.setParameter(COMPONENT_HELPER_PARAMETERS, new Boolean(false));
@@ -405,7 +404,7 @@ public class ComponentHelper extends TagBase {
 
       StringBuffer sb = new StringBuffer(); 
       Map<String, Object> inParams = getRequestParameters(request, "Insert:", action, request.getParams(), parameterList);
-      Map outParams = new HashMap();
+      Map<String,Object> outParams = new HashMap<String,Object>();
       Object result;
       if (isExtended) {
         result = transformerHelper.getDataProvider().dispatchActionEx(request, action, serviceProvider, "", "", guidParam, permissionContext, "", namespace, inParams, outParams);
@@ -498,7 +497,7 @@ public class ComponentHelper extends TagBase {
   
   // ----------------------------------- END Public Tag Definitions --------------------------------------- //
 
-  protected void appendLazyAJAXCall(ComponentTransformerHelper transformerHelper, StringBuffer sb, String componentId, Map parameters) {
+  protected void appendLazyAJAXCall(ComponentTransformerHelper transformerHelper, StringBuffer sb, String componentId, Map<String,Object> parameters) {
     Random randomGenerator = new Random();
     //Create container id
     String container = componentId + "_"+ randomGenerator.nextInt();
@@ -506,7 +505,7 @@ public class ComponentHelper extends TagBase {
     StringBuffer url = new StringBuffer();
     url.append(componentId + transformerHelper.getConfiguration().getLayoutExtension() + "?");
     //Create url params
-    Iterator paramIt = parameters.keySet().iterator();
+    Iterator<String> paramIt = parameters.keySet().iterator();
     while(paramIt.hasNext()) {
       String thisKey = (String) paramIt.next();
       
@@ -536,9 +535,9 @@ public class ComponentHelper extends TagBase {
     sb.append("<h2>File: " + component.getFileName() + "</h2>");
     sb.append("<h2>Component: " + component.getId() + "</h2>");
     sb.append("<h2>XSL: ");
-    Vector contentTransforms = (Vector) component.getTransforms().get(contentType);
+    List<Transform> contentTransforms = component.getTransforms().get(contentType);
     if (contentTransforms != null) {
-      Iterator it = contentTransforms.iterator();
+      Iterator<Transform> it = contentTransforms.iterator();
       while (it.hasNext()) {
         Transform transform = (Transform) it.next();
         sb.append(transform.getTransformName());
@@ -822,7 +821,7 @@ public class ComponentHelper extends TagBase {
   protected String parseUrl(ComponentTransformerHelper transformerHelper, String context, 
       String componentUrl, 
       IRequest request, 
-      Map inParams) throws Exception {
+      Map<String,Object> inParams) throws Exception {
     if (componentUrl.indexOf("?") == -1) {
       return componentUrl.replace(transformerHelper.getConfiguration().getComponentExtension(), "");
     }
@@ -868,10 +867,11 @@ public class ComponentHelper extends TagBase {
     return componentId.replace(transformerHelper.getConfiguration().getComponentExtension(), "");
   }
   
-  protected Map getRequestParameters(IRequest request, String context, String scopeId, Map requestParams, Object parameters) throws Exception {
-    Map outParams = new HashMap(requestParams);
+  @SuppressWarnings("unchecked")
+  protected Map<String, Object> getRequestParameters(IRequest request, String context, String scopeId, Map<String, Object> requestParams, Object parameters) throws Exception {
+    Map<String, Object> outParams = new HashMap<String, Object>(requestParams);
     if (parameters != null) {
-      ArrayList paramList = new ArrayList();
+      List<Parameter> paramList = new ArrayList<Parameter>();
       org.w3c.dom.Node currentNode = null;
       // This is the static XSL case
       if (parameters instanceof org.w3c.dom.traversal.NodeIterator) {
@@ -890,12 +890,12 @@ public class ComponentHelper extends TagBase {
       } else //...
       // this is the nested toobs tags case
       if (parameters instanceof List) {
-        List ps = (List) parameters;
+        List<Object> ps = (List) parameters;
         for (Object o : ps) {
           if (o instanceof Node) {
             processNode((Node) o, paramList);
           } else if (o instanceof Parameter) {
-            paramList.add(o);
+            paramList.add((Parameter)o);
           }
         }
       }
@@ -906,10 +906,10 @@ public class ComponentHelper extends TagBase {
     return outParams;
   }
   
-  protected void processNode(org.w3c.dom.Node currentNode, ArrayList paramList) throws Exception {
+  protected void processNode(org.w3c.dom.Node currentNode, List<Parameter> paramList) throws Exception {
     if (currentNode != null && currentNode.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE) {
       org.w3c.dom.NamedNodeMap nodeMap = currentNode.getAttributes();
-      Map nodeAttributes = new HashMap();
+      Map<String,String> nodeAttributes = new HashMap<String,String>();
       for (int a = 0; a < nodeMap.getLength(); a++) {
         org.w3c.dom.Node attrNode = nodeMap.item(a);
         nodeAttributes.put(attrNode.getNodeName(), attrNode.getNodeValue());

@@ -17,6 +17,9 @@
  */
 package org.toobsframework.pres.xsl;
 
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.toobsframework.pres.component.dataprovider.api.IDataProvider;
 import org.toobsframework.pres.component.manager.IComponentManager;
 import org.toobsframework.pres.layout.manager.IComponentLayoutManager;
@@ -24,14 +27,14 @@ import org.toobsframework.pres.util.ComponentRequestManager;
 import org.toobsframework.transformpipeline.domain.IXMLTransformerHelper;
 import org.toobsframework.util.Configuration;
 
-public class ComponentTransformerHelper implements IXMLTransformerHelper {
+public class ComponentTransformerHelper implements IXMLTransformerHelper, ApplicationContextAware {
   protected Configuration configuration = null;
   protected ComponentRequestManager componentRequestManager = null;
   protected IComponentManager componentManager = null;
   protected IComponentLayoutManager componentLayoutManager = null;
   protected IDataProvider dataProvider;
+  protected ApplicationContext applicationContext;
 
-  
   public IDataProvider getDataProvider() {
     return dataProvider;
   }
@@ -97,6 +100,14 @@ public class ComponentTransformerHelper implements IXMLTransformerHelper {
    */
   public void setConfiguration(Configuration configuration) {
     this.configuration = configuration;
+  }
+
+  public ApplicationContext getApplicationContext() {
+    return applicationContext;
+  }
+
+  public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+    this.applicationContext = applicationContext;
   }
 
 }

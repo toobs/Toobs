@@ -65,17 +65,22 @@ public final class ComponentManager extends XslManagerBase implements IComponent
     loadConfig(Components.class);
   }
 
-  public org.toobsframework.pres.component.Component getComponent(String Id)
+  public org.toobsframework.pres.component.Component getComponent(String id) throws ComponentNotFoundException, ComponentInitializationException {
+    return this.getComponent(id, false);
+  }
+
+  public org.toobsframework.pres.component.Component getComponent(String id, boolean noReload)
       throws ComponentNotFoundException, ComponentInitializationException {
 
-    if (isDoReload()) {
+    if (isDoReload() && !noReload) {
       this.loadConfig(Components.class);
     }
-    if (!registry.containsKey(Id)) {
-      throw new ComponentNotFoundException(Id);
+    if (!registry.containsKey(id)) {
+      throw new ComponentNotFoundException(id);
     }
-    return registry.get(Id);
+    return registry.get(id);
   }
+
 
   public String renderComponent(
       IRequest request,

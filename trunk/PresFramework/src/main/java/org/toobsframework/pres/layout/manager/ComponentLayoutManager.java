@@ -217,7 +217,7 @@ public final class ComponentLayoutManager extends XslManagerBase implements ICom
       for (int i = 0; i < section.getComponentRefCount(); i++) {
         org.toobsframework.pres.layout.config.ComponentRef componentRef = section.getComponentRef(i);
         try {
-          Component component = componentManager.getComponent(componentRef.getComponentId());
+          Component component = componentManager.getComponent(componentRef.getComponentId(), true);
           if (componentRef.getLoader().toString().equalsIgnoreCase("direct")) {
             layoutConfig.addComponentRef(new ComponentRef(component, componentRef.getParameters() ) );
           }

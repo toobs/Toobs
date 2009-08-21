@@ -6,6 +6,11 @@
     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
     http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring-2.0-M2.xsd">
 
+  <bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+    <property name="basename" value="/WEB-INF/i18n/social"/>
+    <property name="cacheSeconds" value="0"/>
+  </bean>
+
   <bean name="socialDao" class="org.toobsframework.social.persistence.dao.SocialDao" init-method="init">
     <property name="dataFile" value="data/directory.xml"/>
   </bean>
