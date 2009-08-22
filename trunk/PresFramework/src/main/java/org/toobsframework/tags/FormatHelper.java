@@ -110,19 +110,19 @@ public class FormatHelper extends TagBase {
   }
 
   /**
-   * Public Tag - Param - pass a parameter to a message
+   * Public Tag - Parameter - pass a parameter to a message
    * <p>
    * <pre><code>
-   *   &lt;fmt:param value="<i>string literal|variable value</i>" /&gt;
-   *   &lt;fmt:param&gt;<i>string literal</i>&lt;/param&gt;
-   *   &lt;fmt:param&gt;<i>value-of expression</i>&lt;/param&gt;
-   *   &lt;fmt:param&gt;<i>nested fmt:message</i>&lt;/param&gt;
+   *   &lt;fmt:parameter value="<i>string literal|variable value</i>" /&gt;
+   *   &lt;fmt:parameter&gt;<i>string literal</i>&lt;/param&gt;
+   *   &lt;fmt:parameter&gt;<i>value-of expression</i>&lt;/param&gt;
+   *   &lt;fmt:parameter&gt;<i>nested fmt:message</i>&lt;/param&gt;
    * </code></pre>
    * 
    * implicit DTD for parameter
    * 
    * <pre><code>
-   * &lt;!ELEMENT toobs:parameter (EMPTY)?>
+   * &lt;!ELEMENT toobs:parameter (PCDATA)?>
    * &lt;!ATTLIST toobs:parameter
    * value CDATA #IMPLIED&gt;
    * </code></pre>
@@ -134,7 +134,7 @@ public class FormatHelper extends TagBase {
    * </ul>
    */
   @SuppressWarnings("unchecked")
-  public void param(XSLProcessorContext processorContext, ElemExtensionCall extensionElement) throws TransformerException {
+  public void parameter(XSLProcessorContext processorContext, ElemExtensionCall extensionElement) throws TransformerException {
     TransformerImpl transformer = processorContext.getTransformer();
     Object p = transformer.getParameter(FORMAT_HELPER_PARAMETERS);
 
