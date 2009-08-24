@@ -16,8 +16,8 @@
     </toobs:component>
   </xsl:template>
   
-  <xsl:template match="componentLayoutRef[loader/@type='0']">
-    <toobs:layout layoutId="@layoutId" disable-output-escaping="yes">
+  <xsl:template match="layoutRef[loader/@type='0']">
+    <toobs:layout layoutId="{@layoutId}" disable-output-escaping="yes">
       <xsl:for-each select="/layout/Parameters/Parameter | ./parameters/parameter">
         <toobs:parameter use="true"/>
       </xsl:for-each>
